@@ -1,0 +1,16 @@
+[
+{
+  "modid": "true_durability",
+  "name": "True Durability mod",
+  "description": "Display item real durability",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Bobeezz"],
+  "credits": "The Forge and FML guys",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
