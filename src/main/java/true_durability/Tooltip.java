@@ -5,14 +5,16 @@ import io.netty.channel.ChannelPipeline;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
 
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import java.util.List;
 
+@SideOnly(Side.CLIENT)
 public class Tooltip {
 
   public static boolean firstConnection = true;
@@ -28,9 +30,9 @@ public class Tooltip {
     List<String> toolTip = event.getToolTip();
 
     int damage;
-    NBTTagCompound nbt = stack.getTagCompound();
-    if(nbt != null && nbt.hasKey("true_damage")) {
-      damage = nbt.getInteger("true_damage");
+    NBTTagCompound tag = stack.getTagCompound();
+    if(tag != null && tag instanceof SpecialTagCompound) {
+      damage = ((SpecialTagCompound)tag).getTrueDamage();
     } else damage = stack.getItemDamage();
 
     long count = (long)max - (long)damage;

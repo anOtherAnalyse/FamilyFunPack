@@ -1,19 +1,22 @@
 package true_durability;
 
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.ByteBuf;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.play.server.SPacketSetSlot;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.play.server.SPacketWindowItems;
+import net.minecraft.item.ItemStack;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.LinkedList;
 
+@SideOnly(Side.CLIENT)
 public class PacketListener extends NettyPacketDecoder {
 
   public PacketListener(EnumPacketDirection direction) {
@@ -22,39 +25,47 @@ public class PacketListener extends NettyPacketDecoder {
 
   protected void decode(ChannelHandlerContext channel, ByteBuf in, List<Object> out) throws IOException, InstantiationException, IllegalAccessException, Exception {
     if (in.readableBytes() != 0) {
-      Integer real_damage = null;
 
-      in.markReaderIndex();
-      PacketBuffer buf = new PacketBuffer(in);
-      if(buf.readVarInt() == 22) { // SetSlot Packet
-        buf.readerIndex(buf.readerIndex() + 3);
-        if(buf.readShort() >= 0) {
-          buf.readerIndex(buf.readerIndex() + 1);
-          real_damage = (int)buf.readShort();
-        }
-      }
-      in.resetReaderIndex();
+      int start_index = in.readerIndex(); // Mark start index
+      super.decode(channel, in, out); // Computer packet
 
-      super.decode(channel, in, out);
+      if(out.size() > 0) {
+        Object packet = out.get(0);
+        if(packet instanceof SPacketSetSlot) { // we got a set slot packet
+          SPacketSetSlot packet_slot = (SPacketSetSlot) packet;
+          int end_index = in.readerIndex();
 
-      if(real_damage != null && out.size() > 0) {
-        List<Object> replace = new LinkedList<Object>();
-        for(Object i : out) {
-          if(i instanceof SPacketSetSlot) {
-            SPacketSetSlot pslt = (SPacketSetSlot) i;
-            ItemStack stack = pslt.getStack();
-
-            int true_damage = real_damage.intValue();
-
-            if(true_damage < 0 || true_damage > stack.getMaxDamage()) {
-              NBTTagCompound nbt = stack.getTagCompound();
-              if(nbt == null) nbt = new NBTTagCompound();
-              nbt.setInteger("true_damage", true_damage);
-              stack.setTagCompound(nbt);
+          // Read real item durability
+          PacketBuffer buf = new PacketBuffer(in);
+          buf.readerIndex(start_index + 4);
+          if(buf.readShort() >= 0) {
+            buf.readerIndex(buf.readerIndex() + 1);
+            short real_damage = buf.readShort();
+            if(real_damage < 0) { // We want to save this value
+              ItemStack stack = packet_slot.getStack();
+              stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), (int)real_damage));
             }
-          } else replace.add(i);
+          }
+
+          in.readerIndex(end_index);
+        } else if(packet instanceof SPacketWindowItems) { // We got a list of item stacks
+          SPacketWindowItems packet_window = (SPacketWindowItems) packet;
+          int end_index = in.readerIndex();
+
+          PacketBuffer buf = new PacketBuffer(in);
+          buf.readerIndex(start_index + 4);
+          for(ItemStack i : packet_window.getItemStacks()) {
+            if(buf.readShort() >= 0) {
+              buf.readerIndex(buf.readerIndex() + 1);
+              short true_damage = buf.readShort();
+              if(true_damage < 0) {
+                i.setTagCompound(new SpecialTagCompound(buf.readCompoundTag(), (int)true_damage));
+              } else buf.readCompoundTag();
+            }
+          }
+
+          in.readerIndex(end_index);
         }
-        out = replace;
       }
     }
   }

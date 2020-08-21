@@ -5,9 +5,11 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 @Mod(modid = TrueDurability.MODID, name = TrueDurability.NAME, version = TrueDurability.VERSION)
+@SideOnly(Side.CLIENT)
 public class TrueDurability
 {
     public static final String MODID = "true_durability";
