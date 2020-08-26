@@ -3,21 +3,37 @@ package true_durability;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NettyPacketDecoder;
+import net.minecraft.network.NettyPacketEncoder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.text.TextFormatting;
+
 import java.util.List;
+
+import org.lwjgl.input.Keyboard;
 
 @SideOnly(Side.CLIENT)
 public class Tooltip {
 
-  public static boolean firstConnection = true;
+  public boolean firstConnection;
+  public KeyBinding openGUIKey;
+
+  public Tooltip() {
+    this.firstConnection = true;
+    this.openGUIKey = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, TrueDurability.NAME);
+    ClientRegistry.registerKeyBinding(this.openGUIKey);
+  }
 
   @SubscribeEvent
   public void itemToolTip(ItemTooltipEvent event) {
@@ -37,27 +53,36 @@ public class Tooltip {
 
     long count = (long)max - (long)damage;
 
-    String color;
-    if(damage < 0) color = "\u00A75";
-    else if(damage > max) color = "\u00A74";
-    else color = "\u00A79";
+    TextFormatting color;
+    if(damage < 0) color = TextFormatting.DARK_PURPLE;
+    else if(damage > max) color = TextFormatting.DARK_RED;
+    else color = TextFormatting.BLUE;
 
     toolTip.add("");
-    toolTip.add(color + "Durability: " + Long.toString(count) + " [Max: " + Long.toString(max) + "]");
+    toolTip.add(color.toString() + "Durability: " + Long.toString(count) + " [Max: " + Long.toString(max) + "]" + TextFormatting.RESET.toString());
   }
 
   @SubscribeEvent
   public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-    if(Tooltip.firstConnection) {
+    if(this.firstConnection) {
 
       ChannelPipeline pipeline = event.getManager().channel().pipeline();
 
       try {
+        // Install receive interception
         ChannelHandler old = pipeline.get("decoder");
         if(old != null && old instanceof NettyPacketDecoder) {
           PacketListener spoof = new PacketListener(EnumPacketDirection.CLIENTBOUND);
           pipeline.replace("decoder", "decoder", spoof);
-          Tooltip.firstConnection = false;
+          this.firstConnection = false;
+        }
+
+        // Install send interception
+        old = pipeline.get("encoder");
+        if(old != null && old instanceof NettyPacketEncoder) {
+          PacketIntercept intercept = new PacketIntercept(EnumPacketDirection.SERVERBOUND);
+          pipeline.replace("encoder", "encoder", intercept);
+          this.firstConnection = false;
         }
       } catch (java.util.NoSuchElementException e) {}
     }
@@ -65,7 +90,17 @@ public class Tooltip {
 
   @SubscribeEvent
 	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-    Tooltip.firstConnection = true;
+    this.firstConnection = true;
+  }
+
+  @SubscribeEvent
+  public void onKey(KeyInputEvent event) {
+    if(this.openGUIKey.isPressed()) {
+      Minecraft client = Minecraft.getMinecraft();
+      if(! (client.currentScreen instanceof CommandGui)) {
+        client.displayGuiScreen(new CommandGui());
+      }
+    }
   }
 
 }
