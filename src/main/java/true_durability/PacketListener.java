@@ -90,11 +90,16 @@ public class PacketListener extends NettyPacketDecoder {
             break;
           case 47: // Player position
             {
-              if(TrueDurability.invulnerable) {
-                SPacketPlayerPosLook position = (SPacketPlayerPosLook) packet;
-                Set<SPacketPlayerPosLook.EnumFlags> flags = position.getFlags();
-                flags.remove(SPacketPlayerPosLook.EnumFlags.Y_ROT);
-                flags.remove(SPacketPlayerPosLook.EnumFlags.X_ROT);
+              if(TrueDurability.configuration.invulnerable) {
+                SPacketPlayerPosLook old = (SPacketPlayerPosLook) packet;
+                Set<SPacketPlayerPosLook.EnumFlags> flags = old.getFlags();
+                flags.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
+                flags.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
+
+                TrueDurability.configuration.last_teleport_id = old.getTeleportId();
+
+                SPacketPlayerPosLook spoof = new SPacketPlayerPosLook(old.getX(), old.getY(), old.getZ(), 0, 0, flags, old.getTeleportId());
+                out.set(0, spoof);
               }
             }
             break;

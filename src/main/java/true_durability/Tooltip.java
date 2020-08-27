@@ -84,6 +84,9 @@ public class Tooltip {
           pipeline.replace("encoder", "encoder", intercept);
           this.firstConnection = false;
         }
+
+        // Record NetworkManager
+        TrueDurability.setNetworkManager(event.getManager());
       } catch (java.util.NoSuchElementException e) {}
     }
   }

@@ -20,3 +20,6 @@ build
 # other
 eclipse
 run
+ 
+# Apple shit
+.DS_Store

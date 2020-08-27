@@ -40,7 +40,7 @@ public class PacketIntercept extends NettyPacketEncoder {
       switch(id) {
         case 0: // CPacketConfirmTeleport
           {
-            if(TrueDurability.invulnerable) {
+            if(TrueDurability.configuration.invulnerable) {
               return;
             }
           }

@@ -5,6 +5,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
+import net.minecraft.network.play.client.CPacketConfirmTeleport;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -25,8 +26,8 @@ public class CommandGui extends GuiScreen {
 
   public void initGui() {
     // Windows position
-    this.x = (this.width / 4) - (CommandGui.guiWidth / 2);
-    this.y = (this.height / 2) - (CommandGui.guiHeight / 2);
+    this.x = 12;
+    this.y = 12;
     this.x_end = CommandGui.guiWidth + x;
     this.y_end = CommandGui.guiHeight + y;
 
@@ -43,11 +44,14 @@ public class CommandGui extends GuiScreen {
     OnOffButton on_invulnerable = new OnOffButton(0, this.x + 110, this.y + 26) {
 
       public void onChange() {
-        TrueDurability.invulnerable = this.state;
+        TrueDurability.configuration.invulnerable = this.state;
+        if(!this.state && TrueDurability.configuration.last_teleport_id != -1) {
+          TrueDurability.sendPacket(new CPacketConfirmTeleport(TrueDurability.configuration.last_teleport_id));
+        }
       }
 
     };
-    on_invulnerable.state = TrueDurability.invulnerable;
+    on_invulnerable.state = TrueDurability.configuration.invulnerable;
     this.buttonList.add(on_invulnerable);
   }
 
