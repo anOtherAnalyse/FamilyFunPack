@@ -19,6 +19,7 @@ public class TrueDurability
     public static final String VERSION = "1.1";
 
     private static NetworkManager networkManager;
+    public static Configuration configuration;
 
     public static void setNetworkManager(NetworkManager networkManager) {
       TrueDurability.networkManager = networkManager;
@@ -30,8 +31,6 @@ public class TrueDurability
       }
     }
 
-    public static Configuration configuration;
-
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {}
 
@@ -39,8 +38,8 @@ public class TrueDurability
     public void init(FMLInitializationEvent event)
     {
       if(event.getSide() == Side.CLIENT) {
-        MinecraftForge.EVENT_BUS.register(new Tooltip());
         TrueDurability.configuration = new Configuration();
+        MinecraftForge.EVENT_BUS.register(new Tooltip());
       }
     }
 

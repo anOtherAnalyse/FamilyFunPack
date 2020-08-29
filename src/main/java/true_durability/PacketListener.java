@@ -6,6 +6,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.ByteBuf;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.Packet;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketBuffer;
@@ -90,7 +91,7 @@ public class PacketListener extends NettyPacketDecoder {
             break;
           case 47: // Player position
             {
-              if(TrueDurability.configuration.invulnerable) {
+              if(TrueDurability.configuration.currently_invulnerable) {
                 SPacketPlayerPosLook old = (SPacketPlayerPosLook) packet;
                 Set<SPacketPlayerPosLook.EnumFlags> flags = old.getFlags();
                 flags.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
@@ -103,6 +104,19 @@ public class PacketListener extends NettyPacketDecoder {
               }
             }
             break;
+          case 53: // SPacketRespawn
+            {
+              // Know when to activate invulnerability
+              if(TrueDurability.configuration.invulnerable && !TrueDurability.configuration.currently_invulnerable) {
+                SPacketRespawn respawn = (SPacketRespawn) packet;
+                TrueDurability.configuration.currently_invulnerable = (respawn.getDimensionID() != Minecraft.getMinecraft().player.dimension);
+              }
+            }
+        }
+
+        // packets interception
+        if(TrueDurability.configuration.block_player_packets && TrueDurability.configuration.inbound_block.contains(id)) {
+          out.clear();
         }
       }
     }

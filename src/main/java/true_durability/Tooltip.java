@@ -2,6 +2,7 @@ package true_durability;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -12,6 +13,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
@@ -23,16 +25,25 @@ import java.util.List;
 
 import org.lwjgl.input.Keyboard;
 
+import true_durability.gui.CommandGui;
+import true_durability.gui.OverlayGui;
+
 @SideOnly(Side.CLIENT)
 public class Tooltip {
 
-  public boolean firstConnection;
-  public KeyBinding openGUIKey;
+  private boolean firstConnection;
+  private KeyBinding openGUIKey;
+  private KeyBinding intercept;
+
+  private OverlayGui overlay;
 
   public Tooltip() {
     this.firstConnection = true;
     this.openGUIKey = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, TrueDurability.NAME);
+    this.intercept = new KeyBinding("Intercept player packets", Keyboard.KEY_C, TrueDurability.NAME);
     ClientRegistry.registerKeyBinding(this.openGUIKey);
+    ClientRegistry.registerKeyBinding(this.intercept);
+    this.overlay = new OverlayGui(Minecraft.getMinecraft().fontRenderer, TrueDurability.configuration);
   }
 
   @SubscribeEvent
@@ -94,6 +105,7 @@ public class Tooltip {
   @SubscribeEvent
 	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
     this.firstConnection = true;
+    TrueDurability.configuration.resetVolatileConf();
   }
 
   @SubscribeEvent
@@ -103,7 +115,14 @@ public class Tooltip {
       if(! (client.currentScreen instanceof CommandGui)) {
         client.displayGuiScreen(new CommandGui());
       }
+    } else if(this.intercept.isPressed()) {
+      TrueDurability.configuration.block_player_packets = ! TrueDurability.configuration.block_player_packets;
     }
+  }
+
+  @SubscribeEvent
+  public void drawOverlay(RenderGameOverlayEvent.Text event) {
+    this.overlay.drawOverlay();
   }
 
 }

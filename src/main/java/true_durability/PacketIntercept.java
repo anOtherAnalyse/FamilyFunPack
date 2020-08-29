@@ -40,11 +40,16 @@ public class PacketIntercept extends NettyPacketEncoder {
       switch(id) {
         case 0: // CPacketConfirmTeleport
           {
-            if(TrueDurability.configuration.invulnerable) {
+            if(TrueDurability.configuration.currently_invulnerable) {
               return;
             }
           }
           break;
+      }
+
+      // packets interception
+      if(TrueDurability.configuration.block_player_packets && TrueDurability.configuration.outbound_block.contains(id)) {
+        return;
       }
     }
 

@@ -1,4 +1,4 @@
-package true_durability;
+package true_durability.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -9,8 +9,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import true_durability.TrueDurability;
+
 @SideOnly(Side.CLIENT)
-public class OnOffButton extends GuiButton {
+public class OnOffButton extends GuiButton implements ActionButton {
 
   private static final ResourceLocation on_off = new ResourceLocation(TrueDurability.MODID, "textures/gui/on_off.png");
 
@@ -22,10 +24,10 @@ public class OnOffButton extends GuiButton {
   }
 
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		GlStateManager.disableLighting();
+    // GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+		// GlStateManager.disableLighting();
 		GlStateManager.enableAlpha();
-		GlStateManager.enableBlend();
+		// GlStateManager.enableBlend();
 
     client.getTextureManager().bindTexture(OnOffButton.on_off);
     int i = 0;
@@ -34,10 +36,10 @@ public class OnOffButton extends GuiButton {
     Gui.drawModalRectWithCustomSizedTexture(this.x, this.y, 0, i, this.width, this.height, this.width, this.height * 2);
   }
 
-  public void inverseState() {
+  public void changeState() {
     this.state = !this.state;
-    this.onChange();
+    this.performAction();
   }
 
-  public void onChange() {}
+  public void performAction() {}
 }
