@@ -92,15 +92,17 @@ public class PacketListener extends NettyPacketDecoder {
           case 47: // Player position
             {
               if(TrueDurability.configuration.currently_invulnerable) {
-                SPacketPlayerPosLook old = (SPacketPlayerPosLook) packet;
-                Set<SPacketPlayerPosLook.EnumFlags> flags = old.getFlags();
-                flags.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
-                flags.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
+                if(! Minecraft.getMinecraft().player.isRiding()) {
+                  SPacketPlayerPosLook old = (SPacketPlayerPosLook) packet;
+                  Set<SPacketPlayerPosLook.EnumFlags> flags = old.getFlags();
+                  flags.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
+                  flags.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
 
-                TrueDurability.configuration.last_teleport_id = old.getTeleportId();
+                  TrueDurability.configuration.last_teleport_id = old.getTeleportId();
 
-                SPacketPlayerPosLook spoof = new SPacketPlayerPosLook(old.getX(), old.getY(), old.getZ(), 0, 0, flags, old.getTeleportId());
-                out.set(0, spoof);
+                  SPacketPlayerPosLook spoof = new SPacketPlayerPosLook(old.getX(), old.getY(), old.getZ(), 0, 0, flags, old.getTeleportId());
+                  out.set(0, spoof);
+                } else out.clear();
               }
             }
             break;

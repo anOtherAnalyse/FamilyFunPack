@@ -1,11 +1,11 @@
 package true_durability.gui;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.network.play.client.CPacketConfirmTeleport;
+import net.minecraft.client.renderer.GlStateManager;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -57,9 +57,13 @@ public class CommandGui extends GuiScreen {
     packet_label.addLine("Packets interception");
     this.labelList.add(packet_label);
 
-    GuiLabel packet_which = new GuiLabel(this.fontRenderer, 2, this.x + 6, this.y + 24 + space * 2, CommandGui.guiWidth - 8, 16, 0xffeeeeee);
+    GuiLabel packet_which = new GuiLabel(this.fontRenderer, 3, this.x + 6, this.y + 24 + space * 2, CommandGui.guiWidth - 8, 16, 0xffeeeeee);
     packet_which.addLine("Which packets ?");
     this.labelList.add(packet_which);
+
+    GuiLabel info_items = new GuiLabel(this.fontRenderer, 4, this.x + 6, this.y + 24 + space * 3, CommandGui.guiWidth - 8, 16, 0xffeeeeee);
+    info_items.addLine("Items tags");
+    this.labelList.add(info_items);
 
     // Add buttons
     OnOffButton on_invulnerable = new OnOffButton(0, this.x_end - 22, this.y + 28) {
@@ -94,8 +98,14 @@ public class CommandGui extends GuiScreen {
         }
       }
     };
-
     this.buttonList.add(selection);
+
+    OpenButton open_info = new OpenButton(2, this.x + 96, this.y + (space * 3) + 24, this.fontRenderer, "view") {
+      public void performAction() {
+        CommandGui.this.mc.displayGuiScreen(new InfoItemGui(CommandGui.this.mc.player.inventoryContainer));
+      }
+    };
+    this.buttonList.add(open_info);
   }
 
   // public void onGuiClosed() {}
@@ -109,10 +119,9 @@ public class CommandGui extends GuiScreen {
 
   protected void keyTyped(char typedChar, int keyCode) throws IOException {
     if(keyCode == Keyboard.KEY_ESCAPE || keyCode == Keyboard.KEY_BACKSLASH) {
-      Minecraft client = Minecraft.getMinecraft();
-      client.displayGuiScreen(null);
-      if (client.currentScreen == null) {
-        client.setIngameFocus();
+      this.mc.displayGuiScreen(null);
+      if (this.mc.currentScreen == null) {
+        this.mc.setIngameFocus();
       }
     }
   }
@@ -126,6 +135,7 @@ public class CommandGui extends GuiScreen {
     Gui.drawRect(this.x_end - 2, this.y, this.x_end, this.y_end, 0xffbbbbbb);
     Gui.drawRect(this.x, this.y_end - 2, this.x_end, this.y_end, 0xffbbbbbb);
 
+    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     super.drawScreen(mouseX, mouseY, partialTicks);
 
     // Draw packets intercept selection

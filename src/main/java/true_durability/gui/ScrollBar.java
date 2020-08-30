@@ -50,6 +50,7 @@ public class ScrollBar extends GuiButton {
     if(super.mousePressed(mc, mouseX, mouseY)) {
       this.clicked = true;
       this.offset_y = mouseY - this.y;
+      return true;
     }
     return false;
   }
