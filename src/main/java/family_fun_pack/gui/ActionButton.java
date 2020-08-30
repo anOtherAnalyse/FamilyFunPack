@@ -1,4 +1,4 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;

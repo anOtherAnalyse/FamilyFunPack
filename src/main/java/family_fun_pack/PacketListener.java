@@ -1,4 +1,4 @@
-package true_durability;
+package family_fun_pack;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -91,14 +91,14 @@ public class PacketListener extends NettyPacketDecoder {
             break;
           case 47: // Player position
             {
-              if(TrueDurability.configuration.currently_invulnerable) {
+              if(FamilyFunPack.configuration.currently_invulnerable) {
                 if(! Minecraft.getMinecraft().player.isRiding()) {
                   SPacketPlayerPosLook old = (SPacketPlayerPosLook) packet;
                   Set<SPacketPlayerPosLook.EnumFlags> flags = old.getFlags();
                   flags.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
                   flags.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
 
-                  TrueDurability.configuration.last_teleport_id = old.getTeleportId();
+                  FamilyFunPack.configuration.last_teleport_id = old.getTeleportId();
 
                   SPacketPlayerPosLook spoof = new SPacketPlayerPosLook(old.getX(), old.getY(), old.getZ(), 0, 0, flags, old.getTeleportId());
                   out.set(0, spoof);
@@ -109,15 +109,15 @@ public class PacketListener extends NettyPacketDecoder {
           case 53: // SPacketRespawn
             {
               // Know when to activate invulnerability
-              if(TrueDurability.configuration.invulnerable && !TrueDurability.configuration.currently_invulnerable) {
+              if(FamilyFunPack.configuration.invulnerable && !FamilyFunPack.configuration.currently_invulnerable) {
                 SPacketRespawn respawn = (SPacketRespawn) packet;
-                TrueDurability.configuration.currently_invulnerable = (respawn.getDimensionID() != Minecraft.getMinecraft().player.dimension);
+                FamilyFunPack.configuration.currently_invulnerable = (respawn.getDimensionID() != Minecraft.getMinecraft().player.dimension);
               }
             }
         }
 
         // packets interception
-        if(TrueDurability.configuration.block_player_packets && TrueDurability.configuration.inbound_block.contains(id)) {
+        if(FamilyFunPack.configuration.block_player_packets && FamilyFunPack.configuration.inbound_block.contains(id)) {
           out.clear();
         }
       }

@@ -1,11 +1,11 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.FontRenderer;
 
-import true_durability.Configuration;
+import family_fun_pack.Configuration;
 
 @SideOnly(Side.CLIENT)
 public class OverlayGui extends Gui {

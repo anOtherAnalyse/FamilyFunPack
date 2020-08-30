@@ -1,4 +1,4 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.io.IOException;
 
-import true_durability.TrueDurability;
+import family_fun_pack.FamilyFunPack;
 
 @SideOnly(Side.CLIENT)
 public class ScrollGui extends Gui {
@@ -150,7 +150,7 @@ public class ScrollGui extends Gui {
 
   public void initPacketsList() {
     this.labels.clear();
-    Set<Integer> conf_enable = TrueDurability.configuration.getSet(this.direction);
+    Set<Integer> conf_enable = FamilyFunPack.configuration.getSet(this.direction);
     if(this.direction == EnumPacketDirection.SERVERBOUND) {
       this.labels.add("CPacketConfirmTeleport");
       this.labels.add("CPacketTabComplete");
@@ -273,12 +273,13 @@ public class ScrollGui extends Gui {
     for(int i = 0; i < this.labels.size(); i ++) {
       OnOffButton added = new OnOffButton(i, 0, 0) {
         public void performAction() {
-          Set<Integer> conf_enable = TrueDurability.configuration.getSet(ScrollGui.this.direction);
+          Set<Integer> conf_enable = FamilyFunPack.configuration.getSet(ScrollGui.this.direction);
           if(this.state) {
             conf_enable.add(this.id);
           } else {
             conf_enable.remove(this.id);
           }
+          FamilyFunPack.configuration.save();
         }
       };
       if(conf_enable.contains(i)) added.state = true;

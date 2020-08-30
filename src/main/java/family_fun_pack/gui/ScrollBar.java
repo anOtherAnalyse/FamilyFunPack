@@ -1,4 +1,4 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;

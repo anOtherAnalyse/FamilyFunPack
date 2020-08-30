@@ -1,9 +1,15 @@
-## True Item Durability Mod
+## Family Fun Pack
 
 #### Summary
 
-Minecraft 1.12.2 mod showing true item durability inside item tooltip (shown when item is hovered).  
-Useful to distinguish "unbreakable" & over broke items on anarchy servers.
+Minecraft 1.12.2 mod. To use only on servers where cheating is allowed.
 
-#### Possible issues
-- May not be compatible with mods modifying minecraft network stack.
+```
+Features:
+ - Portal invulnerability
+ - Show item true durability in item tooltip
+ - Item TagCompound viewer
+ - Network packets interception
+```
+
+Open Gui with the backslash key (by default).

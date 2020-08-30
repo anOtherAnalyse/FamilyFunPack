@@ -1,4 +1,4 @@
-package true_durability;
+package family_fun_pack;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -40,7 +40,7 @@ public class PacketIntercept extends NettyPacketEncoder {
       switch(id) {
         case 0: // CPacketConfirmTeleport
           {
-            if(TrueDurability.configuration.currently_invulnerable) {
+            if(FamilyFunPack.configuration.currently_invulnerable) {
               return;
             }
           }
@@ -48,7 +48,7 @@ public class PacketIntercept extends NettyPacketEncoder {
       }
 
       // packets interception
-      if(TrueDurability.configuration.block_player_packets && TrueDurability.configuration.outbound_block.contains(id)) {
+      if(FamilyFunPack.configuration.block_player_packets && FamilyFunPack.configuration.outbound_block.contains(id)) {
         return;
       }
     }

@@ -1,4 +1,4 @@
-package true_durability;
+package family_fun_pack;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
@@ -25,8 +25,8 @@ import java.util.List;
 
 import org.lwjgl.input.Keyboard;
 
-import true_durability.gui.CommandGui;
-import true_durability.gui.OverlayGui;
+import family_fun_pack.gui.CommandGui;
+import family_fun_pack.gui.OverlayGui;
 
 @SideOnly(Side.CLIENT)
 public class Tooltip {
@@ -39,11 +39,11 @@ public class Tooltip {
 
   public Tooltip() {
     this.firstConnection = true;
-    this.openGUIKey = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, TrueDurability.NAME);
-    this.intercept = new KeyBinding("Intercept player packets", Keyboard.KEY_C, TrueDurability.NAME);
+    this.openGUIKey = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, FamilyFunPack.NAME);
+    this.intercept = new KeyBinding("Intercept player packets", Keyboard.KEY_C, FamilyFunPack.NAME);
     ClientRegistry.registerKeyBinding(this.openGUIKey);
     ClientRegistry.registerKeyBinding(this.intercept);
-    this.overlay = new OverlayGui(Minecraft.getMinecraft().fontRenderer, TrueDurability.configuration);
+    this.overlay = new OverlayGui(Minecraft.getMinecraft().fontRenderer, FamilyFunPack.configuration);
   }
 
   @SubscribeEvent
@@ -97,7 +97,7 @@ public class Tooltip {
         }
 
         // Record NetworkManager
-        TrueDurability.setNetworkManager(event.getManager());
+        FamilyFunPack.setNetworkManager(event.getManager());
       } catch (java.util.NoSuchElementException e) {}
     }
   }
@@ -105,7 +105,7 @@ public class Tooltip {
   @SubscribeEvent
 	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
     this.firstConnection = true;
-    TrueDurability.configuration.resetVolatileConf();
+    FamilyFunPack.configuration.resetVolatileConf();
   }
 
   @SubscribeEvent
@@ -116,7 +116,8 @@ public class Tooltip {
         client.displayGuiScreen(new CommandGui());
       }
     } else if(this.intercept.isPressed()) {
-      TrueDurability.configuration.block_player_packets = ! TrueDurability.configuration.block_player_packets;
+      FamilyFunPack.configuration.block_player_packets = ! FamilyFunPack.configuration.block_player_packets;
+      FamilyFunPack.configuration.save();
     }
   }
 

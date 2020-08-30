@@ -1,4 +1,4 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
@@ -16,7 +16,7 @@ import java.util.LinkedList;
 
 import org.lwjgl.input.Keyboard;
 
-import true_durability.TrueDurability;
+import family_fun_pack.FamilyFunPack;
 
 @SideOnly(Side.CLIENT)
 public class CommandGui extends GuiScreen {
@@ -69,24 +69,26 @@ public class CommandGui extends GuiScreen {
     OnOffButton on_invulnerable = new OnOffButton(0, this.x_end - 22, this.y + 28) {
 
       public void performAction() {
-        TrueDurability.configuration.invulnerable = this.state;
-        TrueDurability.configuration.currently_invulnerable = false;
-        if(!this.state && TrueDurability.configuration.last_teleport_id != -1) {
-          TrueDurability.sendPacket(new CPacketConfirmTeleport(TrueDurability.configuration.last_teleport_id));
-          TrueDurability.configuration.last_teleport_id = -1;
+        FamilyFunPack.configuration.invulnerable = this.state;
+        FamilyFunPack.configuration.currently_invulnerable = false;
+        if(!this.state && FamilyFunPack.configuration.last_teleport_id != -1) {
+          FamilyFunPack.sendPacket(new CPacketConfirmTeleport(FamilyFunPack.configuration.last_teleport_id));
+          FamilyFunPack.configuration.last_teleport_id = -1;
         }
+        FamilyFunPack.configuration.save();
       }
 
     };
-    on_invulnerable.state = TrueDurability.configuration.invulnerable;
+    on_invulnerable.state = FamilyFunPack.configuration.invulnerable;
     this.buttonList.add(on_invulnerable);
 
     OnOffButton on_intercept = new OnOffButton(0, this.x_end - 22, this.y + space + 28) {
       public void performAction() {
-        TrueDurability.configuration.block_player_packets = this.state;
+        FamilyFunPack.configuration.block_player_packets = this.state;
+        FamilyFunPack.configuration.save();
       }
     };
-    on_intercept.state = TrueDurability.configuration.block_player_packets;
+    on_intercept.state = FamilyFunPack.configuration.block_player_packets;
     this.buttonList.add(on_intercept);
 
     OpenButton selection = new OpenButton(1, this.x + 96, this.y + (space * 2) + 24, this.fontRenderer, "select") {

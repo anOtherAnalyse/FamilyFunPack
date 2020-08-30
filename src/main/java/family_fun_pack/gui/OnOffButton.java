@@ -1,4 +1,4 @@
-package true_durability.gui;
+package family_fun_pack.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -9,12 +9,12 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import true_durability.TrueDurability;
+import family_fun_pack.FamilyFunPack;
 
 @SideOnly(Side.CLIENT)
 public class OnOffButton extends GuiButton implements ActionButton {
 
-  private static final ResourceLocation on_off = new ResourceLocation(TrueDurability.MODID, "textures/gui/on_off.png");
+  private static final ResourceLocation on_off = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
 
   public boolean state;
 
