@@ -5,7 +5,11 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.network.play.client.CPacketConfirmTeleport;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.entity.RenderPig;
+import net.minecraft.client.renderer.entity.RenderLiving;
+import net.minecraft.entity.passive.EntityPig;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -13,10 +17,13 @@ import net.minecraftforge.fml.relauncher.Side;
 import java.io.IOException;
 import java.util.List;
 import java.util.LinkedList;
+import java.lang.Class;
 
 import org.lwjgl.input.Keyboard;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.NoRenderPig;
+import family_fun_pack.Tooltip;
 
 @SideOnly(Side.CLIENT)
 public class CommandGui extends GuiScreen {
@@ -30,7 +37,10 @@ public class CommandGui extends GuiScreen {
 
   private ScrollGui send_packet_choice;
 
-  public CommandGui() {
+  private Tooltip tooltip;
+
+  public CommandGui(Tooltip tooltip) {
+    this.tooltip = tooltip;
     this.send_packet_choice = null;
   }
 
@@ -64,6 +74,10 @@ public class CommandGui extends GuiScreen {
     GuiLabel info_items = new GuiLabel(this.fontRenderer, 4, this.x + 6, this.y + 24 + space * 3, CommandGui.guiWidth - 8, 16, 0xffeeeeee);
     info_items.addLine("Items tags");
     this.labelList.add(info_items);
+
+    GuiLabel pig_label = new GuiLabel(this.fontRenderer, 4, this.x + 6, this.y + 24 + space * 4, CommandGui.guiWidth - 8, 16, 0xffeeeeee);
+    pig_label.addLine("Pig POV");
+    this.labelList.add(pig_label);
 
     // Add buttons
     OnOffButton on_invulnerable = new OnOffButton(0, this.x_end - 22, this.y + 28) {
@@ -108,6 +122,24 @@ public class CommandGui extends GuiScreen {
       }
     };
     this.buttonList.add(open_info);
+
+    OnOffButton on_pig_pov = new OnOffButton(0, this.x_end - 22, this.y + (space * 4) + 28) {
+
+      private Minecraft mc = Minecraft.getMinecraft();
+
+      public void performAction() {
+        FamilyFunPack.configuration.pigPOV = this.state;
+        if(this.state) {
+          this.mc.player.eyeHeight = 0.6f;
+          this.mc.getRenderManager().entityRenderMap.put(EntityPig.class, new NoRenderPig(this.mc.getRenderManager(), this.mc));
+        } else {
+          this.mc.player.eyeHeight = this.mc.player.getDefaultEyeHeight();
+          this.mc.getRenderManager().entityRenderMap.put(EntityPig.class, new RenderPig(this.mc.getRenderManager()));
+        }
+      }
+    };
+    on_pig_pov.state = FamilyFunPack.configuration.pigPOV;
+    this.buttonList.add(on_pig_pov);
   }
 
   // public void onGuiClosed() {}
@@ -120,7 +152,7 @@ public class CommandGui extends GuiScreen {
   }
 
   protected void keyTyped(char typedChar, int keyCode) throws IOException {
-    if(keyCode == Keyboard.KEY_ESCAPE || keyCode == Keyboard.KEY_BACKSLASH) {
+    if(keyCode == Keyboard.KEY_ESCAPE || keyCode == this.tooltip.openGUIKey.getKeyCode()) {
       this.mc.displayGuiScreen(null);
       if (this.mc.currentScreen == null) {
         this.mc.setIngameFocus();

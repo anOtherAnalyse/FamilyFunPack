@@ -17,6 +17,7 @@ public class Configuration {
   public Set<Integer> inbound_block;
   public Set<Integer> outbound_block;
 
+  public boolean pigPOV;
   public int last_teleport_id;
   public boolean currently_invulnerable;
 
@@ -35,6 +36,7 @@ public class Configuration {
   public void resetVolatileConf() {
     this.currently_invulnerable = false;
     this.last_teleport_id = -1;
+    this.pigPOV = false;
   }
 
   public Set<Integer> getSet(EnumPacketDirection direction) {

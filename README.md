@@ -10,6 +10,7 @@ Features:
  - Show item true durability in item tooltip
  - Item TagCompound viewer
  - Network packets interception
+ - Pig POV to travel 1x1 tunnel
 ```
 
 Open Gui with the backslash key (by default).

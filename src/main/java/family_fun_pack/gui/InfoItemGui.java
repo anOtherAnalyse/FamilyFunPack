@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
+import family_fun_pack.SpecialTagCompound;
+
 @SideOnly(Side.CLIENT)
 public class InfoItemGui extends GuiScreen {
 
@@ -51,7 +53,7 @@ public class InfoItemGui extends GuiScreen {
     this.x_end = this.x + InfoItemGui.WIDTH;
     this.y_end = this.y + InfoItemGui.HEIGHT;
     this.scroll = new ScrollBar(0, this.x_end - 8, this.y + 20, 0, this.y_end - 2);
-    InfoItemGui.lineMaxChar = ((this.x_end - 10 - (this.x + 89)) / this.fontRenderer.getStringWidth("A")) - 5;
+    InfoItemGui.lineMaxChar = ((this.x_end - 10 - (this.x + 89)) / (int)(((float)this.fontRenderer.getStringWidth("A")) * 0.7f)) - 5;
     InfoItemGui.maxLines = ((this.y_end - 2 - (this.y + 21)) / this.fontRenderer.FONT_HEIGHT);
   }
 
@@ -175,6 +177,8 @@ public class InfoItemGui extends GuiScreen {
           } else tag_string = "Empty tag compound";
 
           this.tag.clear();
+          this.tag.add("ItemStack damage field: " + Integer.toString(SpecialTagCompound.getStackDamage(stack))
+            + ", NBTTagCompound:");
           for(int i = 0; i <= (tag_string.length() - 1) / InfoItemGui.lineMaxChar; i ++) {
             int begin = i * InfoItemGui.lineMaxChar;
             int end = begin + InfoItemGui.lineMaxChar;

@@ -32,18 +32,21 @@ import family_fun_pack.gui.OverlayGui;
 public class Tooltip {
 
   private boolean firstConnection;
-  private KeyBinding openGUIKey;
+  public KeyBinding openGUIKey;
   private KeyBinding intercept;
 
   private OverlayGui overlay;
 
+  private Minecraft mc;
+
   public Tooltip() {
     this.firstConnection = true;
     this.openGUIKey = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, FamilyFunPack.NAME);
-    this.intercept = new KeyBinding("Intercept player packets", Keyboard.KEY_C, FamilyFunPack.NAME);
+    this.intercept = new KeyBinding("Intercept network packets", Keyboard.KEY_C, FamilyFunPack.NAME);
     ClientRegistry.registerKeyBinding(this.openGUIKey);
     ClientRegistry.registerKeyBinding(this.intercept);
-    this.overlay = new OverlayGui(Minecraft.getMinecraft().fontRenderer, FamilyFunPack.configuration);
+    this.mc = Minecraft.getMinecraft();
+    this.overlay = new OverlayGui(this.mc.fontRenderer, FamilyFunPack.configuration);
   }
 
   @SubscribeEvent
@@ -111,9 +114,8 @@ public class Tooltip {
   @SubscribeEvent
   public void onKey(KeyInputEvent event) {
     if(this.openGUIKey.isPressed()) {
-      Minecraft client = Minecraft.getMinecraft();
-      if(! (client.currentScreen instanceof CommandGui)) {
-        client.displayGuiScreen(new CommandGui());
+      if(! (this.mc.currentScreen instanceof CommandGui)) {
+        this.mc.displayGuiScreen(new CommandGui(this));
       }
     } else if(this.intercept.isPressed()) {
       FamilyFunPack.configuration.block_player_packets = ! FamilyFunPack.configuration.block_player_packets;

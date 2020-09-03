@@ -6,6 +6,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.item.ItemStack;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -14,6 +15,14 @@ import java.util.UUID;
 /* Store real durability inside special NBTTagCompound */
 @SideOnly(Side.CLIENT)
 public class SpecialTagCompound extends NBTTagCompound {
+
+  public static int getStackDamage(ItemStack stack) {
+    NBTTagCompound tag = stack.getTagCompound();
+    if(tag != null && tag instanceof SpecialTagCompound) {
+      return ((SpecialTagCompound)tag).getTrueDamage();
+    }
+    return stack.getItemDamage();
+  }
 
   private boolean empty;
   private int true_damage;
