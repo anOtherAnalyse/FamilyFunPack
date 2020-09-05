@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import family_fun_pack.SpecialTagCompound;
+import family_fun_pack.Tooltip;
 
 @SideOnly(Side.CLIENT)
 public class InfoItemGui extends GuiScreen {
@@ -31,20 +32,24 @@ public class InfoItemGui extends GuiScreen {
 
   private int x, y, x_end, y_end;
 
-  private int current_slot;
+  public int current_slot;
 
   private String title;
 
   private List<String> tag;
 
   private ScrollBar scroll;
+  private OpenButton previewOpen;
 
-  Container inventory;
+  public Container inventory;
 
-  public InfoItemGui(Container inventory) {
+  private Tooltip tooltip;
+
+  public InfoItemGui(Container inventory, Tooltip tooltip) {
     this.inventory = inventory;
     this.current_slot = -1;
     this.tag = new ArrayList<String>();
+    this.tooltip = tooltip;
   }
 
   public void initGui() {
@@ -58,7 +63,7 @@ public class InfoItemGui extends GuiScreen {
   }
 
   protected void keyTyped(char typedChar, int keyCode) throws IOException {
-    if(keyCode == Keyboard.KEY_ESCAPE || keyCode == Keyboard.KEY_BACKSLASH) {
+    if(keyCode == Keyboard.KEY_ESCAPE || keyCode == this.tooltip.openGUIKey.getKeyCode()) {
       this.mc.displayGuiScreen(null);
       if (this.mc.currentScreen == null) {
         this.mc.setIngameFocus();
@@ -97,6 +102,9 @@ public class InfoItemGui extends GuiScreen {
     Gui.drawRect(info_x, info_y, info_x + 1, info_y_end, 0xffbbbbbb);
     //Gui.drawRect(info_x_end - 1, info_y, info_x_end, info_y_end, 0xffbbbbbb);
     //Gui.drawRect(info_x, info_y_end - 1, info_x_end, info_y_end, 0xffbbbbbb);
+
+    // Draw preview open button
+    if(this.previewOpen != null) this.previewOpen.drawButton(this.mc, mouseX, mouseY, partialTicks);
 
     // Draw tag
     if(this.current_slot != -1) {
@@ -161,6 +169,10 @@ public class InfoItemGui extends GuiScreen {
     if(mouseButton == 0) {
 
       if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
+      else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
+        this.previewOpen.performAction();
+        return;
+      }
 
       int x = (mouseX - 4 - this.x) / 16;
       int y = (mouseY - 4 - this.y) / 16;
@@ -187,6 +199,22 @@ public class InfoItemGui extends GuiScreen {
             int max_scroll = this.tag.size() - InfoItemGui.maxLines;
             if(max_scroll < 0) max_scroll = 0;
             this.scroll.resetMaxScroll(max_scroll);
+
+            if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {
+              NBTTagCompound blockTag = tag.getCompoundTag("BlockEntityTag");
+              if(blockTag.hasKey("Items") && blockTag.getTagId("Items") == 9) {
+                this.previewOpen = new OpenButton(0, this.x_end - 46, this.y + 3, this.fontRenderer, "Preview") {
+                  public void performAction() {
+                    InfoItemGui.this.mc.displayGuiScreen(new PreviewGui(
+                      InfoItemGui.this.inventory.getSlot(InfoItemGui.this.current_slot).getStack().getTagCompound().getCompoundTag("BlockEntityTag").getTagList("Items", 10),
+                      InfoItemGui.this,
+                      InfoItemGui.this.tooltip
+                    ));
+                  };
+                };
+              } else this.previewOpen = null;
+            } else this.previewOpen = null;
+
           }
         } else this.current_slot = -1;
       }

@@ -1,7 +1,5 @@
 package family_fun_pack;
 
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelPipeline;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
@@ -20,13 +18,16 @@ import net.minecraft.network.NettyPacketEncoder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.TextFormatting;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelPipeline;
+import org.lwjgl.input.Keyboard;
 
 import java.util.List;
 
-import org.lwjgl.input.Keyboard;
-
 import family_fun_pack.gui.CommandGui;
 import family_fun_pack.gui.OverlayGui;
+import family_fun_pack.network.PacketListener;
+import family_fun_pack.network.PacketIntercept;
 
 @SideOnly(Side.CLIENT)
 public class Tooltip {

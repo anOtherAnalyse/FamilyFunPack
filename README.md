@@ -8,7 +8,7 @@ Minecraft 1.12.2 mod. To use only on servers where cheating is allowed.
 Features:
  - Portal invulnerability
  - Show item true durability in item tooltip
- - Item TagCompound viewer
+ - Item TagCompound viewer + shulker preview
  - Network packets interception
  - Pig POV to travel 1x1 tunnel
 ```

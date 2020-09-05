@@ -118,7 +118,7 @@ public class CommandGui extends GuiScreen {
 
     OpenButton open_info = new OpenButton(2, this.x + 96, this.y + (space * 3) + 24, this.fontRenderer, "view") {
       public void performAction() {
-        CommandGui.this.mc.displayGuiScreen(new InfoItemGui(CommandGui.this.mc.player.inventoryContainer));
+        CommandGui.this.mc.displayGuiScreen(new InfoItemGui(CommandGui.this.mc.player.inventoryContainer, CommandGui.this.tooltip));
       }
     };
     this.buttonList.add(open_info);

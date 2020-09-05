@@ -1,4 +1,4 @@
-package family_fun_pack;
+package family_fun_pack.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,6 +14,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import java.lang.Exception;
 import java.io.IOException;
+
+import family_fun_pack.FamilyFunPack;
 
 @SideOnly(Side.CLIENT)
 public class PacketIntercept extends NettyPacketEncoder {

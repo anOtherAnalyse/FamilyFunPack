@@ -1,4 +1,4 @@
-package family_fun_pack;
+package family_fun_pack.network;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -19,6 +19,9 @@ import net.minecraft.item.ItemStack;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+
+import family_fun_pack.FamilyFunPack;
+import family_fun_pack.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
 public class PacketListener extends NettyPacketDecoder {
