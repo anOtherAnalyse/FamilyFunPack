@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.lang.Math;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.SpecialTagCompound;
@@ -117,6 +118,26 @@ public class PacketListener extends NettyPacketDecoder {
                 FamilyFunPack.configuration.currently_invulnerable = (respawn.getDimensionID() != Minecraft.getMinecraft().player.dimension);
               }
             }
+            break;
+          case 63: // SPacketEntityEquipment
+            {
+              SPacketEntityEquipment equipment = (SPacketEntityEquipment) packet;
+              int end_index = in.readerIndex();
+
+              PacketBuffer buf = new PacketBuffer(in);
+              buf.readerIndex(start_index + 3 + (int)Math.floor(Math.log((double)equipment.getEntityID()) / Math.log(128d)));
+              if(buf.readShort() >= 0) {
+                buf.readerIndex(buf.readerIndex() + 1);
+                short real_damage = buf.readShort();
+                if(real_damage < 0) { // We want to save this value
+                  ItemStack stack = equipment.getItemStack();
+                  stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), (int)real_damage));
+                }
+              }
+
+              in.readerIndex(end_index);
+            }
+            break;
         }
 
         // packets interception

@@ -1,5 +1,8 @@
 package family_fun_pack.gui;
 
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
@@ -22,6 +25,7 @@ import java.util.LinkedList;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.Tooltip;
 
+@SideOnly(Side.CLIENT)
 public class PreviewGui extends GuiScreen {
 
   private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/preview.png");

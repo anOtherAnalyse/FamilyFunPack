@@ -22,7 +22,7 @@ import java.lang.Class;
 import org.lwjgl.input.Keyboard;
 
 import family_fun_pack.FamilyFunPack;
-import family_fun_pack.NoRenderPig;
+import family_fun_pack.render.NoRenderPig;
 import family_fun_pack.Tooltip;
 
 @SideOnly(Side.CLIENT)

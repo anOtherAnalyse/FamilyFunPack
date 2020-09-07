@@ -1,4 +1,4 @@
-package family_fun_pack;
+package family_fun_pack.render;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -8,7 +8,7 @@ import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.client.Minecraft;
 
 @SideOnly(Side.CLIENT)
-public class NoRenderPig extends RenderPig {
+public class NoRenderPig extends RenderPig { // Not no render anymore, just render it lower
 
   private Minecraft mc;
 
