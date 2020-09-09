@@ -24,6 +24,11 @@ import java.lang.Math;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.SpecialTagCompound;
 
+/*
+import net.minecraft.util.text.ChatType;
+import net.minecraft.util.text.TextComponentString;
+*/
+
 @SideOnly(Side.CLIENT)
 public class PacketListener extends NettyPacketDecoder {
 
@@ -53,6 +58,11 @@ public class PacketListener extends NettyPacketDecoder {
         int id = ((EnumConnectionState)context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get()).getPacketId(this.direction, packet);
 
         switch(id) {
+          /*
+          case 18:
+            Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString("Server GUI close received"));
+            break;
+          */
           case 20: // Windows items
             {
               SPacketWindowItems packet_window = (SPacketWindowItems) packet;

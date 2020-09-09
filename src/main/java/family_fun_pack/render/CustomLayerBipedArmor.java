@@ -71,7 +71,7 @@ public class CustomLayerBipedArmor extends LayerBipedArmor {
         model.render((Entity)entity, fp1, fp2, fp4, fp5, fp6, fp7);
 
         NBTTagCompound tag = itemstack.getTagCompound();
-        if(itemstack.getItemDamage() > itemstack.getMaxDamage() || (tag != null && tag instanceof SpecialTagCompound)) {
+        if((itemstack.isItemStackDamageable() && itemstack.getItemDamage() > itemstack.getMaxDamage()) || (tag != null && (tag instanceof SpecialTagCompound || tag.getBoolean("Unbreakable")))) {
           CustomLayerBipedArmor.renderEnchantedGlint(this.renderer_save, entity, (ModelBase)model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);
         } else if (itemstack.hasEffect()) {
           LayerArmorBase.renderEnchantedGlint(this.renderer_save, entity, (ModelBase)model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);

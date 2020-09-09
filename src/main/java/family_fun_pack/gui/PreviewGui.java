@@ -24,6 +24,7 @@ import java.util.LinkedList;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.Tooltip;
+import family_fun_pack.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
 public class PreviewGui extends GuiScreen {
@@ -47,6 +48,9 @@ public class PreviewGui extends GuiScreen {
       ItemStack stack = new ItemStack(i);
       if(!stack.isEmpty()) {
         int index = i.getByte("Slot") & 0xFF;
+        if(i.getShort("Damage") < 0) {
+          stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), i.getShort("Damage")));
+        }
         this.inventory.setInventorySlotContents(index, stack);
         this.slots.add(new Slot(this.inventory, index, 8 + (index % 9) * 18, 26 + (index / 9) * 18));
       }

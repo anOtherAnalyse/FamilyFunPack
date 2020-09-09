@@ -14,8 +14,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
+import net.minecraft.client.resources.IReloadableResourceManager;
 
 import family_fun_pack.render.CustomLayerBipedArmor;
+import family_fun_pack.render.CustomLayerElytra;
+import family_fun_pack.render.CustomRenderItem;
 
 import java.lang.Class;
 import java.lang.reflect.Field;
@@ -58,23 +64,69 @@ public class FamilyFunPack
         FamilyFunPack.configuration = new Configuration(this.confFile);
         MinecraftForge.EVENT_BUS.register(new Tooltip());
 
-        // Init renderers
+        // Init armor renderers
+        Minecraft client = Minecraft.getMinecraft();
         try {
-          Minecraft client = Minecraft.getMinecraft();
           RenderManager renderManager = client.getRenderManager();
           RenderPlayer normal = renderManager.getSkinMap().get("default");
           RenderPlayer slim = renderManager.getSkinMap().get("slim");
           Class<RenderLivingBase> renderLivingClass = RenderLivingBase.class;
-          Field layers_field = renderLivingClass.getDeclaredField("layerRenderers");
+          Field layers_field = null;
+          try {
+            layers_field = renderLivingClass.getDeclaredField("field_177097_h");
+          } catch (NoSuchFieldException e) {
+            layers_field = renderLivingClass.getDeclaredField("layerRenderers");
+          }
           layers_field.setAccessible(true);
           List<Object> layers_default = (List<Object>)layers_field.get(normal);
           List<Object> layers_slim = (List<Object>)layers_field.get(slim);
-          layers_default.set(0, new CustomLayerBipedArmor(normal)); // Set our own renderer for default skin armor
-          layers_slim.set(0, new CustomLayerBipedArmor(slim)); // Set our own renderer for slim skin armor
+
+          // Set Armor renderers
+          layers_default.set(0, new CustomLayerBipedArmor(normal));
+          layers_slim.set(0, new CustomLayerBipedArmor(slim));
+
+          // Set Elytra renderers
+          layers_default.set(6, new CustomLayerElytra(normal));
+          layers_slim.set(6, new CustomLayerElytra(slim));
+
         } catch (IllegalAccessException e) {
           throw new RuntimeException("FamilyFunPack error: " + e.getMessage());
         } catch (NoSuchFieldException e) {
+          throw new RuntimeException("FamilyFunPack error: no such field " + e.getMessage() + " in class RenderLivingBase");
+        }
+
+        // Init item renderer
+        try {
+          Class<Minecraft> mcClass = Minecraft.class;
+          Field renderItem_field = null;
+          try {
+            renderItem_field = mcClass.getDeclaredField("field_175621_X");
+          } catch (NoSuchFieldException e) {
+            renderItem_field = mcClass.getDeclaredField("renderItem");
+          }
+          renderItem_field.setAccessible(true);
+          Field itemRenderer_field = null;
+          try {
+            itemRenderer_field = mcClass.getDeclaredField("field_175620_Y");
+          } catch (NoSuchFieldException e) {
+            itemRenderer_field = mcClass.getDeclaredField("itemRenderer");
+          }
+          itemRenderer_field.setAccessible(true);
+
+          renderItem_field.set(client, new CustomRenderItem(client.getTextureManager(), client.getRenderItem().getItemModelMesher().getModelManager(),
+            client.getItemColors()));
+          ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener((IResourceManagerReloadListener) renderItem_field.get(client));
+
+          itemRenderer_field.set(client, new ItemRenderer(client));
+
+          // Update Item renderer in entity renderer (for first person item render)
+          client.entityRenderer = new EntityRenderer(client, client.getResourceManager());
+          ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener((IResourceManagerReloadListener) client.entityRenderer);
+
+        } catch (IllegalAccessException e) {
           throw new RuntimeException("FamilyFunPack error: " + e.getMessage());
+        } catch (NoSuchFieldException e) {
+          throw new RuntimeException("FamilyFunPack error: no such field " + e.getMessage() + " in class Minecraft");
         }
       }
     }
