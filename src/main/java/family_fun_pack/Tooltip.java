@@ -1,6 +1,7 @@
 package family_fun_pack;
 
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -11,12 +12,17 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.Entity;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
+import net.minecraft.network.play.client.CPacketTabComplete;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 import org.lwjgl.input.Keyboard;
@@ -109,6 +115,7 @@ public class Tooltip {
 	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
     this.firstConnection = true;
     FamilyFunPack.configuration.resetVolatileConf();
+    FamilyFunPack.setNetworkManager(null);
   }
 
   @SubscribeEvent
@@ -126,6 +133,109 @@ public class Tooltip {
   @SubscribeEvent
   public void drawOverlay(RenderGameOverlayEvent.Text event) {
     this.overlay.drawOverlay();
+  }
+
+  @SubscribeEvent
+  public void onChat(ClientChatEvent event) { // handle commands
+    String message = event.getMessage();
+    if(message.startsWith("/")) {
+      String[] cmd = message.substring(1).split("[ ]+");
+      if(cmd.length <= 0) return;
+      switch(cmd[0]) {
+        case "diff": // players list diff
+          {
+            FamilyFunPack.configuration.player_completion = true;
+            FamilyFunPack.sendPacket(new CPacketTabComplete("", null, false));
+            event.setCanceled(true);
+            this.mc.ingameGUI.getChatGUI().addToSentMessages("diff");
+          }
+          break;
+        case "commands": // available commands
+          {
+            RayTraceResult target_ray = this.mc.objectMouseOver;
+            BlockPos target = null;
+            boolean has_target = false;
+            if(target_ray != null && target_ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+              target = target_ray.getBlockPos();
+              has_target = true;
+            }
+            FamilyFunPack.configuration.commands_completion = true;
+            FamilyFunPack.sendPacket(new CPacketTabComplete("/", target, has_target));
+            event.setCanceled(true);
+            this.mc.ingameGUI.getChatGUI().addToSentMessages("commands");
+          }
+          break;
+        case "vanish": // vanish riding entity
+          {
+            if(cmd.length > 1) {
+              switch(cmd[1]) {
+                case "dismount":
+                  {
+                    if(this.mc.player.isRiding()) {
+                      FamilyFunPack.configuration.ride = this.mc.player.getRidingEntity();
+                      this.mc.player.dismountRidingEntity();
+                      this.mc.world.removeEntity(FamilyFunPack.configuration.ride);
+                    } else FamilyFunPack.printMessage("You are not riding anything");
+                  }
+                  break;
+                case "remount":
+                  {
+                    if(FamilyFunPack.configuration.ride != null) {
+                      if(! this.mc.player.isRiding()) {
+                        FamilyFunPack.configuration.ride.isDead = false;
+                        this.mc.world.spawnEntity(FamilyFunPack.configuration.ride);
+                        this.mc.player.startRiding(FamilyFunPack.configuration.ride, true);
+                        if(this.mc.player.isRiding())
+                          FamilyFunPack.printMessage("Entity " + Integer.toString(FamilyFunPack.configuration.ride.hashCode()) + " remounted");
+                        else FamilyFunPack.printMessage("Could not remount");
+                      }
+                      FamilyFunPack.configuration.ride = null;
+                    } else FamilyFunPack.printMessage("Nothing to remount");
+                  }
+                  break;
+                default:
+                  FamilyFunPack.printMessage("Unknown argument " + cmd[1]);
+              }
+            } else FamilyFunPack.printMessage("dismount or remount ?");
+            event.setCanceled(true);
+            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
+          }
+          break;
+        case "hclip": // salhack hclip copy
+          {
+            if(cmd.length > 1) {
+              try {
+                double weight = Double.parseDouble(cmd[1]);
+                Vec3d direction = new Vec3d(Math.cos((this.mc.player.rotationYaw + 90f) * (float) (Math.PI / 180.0f)), 0, Math.sin((this.mc.player.rotationYaw + 90f) * (float) (Math.PI / 180.0f)));
+                Entity target = this.mc.player.isRiding() ? this.mc.player.getRidingEntity() : this.mc.player;
+                target.setPosition(this.mc.player.posX + direction.x*weight, this.mc.player.posY, this.mc.player.posZ + direction.z*weight);
+                FamilyFunPack.printMessage(String.format("Teleported you %s blocks forward", weight));
+              } catch(NumberFormatException e) {
+                FamilyFunPack.printMessage("This is not a real number");
+              }
+            } else FamilyFunPack.printMessage("Specify a number");
+            event.setCanceled(true);
+            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
+          }
+          break;
+        case "vclip":
+          {
+            if(cmd.length > 1) {
+              try {
+                double weight = Double.parseDouble(cmd[1]);
+                Entity target = this.mc.player.isRiding() ? this.mc.player.getRidingEntity() : this.mc.player;
+                target.setPosition(this.mc.player.posX, this.mc.player.posY + weight, this.mc.player.posZ);
+                FamilyFunPack.printMessage(String.format("Teleported you %s blocks up", weight));
+              } catch(NumberFormatException e) {
+                FamilyFunPack.printMessage("This is not a real number");
+              }
+            } else FamilyFunPack.printMessage("Specify a number");
+            event.setCanceled(true);
+            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
+          }
+          break;
+      }
+    }
   }
 
 }

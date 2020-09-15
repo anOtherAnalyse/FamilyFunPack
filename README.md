@@ -15,3 +15,10 @@ Features:
 ```
 
 Open Gui with the backslash key (by default).
+
+Few commands:
+- hclip <double>
+- vclip <double>
+- vanish <dismount | remount>
+- diff
+- commands

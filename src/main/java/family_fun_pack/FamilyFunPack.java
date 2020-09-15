@@ -7,8 +7,6 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
@@ -18,6 +16,11 @@ import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.Packet;
+import net.minecraft.network.INetHandler;
+import net.minecraft.util.text.ChatType;
+import net.minecraft.util.text.TextComponentString;
 
 import family_fun_pack.render.CustomLayerBipedArmor;
 import family_fun_pack.render.CustomLayerElytra;
@@ -50,6 +53,17 @@ public class FamilyFunPack
       if(FamilyFunPack.networkManager != null) {
         FamilyFunPack.networkManager.sendPacket(packet);
       }
+    }
+
+    public static INetHandler getNetHandler() {
+      if(FamilyFunPack.networkManager != null) {
+        return FamilyFunPack.networkManager.getNetHandler();
+      }
+      return null;
+    }
+
+    public static void printMessage(String msg) {
+      Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(msg));
     }
 
     @EventHandler

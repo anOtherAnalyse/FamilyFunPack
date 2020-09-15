@@ -7,6 +7,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketBuffer;
@@ -23,11 +26,6 @@ import java.lang.Math;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.SpecialTagCompound;
-
-/*
-import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.TextComponentString;
-*/
 
 @SideOnly(Side.CLIENT)
 public class PacketListener extends NettyPacketDecoder {
@@ -60,9 +58,41 @@ public class PacketListener extends NettyPacketDecoder {
         switch(id) {
           /*
           case 18:
-            Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString("Server GUI close received"));
+            FamilyFunPack.printMessage("Server GUI close received");
             break;
           */
+          case 14: // SPacketTabComplete
+            {
+              if(FamilyFunPack.configuration.player_completion) {
+                FamilyFunPack.configuration.player_completion = false;
+                SPacketTabComplete completion = (SPacketTabComplete) packet;
+                NetHandlerPlayClient handler = (NetHandlerPlayClient)(FamilyFunPack.getNetHandler());
+                if(handler == null) break;
+                Minecraft client = Minecraft.getMinecraft();
+                boolean add = true;
+                for(String name : completion.getMatches()) {
+                  if(handler.getPlayerInfo(name) == null) {
+                    FamilyFunPack.printMessage("Addtional player: " + name);
+                      add = false;
+                  }
+                }
+                if(add) {
+                  FamilyFunPack.printMessage("No additional players over " + Integer.toString(completion.getMatches().length) + " players");
+                } else {
+                  int total_tab = handler.getPlayerInfoMap().size();
+                  FamilyFunPack.printMessage("Board contains [" + Integer.toString(total_tab) + "/" + Integer.toString(completion.getMatches().length) + "] players");
+                }
+              } else if(FamilyFunPack.configuration.commands_completion) {
+                FamilyFunPack.configuration.commands_completion = false;
+                SPacketTabComplete completion = (SPacketTabComplete) packet;
+                Minecraft client = Minecraft.getMinecraft();
+                FamilyFunPack.printMessage("Available commands:");
+                for(String cmd : completion.getMatches()) {
+                  FamilyFunPack.printMessage(cmd);
+                }
+              }
+            }
+            break;
           case 20: // Windows items
             {
               SPacketWindowItems packet_window = (SPacketWindowItems) packet;
@@ -103,7 +133,7 @@ public class PacketListener extends NettyPacketDecoder {
               in.readerIndex(end_index);
             }
             break;
-          case 47: // Player position
+          case 47: // SPacketPlayerPosLook
             {
               if(FamilyFunPack.configuration.currently_invulnerable) {
                 if(! Minecraft.getMinecraft().player.isRiding()) {
@@ -129,6 +159,18 @@ public class PacketListener extends NettyPacketDecoder {
               }
             }
             break;
+          case 50: // SPacketDestroyEntities
+            {
+              if(FamilyFunPack.configuration.ride != null) {
+                SPacketDestroyEntities destroy = (SPacketDestroyEntities) packet;
+                for(int i : destroy.getEntityIDs()) {
+                  if(i == FamilyFunPack.configuration.ride.hashCode()) {
+                    FamilyFunPack.printMessage("Server destroyed our ride. Better dismount.");
+                  }
+                }
+              }
+            }
+            break;
           case 63: // SPacketEntityEquipment
             {
               SPacketEntityEquipment equipment = (SPacketEntityEquipment) packet;
@@ -146,6 +188,42 @@ public class PacketListener extends NettyPacketDecoder {
               }
 
               in.readerIndex(end_index);
+            }
+            break;
+          case 67: // SPacketSetPassengers
+            {
+              if(FamilyFunPack.configuration.ride != null) {
+                SPacketSetPassengers passengers = (SPacketSetPassengers) packet;
+                if(passengers.getEntityId() == FamilyFunPack.configuration.ride.hashCode()) {
+                  boolean dismount = true;
+                  for(int i : passengers.getPassengerIds()) {
+                    if(i == Minecraft.getMinecraft().player.hashCode()) {
+                      dismount = false;
+                      break;
+                    }
+                  }
+                  if(dismount) {
+                    FamilyFunPack.printMessage("Server dismounted you from your (vanished) ride.");
+                    Minecraft.getMinecraft().world.spawnEntity(FamilyFunPack.configuration.ride);
+                    FamilyFunPack.configuration.ride = null;
+                  }
+                }
+              }
+            }
+            break;
+          case 76: // SPacketEntityTeleport
+            {
+              SPacketEntityTeleport teleport = (SPacketEntityTeleport) packet;
+              Minecraft mc = Minecraft.getMinecraft();
+              double x = mc.player.posX - teleport.getX();
+              double z = mc.player.posZ - teleport.getZ();
+              double distance = (x * x) + (z * z);
+              if(distance >= 1000000d) {
+                String name = Integer.toString(teleport.getEntityId());
+                Entity entity = mc.world.getEntityByID(teleport.getEntityId());
+                if(entity != null && entity instanceof EntityPlayer) name = " player " + ((EntityPlayer)entity).getName();
+                FamilyFunPack.printMessage("\u00A7cEntity " + name + " teleported to (" + String.format("%.2f", teleport.getX()) + ", " + String.format("%.2f", teleport.getY()) + ", " + String.format("%.2f", teleport.getZ()) + ")");
+              }
             }
             break;
         }

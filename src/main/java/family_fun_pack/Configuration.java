@@ -1,8 +1,10 @@
 package family_fun_pack;
 
+import net.minecraft.network.EnumPacketDirection;
+import net.minecraft.entity.Entity;
+
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraft.network.EnumPacketDirection;
 import net.minecraftforge.common.config.Property;
 
 import java.util.Set;
@@ -20,6 +22,9 @@ public class Configuration {
   public boolean pigPOV;
   public int last_teleport_id;
   public boolean currently_invulnerable;
+  public boolean player_completion;
+  public boolean commands_completion;
+  public Entity ride;
 
   private net.minecraftforge.common.config.Configuration conf;
 
@@ -37,6 +42,9 @@ public class Configuration {
     this.currently_invulnerable = false;
     this.last_teleport_id = -1;
     this.pigPOV = false;
+    this.player_completion = false;
+    this.commands_completion = false;
+    this.ride = null;
   }
 
   public Set<Integer> getSet(EnumPacketDirection direction) {

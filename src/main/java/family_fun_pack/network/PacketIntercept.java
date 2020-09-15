@@ -2,6 +2,7 @@ package family_fun_pack.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.Packet;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.NettyPacketEncoder;
@@ -44,6 +45,20 @@ public class PacketIntercept extends NettyPacketEncoder {
           {
             if(FamilyFunPack.configuration.currently_invulnerable) {
               return;
+            }
+          }
+          break;
+        case 12: // CPacketPlayer
+        case 13:
+        case 14:
+          {
+            if(FamilyFunPack.configuration.ride != null) {
+              Minecraft mc = Minecraft.getMinecraft();
+              if(!mc.player.isRiding()) {
+                mc.player.onGround = true;
+                FamilyFunPack.configuration.ride.setPosition(mc.player.posX, mc.player.posY, mc.player.posZ);
+                FamilyFunPack.sendPacket(new CPacketVehicleMove(FamilyFunPack.configuration.ride));
+              } else FamilyFunPack.configuration.ride = null;
             }
           }
           break;
