@@ -20,6 +20,7 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.item.ItemStack;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.lang.Math;
@@ -61,6 +62,22 @@ public class PacketListener extends NettyPacketDecoder {
             FamilyFunPack.printMessage("Server GUI close received");
             break;
           */
+          case 0: // SPacketSpawnObject
+            {
+              if(FamilyFunPack.configuration.spawn_info) {
+                SPacketSpawnObject object = (SPacketSpawnObject) packet;
+                FamilyFunPack.printMessage(String.format("Object %d spawned of type %d", object.getEntityID(), object.getType()));
+              }
+            }
+            break;
+          case 3: // SPacketSpawnMob
+            {
+              if(FamilyFunPack.configuration.spawn_info) {
+                SPacketSpawnMob mob = (SPacketSpawnMob) packet;
+                FamilyFunPack.printMessage(String.format("Entity mob %d spawned of type %d", mob.getEntityID(), mob.getEntityType()));
+              }
+            }
+            break;
           case 14: // SPacketTabComplete
             {
               if(FamilyFunPack.configuration.player_completion) {
@@ -171,6 +188,14 @@ public class PacketListener extends NettyPacketDecoder {
               }
             }
             break;
+          case 61: // SPacketEntityAttach
+            {
+              if(FamilyFunPack.configuration.spawn_info) {
+                SPacketEntityAttach attach = (SPacketEntityAttach) packet;
+                FamilyFunPack.printMessage(String.format("Entity %d attached to %d", attach.getEntityId(), attach.getVehicleEntityId()));
+              }
+            }
+            break;
           case 63: // SPacketEntityEquipment
             {
               SPacketEntityEquipment equipment = (SPacketEntityEquipment) packet;
@@ -192,6 +217,10 @@ public class PacketListener extends NettyPacketDecoder {
             break;
           case 67: // SPacketSetPassengers
             {
+              if(FamilyFunPack.configuration.spawn_info) {
+                SPacketSetPassengers passengers = (SPacketSetPassengers) packet;
+                FamilyFunPack.printMessage(String.format("Entity %d has passengers %s", passengers.getEntityId(), Arrays.toString(passengers.getPassengerIds())));
+              }
               if(FamilyFunPack.configuration.ride != null) {
                 SPacketSetPassengers passengers = (SPacketSetPassengers) packet;
                 if(passengers.getEntityId() == FamilyFunPack.configuration.ride.hashCode()) {

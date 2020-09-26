@@ -1,5 +1,6 @@
 package family_fun_pack;
 
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.entity.Entity;
 
@@ -25,6 +26,10 @@ public class Configuration {
   public boolean player_completion;
   public boolean commands_completion;
   public Entity ride;
+  public GuiScreen last_gui;
+
+  public boolean spawn_info;
+  public boolean reverse_face;
 
   private net.minecraftforge.common.config.Configuration conf;
 
@@ -33,6 +38,8 @@ public class Configuration {
     this.block_player_packets = false;
     this.inbound_block = new HashSet<Integer>();
     this.outbound_block = new HashSet<Integer>();
+    this.spawn_info = false;
+    this.reverse_face = false;
     this.resetVolatileConf();
     this.conf = new net.minecraftforge.common.config.Configuration(save);
     this.load();
@@ -45,6 +52,7 @@ public class Configuration {
     this.player_completion = false;
     this.commands_completion = false;
     this.ride = null;
+    this.last_gui = null;
   }
 
   public Set<Integer> getSet(EnumPacketDirection direction) {

@@ -2,6 +2,7 @@ package family_fun_pack;
 
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.ClientChatEvent;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -12,13 +13,18 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
 import net.minecraft.network.play.client.CPacketTabComplete;
+import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.BlockPos;
@@ -33,6 +39,7 @@ import family_fun_pack.gui.CommandGui;
 import family_fun_pack.gui.OverlayGui;
 import family_fun_pack.network.PacketListener;
 import family_fun_pack.network.PacketIntercept;
+import family_fun_pack.entities.EntityVoid;
 
 @SideOnly(Side.CLIENT)
 public class Tooltip {
@@ -44,6 +51,8 @@ public class Tooltip {
   private OverlayGui overlay;
 
   private Minecraft mc;
+
+  private boolean reopen_gui = false;
 
   public Tooltip() {
     this.firstConnection = true;
@@ -136,18 +145,28 @@ public class Tooltip {
   }
 
   @SubscribeEvent
+  public void onGuiOpened(GuiOpenEvent event) {
+    GuiScreen opened = event.getGui();
+    if(opened != null && opened.getClass() != net.minecraft.client.gui.GuiChat.class) {
+      FamilyFunPack.configuration.last_gui = opened;
+    } else if(opened == null && this.reopen_gui) {
+      this.reopen_gui = false;
+      event.setGui(FamilyFunPack.configuration.last_gui);
+    }
+  }
+
+  @SubscribeEvent
   public void onChat(ClientChatEvent event) { // handle commands
     String message = event.getMessage();
     if(message.startsWith("/")) {
       String[] cmd = message.substring(1).split("[ ]+");
       if(cmd.length <= 0) return;
+      boolean canceled = true;
       switch(cmd[0]) {
         case "diff": // players list diff
           {
             FamilyFunPack.configuration.player_completion = true;
             FamilyFunPack.sendPacket(new CPacketTabComplete("", null, false));
-            event.setCanceled(true);
-            this.mc.ingameGUI.getChatGUI().addToSentMessages("diff");
           }
           break;
         case "commands": // available commands
@@ -161,8 +180,6 @@ public class Tooltip {
             }
             FamilyFunPack.configuration.commands_completion = true;
             FamilyFunPack.sendPacket(new CPacketTabComplete("/", target, has_target));
-            event.setCanceled(true);
-            this.mc.ingameGUI.getChatGUI().addToSentMessages("commands");
           }
           break;
         case "vanish": // vanish riding entity
@@ -197,8 +214,6 @@ public class Tooltip {
                   FamilyFunPack.printMessage("Unknown argument " + cmd[1]);
               }
             } else FamilyFunPack.printMessage("dismount or remount ?");
-            event.setCanceled(true);
-            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
           }
           break;
         case "hclip": // salhack hclip copy
@@ -214,8 +229,6 @@ public class Tooltip {
                 FamilyFunPack.printMessage("This is not a real number");
               }
             } else FamilyFunPack.printMessage("Specify a number");
-            event.setCanceled(true);
-            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
           }
           break;
         case "vclip":
@@ -230,10 +243,102 @@ public class Tooltip {
                 FamilyFunPack.printMessage("This is not a real number");
               }
             } else FamilyFunPack.printMessage("Specify a number");
-            event.setCanceled(true);
-            this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
           }
           break;
+        case "open":
+          {
+            if(cmd.length > 3) {
+              try {
+                int x = Integer.parseInt(cmd[1]);
+                int y = Integer.parseInt(cmd[2]);
+                int z = Integer.parseInt(cmd[3]);
+                Vec3d look = this.mc.player.getLookVec();
+                CPacketPlayerTryUseItemOnBlock packet = new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z);
+                FamilyFunPack.printMessage("Trying to open at (" + Integer.toString(x) + ", " + Integer.toString(y) + ", " + Integer.toString(z) + ")");
+                FamilyFunPack.sendPacket(packet);
+              } catch(NumberFormatException e) {
+                FamilyFunPack.printMessage("Wrong number");
+              }
+            } else FamilyFunPack.printMessage("Specify position");
+          }
+          break;
+        case "reopen":
+          {
+            if(FamilyFunPack.configuration.last_gui != null) {
+              this.reopen_gui = true;
+            } else FamilyFunPack.printMessage("No previous gui");
+          }
+          break;
+        case "mount":
+          {
+            if(cmd.length > 1) {
+              try {
+                int id = Integer.parseInt(cmd[1]);
+                CPacketUseEntity packet = new CPacketUseEntity(new EntityVoid(this.mc.world, id), EnumHand.MAIN_HAND);
+                FamilyFunPack.printMessage("Trying to ride entity " + Integer.toString(id));
+                FamilyFunPack.sendPacket(packet);
+              } catch(NumberFormatException e) {
+                FamilyFunPack.printMessage("Wrong number");
+              }
+            } else FamilyFunPack.printMessage("Specify an entity id");
+          }
+          break;
+        case "info":
+          {
+            if(cmd.length > 1) {
+              switch(cmd[1]) {
+                case "on":
+                  FamilyFunPack.configuration.spawn_info = true;
+                  FamilyFunPack.printMessage("info on");
+                  break;
+                case "off":
+                  FamilyFunPack.configuration.spawn_info = false;
+                  FamilyFunPack.printMessage("info off");
+                  break;
+                default:
+                  FamilyFunPack.printMessage("on or off ?");
+              }
+            } else FamilyFunPack.printMessage("on or off ?");
+          }
+          break;
+        case "raytrace":
+          {
+            RayTraceResult target_ray = this.mc.objectMouseOver;
+            if(target_ray != null) {
+              if(target_ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+                BlockPos pos = target_ray.getBlockPos();
+                FamilyFunPack.printMessage(String.format("Block at (%d, %d, %d)", pos.getX(), pos.getY(), pos.getZ()));
+              } else if(target_ray.typeOfHit == RayTraceResult.Type.ENTITY) {
+                Entity entity = target_ray.entityHit;
+                FamilyFunPack.printMessage(String.format("Entity id is %d", entity.getEntityId()));
+              } else FamilyFunPack.printMessage("No target");
+            }
+          }
+          break;
+        case "reverse":
+          {
+            if(cmd.length > 1) {
+              switch(cmd[1]) {
+                case "on":
+                  FamilyFunPack.configuration.reverse_face = true;
+                  FamilyFunPack.printMessage("reverse on");
+                  break;
+                case "off":
+                  FamilyFunPack.configuration.reverse_face = false;
+                  FamilyFunPack.printMessage("reverse off");
+                  break;
+                default:
+                  FamilyFunPack.printMessage("on or off ?");
+              }
+            } else FamilyFunPack.printMessage("on or off ?");
+          }
+          break;
+        default:
+          canceled = false;
+      }
+      if(canceled) {
+        event.setCanceled(true);
+        this.mc.ingameGUI.getChatGUI().addToSentMessages(message);
       }
     }
   }
