@@ -18,6 +18,8 @@ import java.util.LinkedList;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.overlay.OverlayGui;
+import family_fun_pack.key.KeyListener;
+import family_fun_pack.modules.Module;
 import family_fun_pack.modules.Modules;
 import family_fun_pack.modules.interfaces.*;
 import family_fun_pack.network.NetworkHandler;
@@ -33,6 +35,7 @@ public class FamilyFunPack
     private static NetworkHandler networkHandler;
     private static Modules modules;
     private static OverlayGui overlay;
+    private static KeyListener keyListener;
 
     private File confFile;
 
@@ -46,6 +49,10 @@ public class FamilyFunPack
 
     public static OverlayGui getOverlay() {
       return FamilyFunPack.overlay;
+    }
+
+    public static void addModuleKey(int key, Module module) {
+      FamilyFunPack.keyListener.addModuleKey(key, module);
     }
 
     public static void printMessage(String msg) {
@@ -68,6 +75,9 @@ public class FamilyFunPack
         // Init network handler
         FamilyFunPack.networkHandler = new NetworkHandler();
 
+        // Init key listener
+        FamilyFunPack.keyListener = new KeyListener();
+
         // load modules configuration
         FamilyFunPack.modules = new Modules(this.confFile);
 
@@ -84,7 +94,10 @@ public class FamilyFunPack
 
         // Init interface
         MainGui gui = new MainGui(FamilyFunPack.modules, interfaces);
-        MinecraftForge.EVENT_BUS.register(new KeyListener(gui));
+        FamilyFunPack.keyListener.setGui(gui);
+
+        // Register key listener
+        MinecraftForge.EVENT_BUS.register(FamilyFunPack.keyListener);
       }
     }
 }

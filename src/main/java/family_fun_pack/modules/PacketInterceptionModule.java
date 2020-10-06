@@ -25,6 +25,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     super("Packets interception", "Intercept network packets");
     this.inbound_block = new HashSet<Integer>();
     this.outbound_block = new HashSet<Integer>();
+    FamilyFunPack.addModuleKey(0, this);
   }
 
   protected void enable() {

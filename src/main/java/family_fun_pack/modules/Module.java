@@ -23,6 +23,10 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
     this.enabled = false;
   }
 
+  public void toggle() {
+    this.toggle(! this.enabled);
+  }
+
   public void toggle(boolean state) {
     if(state) {
       if(!this.enabled) {
