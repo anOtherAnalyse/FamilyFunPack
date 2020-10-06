@@ -69,7 +69,7 @@ public class FamilyFunPack
         FamilyFunPack.networkHandler = new NetworkHandler();
 
         // load modules configuration
-        FamilyFunPack.modules = new Modules();
+        FamilyFunPack.modules = new Modules(this.confFile);
 
         // register overlay
         MinecraftForge.EVENT_BUS.register(FamilyFunPack.overlay);

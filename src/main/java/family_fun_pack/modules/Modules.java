@@ -1,8 +1,10 @@
 package family_fun_pack.modules;
 
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -11,7 +13,9 @@ public class Modules {
 
   private List<Module> modules;
 
-  public Modules() {
+  private Configuration configuration;
+
+  public Modules(File configuration_file) {
     this.modules = new ArrayList<Module>();
     this.modules.add(new CommandsModule());
     this.modules.add(new PacketInterceptionModule());
@@ -19,6 +23,8 @@ public class Modules {
     this.modules.add(new PortalInvulnerabilityModule());
     this.modules.add(new NoCloseModule());
     this.modules.add(new TrueDurabilityModule());
+    this.configuration = new Configuration(configuration_file);
+    this.load();
   }
 
   public List<Module> getModules() {
@@ -36,6 +42,19 @@ public class Modules {
       if(m.getLabel().equals(name)) return m;
     }
     return null;
+  }
+
+  private void load() {
+    for(Module i : this.modules) {
+      i.load(this.configuration);
+    }
+  }
+
+  public void save() {
+    for(Module i : this.modules) {
+      i.save(this.configuration);
+    }
+    this.configuration.save();
   }
 
 }

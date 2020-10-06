@@ -299,4 +299,8 @@ public class TrueDurabilityModule extends Module implements PacketListener {
     return packet;
   }
 
+  public boolean defaultState() {
+    return true;
+  }
+
 }

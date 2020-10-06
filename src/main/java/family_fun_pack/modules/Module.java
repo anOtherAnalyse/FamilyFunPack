@@ -1,5 +1,6 @@
 package family_fun_pack.modules;
 
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -39,6 +40,19 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
   protected abstract void enable();
 
   protected abstract void disable();
+
+  public boolean defaultState() {
+    return false;
+  }
+
+  public void save(Configuration configuration) {
+    configuration.get(this.name, "state", false).set(this.isEnabled());
+  }
+
+  public void load(Configuration configuration) {
+    boolean state = configuration.get(this.name, "state", this.defaultState()).getBoolean();
+    this.toggle(state);
+  }
 
   public void onDisconnect() {}
 

@@ -2,6 +2,7 @@ package family_fun_pack.modules;
 
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -41,6 +42,30 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this);
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this);
     FamilyFunPack.getOverlay().removeLabel("Interception: On");
+  }
+
+  public static int[] convertArray(Integer[] in) {
+    int[] out = new int[in.length];
+    for(int j = 0; j < in.length; j ++) {
+      out[j] = in[j];
+    }
+    return out;
+  }
+
+  public void save(Configuration configuration) {
+    configuration.get(this.getLabel(), "inbound_filter", new int[0]).set(PacketInterceptionModule.convertArray(this.inbound_block.toArray(new Integer[0])));
+    configuration.get(this.getLabel(), "outbound_filter", new int[0]).set(PacketInterceptionModule.convertArray(this.outbound_block.toArray(new Integer[0])));
+    super.save(configuration);
+  }
+
+  public void load(Configuration configuration) {
+    for(int id : configuration.get(this.getLabel(), "inbound_filter", new int[0]).getIntList()) {
+      this.inbound_block.add(id);
+    }
+    for(int id : configuration.get(this.getLabel(), "outbound_filter", new int[0]).getIntList()) {
+      this.outbound_block.add(id);
+    }
+    super.load(configuration);
   }
 
   public void addIntercept(EnumPacketDirection direction, int id) {

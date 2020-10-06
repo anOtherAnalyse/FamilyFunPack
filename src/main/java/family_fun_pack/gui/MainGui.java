@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
+import family_fun_pack.FamilyFunPack;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.Modules;
 import family_fun_pack.modules.interfaces.InterfaceModule;
@@ -102,7 +103,9 @@ public class MainGui extends GuiScreen {
     this.right_panel = null;
   }
 
-  // public void onGuiClosed() {}
+  public void onGuiClosed() {
+    FamilyFunPack.getModules().save();
+  }
 
   protected void actionPerformed(GuiButton button) throws IOException {
     if(button instanceof ActionButton) {

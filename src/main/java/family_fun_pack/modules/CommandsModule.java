@@ -52,4 +52,8 @@ public class CommandsModule extends Module {
       }
     }
   }
+
+  public boolean defaultState() {
+    return true;
+  }
 }

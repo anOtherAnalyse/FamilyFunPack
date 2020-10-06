@@ -3,6 +3,7 @@ package family_fun_pack.modules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderPig;
 import net.minecraft.entity.passive.EntityPig;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -26,4 +27,8 @@ public class PigPOVModule extends Module {
     mc.player.eyeHeight = mc.player.getDefaultEyeHeight();
     mc.getRenderManager().entityRenderMap.put(EntityPig.class, new RenderPig(mc.getRenderManager()));
   }
+
+  public void save(Configuration configuration) {}
+
+  public void load(Configuration configuration) {}
 }
