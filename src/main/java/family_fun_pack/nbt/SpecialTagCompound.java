@@ -1,15 +1,12 @@
-package family_fun_pack;
+package family_fun_pack.nbt;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.item.ItemStack;
 
-import java.io.DataInput;
-import java.io.IOException;
 import java.util.UUID;
 
 /* Store real durability inside special NBTTagCompound */

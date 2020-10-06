@@ -1,4 +1,4 @@
-package family_fun_pack.gui;
+package family_fun_pack.gui.interfaces;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -16,31 +16,34 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 
-import org.lwjgl.input.Keyboard;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.LinkedList;
 
 import family_fun_pack.FamilyFunPack;
-import family_fun_pack.Tooltip;
-import family_fun_pack.SpecialTagCompound;
+import family_fun_pack.gui.MainGui;
+import family_fun_pack.gui.components.GenericButton;
+import family_fun_pack.nbt.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
-public class PreviewGui extends GuiScreen {
+public class PreviewGui extends RightPanel {
 
   private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/preview.png");
-  private static int WIDTH = 176;
-  private static int HEIGHT = 80;
+
+  private static final int INNER_BORDER = PreviewGui.INNER_BORDER;
+
+  private static int guiWidth = 176;
+  private static int guiHeight = 80;
 
   private int x, y, x_end, y_end;
 
   private InventoryBasic inventory;
-  private GuiScreen previous;
-  private Tooltip tooltip;
+  private RightPanel previous;
   private List<Slot> slots;
 
-  public PreviewGui(NBTTagList list, GuiScreen previous, Tooltip tooltip) {
+  public PreviewGui(NBTTagList list, RightPanel previous) {
+    super();
+
     this.inventory = new InventoryBasic(null, false, 27);
     this.slots = new LinkedList<Slot>();
     for(NBTBase i_base : list) {
@@ -55,44 +58,37 @@ public class PreviewGui extends GuiScreen {
         this.slots.add(new Slot(this.inventory, index, 8 + (index % 9) * 18, 26 + (index / 9) * 18));
       }
     }
-    this.tooltip = tooltip;
     this.previous = previous;
-  }
 
-  public void initGui() {
-    this.x = (this.width / 2) - (PreviewGui.WIDTH / 2);
-    this.y = (this.height / 2) - (PreviewGui.HEIGHT / 2);
-    this.x_end = this.x + PreviewGui.WIDTH;
-    this.y_end = this.y + PreviewGui.HEIGHT;
+    this.x = (this.width - MainGui.guiWidth - 12 - PreviewGui.guiWidth) / 2 + MainGui.guiWidth + 12;
+    this.y = (MainGui.guiHeight - PreviewGui.guiHeight) / 2 + 12;
+    this.x_end = this.x + PreviewGui.guiWidth;
+    this.y_end = this.y + PreviewGui.guiHeight;
     for(Slot s : this.slots) {
       s.xPos += this.x;
       s.yPos += this.y;
     }
-    this.addButton(new OpenButton(0, this.x + 3, this.y + 3, this.fontRenderer, "Back") {
-      public void performAction() {
-        PreviewGui.this.mc.displayGuiScreen(PreviewGui.this.previous);
+    this.buttonList.add(new GenericButton(0, this.x + 3, this.y + 3, "Back") {
+      public void onClick(Gui parent) {
+        ((PreviewGui) parent).close();
       }
     });
   }
 
-  protected void actionPerformed(GuiButton button) throws IOException {
-    ((OpenButton) button).performAction();
-  }
-
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     // Gui background
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, CommandGui.BACKGROUND_COLOR); // GUI background
+    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
 
     // borders
-    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, 0xffbbbbbb);
+    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, PreviewGui.INNER_BORDER);
+    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, PreviewGui.INNER_BORDER);
+    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
+    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
 
     // items background
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     this.mc.getTextureManager().bindTexture(PreviewGui.GUI_TEXTURE);
-    drawTexturedModalRect(this.x, this.y + 18, 0, 0, PreviewGui.WIDTH, PreviewGui.HEIGHT);
+    drawTexturedModalRect(this.x, this.y + 18, 0, 0, PreviewGui.guiWidth, PreviewGui.guiHeight);
 
     // Draw items
     RenderHelper.enableGUIStandardItemLighting();
@@ -118,19 +114,7 @@ public class PreviewGui extends GuiScreen {
     }
   }
 
-  protected void keyTyped(char typedChar, int keyCode) throws IOException {
-    if(keyCode == Keyboard.KEY_ESCAPE) {
-      this.mc.displayGuiScreen(this.previous);
-    } else if(keyCode == this.tooltip.openGUIKey.getKeyCode()) {
-      this.mc.displayGuiScreen(null);
-      if (this.mc.currentScreen == null) {
-        this.mc.setIngameFocus();
-      }
-    }
+  public void close() {
+    this.transition(this.previous);
   }
-
-  public boolean doesGuiPauseGame() {
-	   return false;
-	}
-
 }

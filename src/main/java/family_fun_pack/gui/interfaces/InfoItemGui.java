@@ -1,4 +1,4 @@
-package family_fun_pack.gui;
+package family_fun_pack.gui.interfaces;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
@@ -13,22 +13,23 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import org.lwjgl.input.Keyboard;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
-import family_fun_pack.SpecialTagCompound;
-import family_fun_pack.Tooltip;
+import family_fun_pack.gui.MainGui;
+import family_fun_pack.gui.components.GenericButton;
+import family_fun_pack.gui.components.ScrollBar;
+import family_fun_pack.nbt.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
-public class InfoItemGui extends GuiScreen {
+public class InfoItemGui extends RightPanel {
 
-  private static int WIDTH = 320;
-  private static int HEIGHT = 136;
+  // private static int guiWidth = 320;
+  private static int guiHeight = 136;
 
-  public static int lineMaxChar = 54;
-  public static int maxLines = 13;
+  private static int lineMaxChar = 54;
+  private static int maxLines = 13;
 
   private int x, y, x_end, y_end;
 
@@ -39,46 +40,34 @@ public class InfoItemGui extends GuiScreen {
   private List<String> tag;
 
   private ScrollBar scroll;
-  private OpenButton previewOpen;
+  private GenericButton previewOpen;
 
   public Container inventory;
 
-  private Tooltip tooltip;
-
-  public InfoItemGui(Container inventory, Tooltip tooltip) {
-    this.inventory = inventory;
+  public InfoItemGui() {
+    super();
+    this.inventory = this.mc.player.inventoryContainer;
     this.current_slot = -1;
     this.tag = new ArrayList<String>();
-    this.tooltip = tooltip;
-  }
 
-  public void initGui() {
-    this.x = (this.width / 2) - (InfoItemGui.WIDTH / 2);
-    this.y = (this.height / 2) - (InfoItemGui.HEIGHT / 2);
-    this.x_end = this.x + InfoItemGui.WIDTH;
-    this.y_end = this.y + InfoItemGui.HEIGHT;
+    this.x = MainGui.guiWidth + 16;
+    this.y = (MainGui.guiHeight - InfoItemGui.guiHeight) / 2 + 12;
+    this.x_end = this.width - 12;
+    this.y_end = this.y + InfoItemGui.guiHeight;
     this.scroll = new ScrollBar(0, this.x_end - 8, this.y + 20, 0, this.y_end - 2);
+    this.previewOpen = null;
     InfoItemGui.lineMaxChar = ((this.x_end - 10 - (this.x + 89)) / (int)(((float)this.fontRenderer.getStringWidth("A")) * 0.7f)) - 5;
     InfoItemGui.maxLines = ((this.y_end - 2 - (this.y + 21)) / this.fontRenderer.FONT_HEIGHT);
   }
 
-  protected void keyTyped(char typedChar, int keyCode) throws IOException {
-    if(keyCode == Keyboard.KEY_ESCAPE || keyCode == this.tooltip.openGUIKey.getKeyCode()) {
-      this.mc.displayGuiScreen(null);
-      if (this.mc.currentScreen == null) {
-        this.mc.setIngameFocus();
-      }
-    }
-  }
-
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, CommandGui.BACKGROUND_COLOR); // GUI background
+    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
 
     // borders
-    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, 0xffbbbbbb);
+    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, MainGui.BORDER_COLOR);
 
     // items border
     int info_x = this.x + 4;
@@ -98,8 +87,8 @@ public class InfoItemGui extends GuiScreen {
     info_y = this.y + 18;
     info_x_end = this.x_end - 1;
     info_y_end = this.y_end - 1;
-    Gui.drawRect(info_x, info_y, info_x_end, info_y + 1, 0xffbbbbbb);
-    Gui.drawRect(info_x, info_y, info_x + 1, info_y_end, 0xffbbbbbb);
+    Gui.drawRect(info_x, info_y, info_x_end, info_y + 1, MainGui.BORDER_COLOR);
+    Gui.drawRect(info_x, info_y, info_x + 1, info_y_end, MainGui.BORDER_COLOR);
     //Gui.drawRect(info_x_end - 1, info_y, info_x_end, info_y_end, 0xffbbbbbb);
     //Gui.drawRect(info_x, info_y_end - 1, info_x_end, info_y_end, 0xffbbbbbb);
 
@@ -112,7 +101,7 @@ public class InfoItemGui extends GuiScreen {
       // Draw title
       int width = this.fontRenderer.getStringWidth(this.title);
       info_x += ((this.x_end - 2 - info_x) / 2 - (width) / 2);
-      this.fontRenderer.drawStringWithShadow(this.title, info_x, this.y + 4, 0xffbbbbbb);
+      this.fontRenderer.drawStringWithShadow(this.title, info_x, this.y + 4, MainGui.BORDER_COLOR);
 
       GlStateManager.pushMatrix();
       float scale = 0.7f;
@@ -122,7 +111,7 @@ public class InfoItemGui extends GuiScreen {
       for(int i = this.scroll.current_scroll; i < (this.scroll.current_scroll + InfoItemGui.maxLines) && i < this.tag.size(); i ++) {
 
         info_y = (int)(((float)this.y + 21f + (float)((i - this.scroll.current_scroll) * this.fontRenderer.FONT_HEIGHT)) / scale);
-        this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, 0xffbbbbbb);
+        this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, MainGui.BORDER_COLOR);
       }
 
       GlStateManager.popMatrix();
@@ -165,12 +154,12 @@ public class InfoItemGui extends GuiScreen {
     super.drawScreen(mouseX, mouseY, partialTicks);
   }
 
-  protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+  public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     if(mouseButton == 0) {
 
       if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
       else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
-        this.previewOpen.performAction();
+        this.previewOpen.onClick(this.parent);
         return;
       }
 
@@ -203,14 +192,15 @@ public class InfoItemGui extends GuiScreen {
             if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {
               NBTTagCompound blockTag = tag.getCompoundTag("BlockEntityTag");
               if(blockTag.hasKey("Items") && blockTag.getTagId("Items") == 9) {
-                this.previewOpen = new OpenButton(0, this.x_end - 46, this.y + 3, this.fontRenderer, "Preview") {
-                  public void performAction() {
-                    InfoItemGui.this.mc.displayGuiScreen(new PreviewGui(
+                this.previewOpen = new GenericButton(0, this.x_end - 46, this.y + 3, "Preview") {
+                  public void onClick(Gui parent) {
+                    PreviewGui preview = new PreviewGui(
                       InfoItemGui.this.inventory.getSlot(InfoItemGui.this.current_slot).getStack().getTagCompound().getCompoundTag("BlockEntityTag").getTagList("Items", 10),
-                      InfoItemGui.this,
-                      InfoItemGui.this.tooltip
-                    ));
-                  };
+                      InfoItemGui.this
+                    );
+                    preview.setParent((MainGui) parent);
+                    InfoItemGui.this.transition(preview);
+                  }
                 };
               } else this.previewOpen = null;
             } else this.previewOpen = null;
@@ -226,9 +216,5 @@ public class InfoItemGui extends GuiScreen {
       this.scroll.mouseReleased(mouseX, mouseY);
     }
   }
-
-  public boolean doesGuiPauseGame() {
-	   return false;
-	}
 
 }

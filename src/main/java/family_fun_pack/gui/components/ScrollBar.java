@@ -1,4 +1,4 @@
-package family_fun_pack.gui;
+package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -8,6 +8,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 @SideOnly(Side.CLIENT)
 public class ScrollBar extends GuiButton {
+
+  static final int COLOR = 0xffbbbbbb;
 
   public int current_scroll;
   public boolean clicked;
@@ -35,7 +37,7 @@ public class ScrollBar extends GuiButton {
   }
 
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-    this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0xffbbbbbb);
+    this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
   }
 
   public void dragged(int mouseX, int mouseY) {

@@ -15,13 +15,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.nbt.NBTTagCompound;
 
-import family_fun_pack.SpecialTagCompound;
-
 import java.lang.Class;
 import java.lang.NoSuchMethodException;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.IllegalAccessException;
+
+import family_fun_pack.nbt.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
 public class CustomRenderItem extends RenderItem {

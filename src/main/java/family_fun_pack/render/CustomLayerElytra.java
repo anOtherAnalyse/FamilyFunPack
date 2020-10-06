@@ -19,7 +19,7 @@ import net.minecraft.init.Items;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.nbt.NBTTagCompound;
 
-import family_fun_pack.SpecialTagCompound;
+import family_fun_pack.nbt.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
 public class CustomLayerElytra implements LayerRenderer<EntityLivingBase> {

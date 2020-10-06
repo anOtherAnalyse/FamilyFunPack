@@ -1,9 +1,8 @@
-package family_fun_pack.gui;
+package family_fun_pack.gui.interfaces;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -11,15 +10,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.util.List;
-import java.util.LinkedList;
 import java.util.ArrayList;
-import java.util.Set;
 import java.io.IOException;
 
-import family_fun_pack.FamilyFunPack;
+import family_fun_pack.gui.MainGui;
+import family_fun_pack.gui.components.GenericButton;
+import family_fun_pack.gui.components.OnOffButton;
+import family_fun_pack.gui.components.ScrollBar;
+import family_fun_pack.gui.components.actions.OnOffInterception;
+import family_fun_pack.modules.PacketInterceptionModule;
+import family_fun_pack.modules.Module;
 
 @SideOnly(Side.CLIENT)
-public class ScrollGui extends Gui {
+public class PacketsSelectionGui extends RightPanel {
 
   private static final int guiWidth = 148;
   private static final int guiHeight = 200;
@@ -33,47 +36,35 @@ public class ScrollGui extends Gui {
 
   private ScrollBar scroll;
 
-  private Minecraft mc;
-
-  protected List<GuiButton> buttonList;
-
-  private FontRenderer fontRenderer;
-
   public EnumPacketDirection direction;
 
-  public ScrollGui(int x, int y, FontRenderer fontRenderer) {
-    this.fontRenderer = fontRenderer;
-    this.x = x;
-    this.y = y;
-    this.x_end = ScrollGui.guiWidth + this.x;
-    this.y_end = ScrollGui.guiHeight + this.y;
+  public PacketsSelectionGui() {
+    super();
 
-    this.buttonList = new LinkedList<GuiButton>();
+    this.x = MainGui.guiWidth + 16;
+    this.y = 12;
+    this.x_end = PacketsSelectionGui.guiWidth + this.x;
+    this.y_end = PacketsSelectionGui.guiHeight + this.y;
 
     this.direction = EnumPacketDirection.SERVERBOUND;
     this.labels = new ArrayList<String>();
     this.enableList = new ArrayList<OnOffButton>();
-    this.initPacketsList();
 
-    this.mc = Minecraft.getMinecraft();
-    OpenButton selection = new OpenButton(1, this.x + 2, this.y + 4, this.fontRenderer, "Emitted") {
-      public void performAction() {
-        if(this.clicked) {
-          this.displayString = "Received";
-        } else this.displayString = "Emitted";
+    GenericButton selection = new GenericButton(1, this.x + 2, this.y + 4, "Emitted") {
+      public void onClick(Gui parent) {
+        if(this.displayString.equals("Emitted")) this.displayString = "Received";
+        else this.displayString = "Emitted";
         this.width = this.fontRenderer.getStringWidth(this.displayString) + 4;
-        this.x = ScrollGui.this.x + (ScrollGui.guiWidth / 2) - (this.width / 2);
-        ScrollGui.this.switchDirection();
+        this.x = PacketsSelectionGui.this.x + (PacketsSelectionGui.guiWidth / 2) - (this.width / 2);
+        PacketsSelectionGui.this.switchDirection();
       }
     };
-    selection.x = this.x + (ScrollGui.guiWidth / 2) - (selection.width / 2);
-    selection.clicked_background_color = CommandGui.BACKGROUND_COLOR;
-    selection.clicked_border_color = 0xffbbbbbb;
+    selection.x = this.x + (PacketsSelectionGui.guiWidth / 2) - (selection.width / 2);
     this.buttonList.add(selection);
   }
 
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, CommandGui.BACKGROUND_COLOR); // GUI background
+    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
 
     // borders
     Gui.drawRect(this.x, this.y, this.x_end, this.y + 2, 0xffbbbbbb);
@@ -86,16 +77,13 @@ public class ScrollGui extends Gui {
       this.scroll.dragged(mouseX, mouseY);
     }
 
-    // Draw buttons
-    for(GuiButton btn : this.buttonList) {
-      btn.drawButton(this.mc, mouseX, mouseY, partialTicks);
-    }
+    super.drawScreen(mouseX, mouseY, partialTicks);
 
     // Draw labels
     GlStateManager.pushMatrix();
     float scale = 0.7f;
     GlStateManager.scale(scale, scale, scale);
-    for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < ScrollGui.maxLabelsDisplayed & i < this.labels.size(); i ++) {
+    for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed & i < this.labels.size(); i ++) {
       int decal_y = (int)((float)(this.y + 20 + (i - this.scroll.current_scroll) * 11) / scale);
       int decal_x = (int)((float)(this.x + 4) / scale);
       this.drawString(this.fontRenderer, this.labels.get(i), decal_x, decal_y, 0xffbbbbbb);
@@ -106,7 +94,7 @@ public class ScrollGui extends Gui {
 
     // Draw enable buttons
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-    for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < ScrollGui.maxLabelsDisplayed & i < this.enableList.size(); i ++) {
+    for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed & i < this.enableList.size(); i ++) {
       OnOffButton current = this.enableList.get(i);
       current.x = this.x_end - 28;
       current.y = this.y + 20 + (i - this.scroll.current_scroll) * 11;
@@ -116,19 +104,14 @@ public class ScrollGui extends Gui {
 
   public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     if(mouseButton == 0) {
-      for(GuiButton btn : this.buttonList) {
-        if(btn.mousePressed(this.mc, mouseX, mouseY) && btn instanceof ActionButton) {
-          ((ActionButton)btn).changeState();
-          return;
-        }
-      }
-      for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < ScrollGui.maxLabelsDisplayed & i < this.enableList.size(); i ++) {
+      for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed & i < this.enableList.size(); i ++) {
         OnOffButton current = this.enableList.get(i);
         if(current.mousePressed(this.mc, mouseX, mouseY)) {
-          current.changeState();
+          current.onClick(this);
           return;
         }
       }
+      super.mouseClicked(mouseX, mouseY, mouseButton);
     }
   }
 
@@ -138,19 +121,19 @@ public class ScrollGui extends Gui {
     }
   }
 
-	public boolean doesGuiPauseGame() {
-	   return true;
-	}
-
   public void switchDirection() {
     if(this.direction == EnumPacketDirection.SERVERBOUND) this.direction = EnumPacketDirection.CLIENTBOUND;
     else this.direction = EnumPacketDirection.SERVERBOUND;
     this.initPacketsList();
   }
 
+  public void dependsOn(Module dependence) {
+    super.dependsOn(dependence);
+    this.initPacketsList();
+  }
+
   public void initPacketsList() {
     this.labels.clear();
-    Set<Integer> conf_enable = FamilyFunPack.configuration.getSet(this.direction);
     if(this.direction == EnumPacketDirection.SERVERBOUND) {
       this.labels.add("CPacketConfirmTeleport");
       this.labels.add("CPacketTabComplete");
@@ -271,23 +254,13 @@ public class ScrollGui extends Gui {
     // reset / sed Enable buttons list
     this.enableList.clear();
     for(int i = 0; i < this.labels.size(); i ++) {
-      OnOffButton added = new OnOffButton(i, 0, 0) {
-        public void performAction() {
-          Set<Integer> conf_enable = FamilyFunPack.configuration.getSet(ScrollGui.this.direction);
-          if(this.state) {
-            conf_enable.add(this.id);
-          } else {
-            conf_enable.remove(this.id);
-          }
-          FamilyFunPack.configuration.save();
-        }
-      };
-      if(conf_enable.contains(i)) added.state = true;
-      this.enableList.add(added);
+      OnOffButton enable_btn = new OnOffButton(i, 0, 0, new OnOffInterception((PacketInterceptionModule) this.dependence, this.direction, i));
+      enable_btn.setState(((PacketInterceptionModule) this.dependence).isFiltered(this.direction, i));
+      this.enableList.add(enable_btn);
     }
 
     // reset / set scroll bar
-    int max_scroll = this.labels.size() - ScrollGui.maxLabelsDisplayed;
+    int max_scroll = this.labels.size() - PacketsSelectionGui.maxLabelsDisplayed;
     if(this.scroll != null) {
       this.scroll.resetMaxScroll(max_scroll > 0 ? max_scroll : 0);
     } else {

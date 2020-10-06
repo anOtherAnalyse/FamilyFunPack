@@ -17,7 +17,7 @@ import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
-import family_fun_pack.SpecialTagCompound;
+import family_fun_pack.nbt.SpecialTagCompound;
 
 @SideOnly(Side.CLIENT)
 public class CustomLayerBipedArmor extends LayerBipedArmor {

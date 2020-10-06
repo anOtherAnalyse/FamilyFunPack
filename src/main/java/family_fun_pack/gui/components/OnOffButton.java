@@ -1,33 +1,40 @@
-package family_fun_pack.gui;
+package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
-
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.gui.components.actions.OnOffAction;
 
 @SideOnly(Side.CLIENT)
-public class OnOffButton extends GuiButton implements ActionButton {
+public class OnOffButton extends ActionButton {
 
   private static final ResourceLocation on_off = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
 
-  public boolean state;
+  private boolean state;
+  private OnOffAction action;
 
-  public OnOffButton(int id, int x, int y) {
+  public OnOffButton(int id, int x, int y, OnOffAction action) {
     super(id, x, y, 16, 7, null);
     this.state = false;
+    this.action = action;
+  }
+
+  public OnOffButton(int x, int y, OnOffAction action) {
+    this(0, x, y, action);
+  }
+
+  public void setState(boolean state) {
+    this.state = state;
   }
 
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-    // GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		// GlStateManager.disableLighting();
 		GlStateManager.enableAlpha();
-		// GlStateManager.enableBlend();
+    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
     client.getTextureManager().bindTexture(OnOffButton.on_off);
     int i = 0;
@@ -36,10 +43,8 @@ public class OnOffButton extends GuiButton implements ActionButton {
     Gui.drawModalRectWithCustomSizedTexture(this.x, this.y, 0, i, this.width, this.height, this.width, this.height * 2);
   }
 
-  public void changeState() {
+  public void onClick(Gui parent) {
     this.state = !this.state;
-    this.performAction();
+    this.action.toggle(this.state);
   }
-
-  public void performAction() {}
 }
