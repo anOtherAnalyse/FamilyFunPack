@@ -104,7 +104,7 @@ public class PacketsSelectionGui extends RightPanel {
 
   public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     if(mouseButton == 0) {
-      for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed & i < this.enableList.size(); i ++) {
+      for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed && i < this.enableList.size(); i ++) {
         OnOffButton current = this.enableList.get(i);
         if(current.mousePressed(this.mc, mouseX, mouseY)) {
           current.onClick(this);

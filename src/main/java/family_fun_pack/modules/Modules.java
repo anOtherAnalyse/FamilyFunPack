@@ -21,6 +21,7 @@ public class Modules {
     this.modules.add(new PacketInterceptionModule());
     this.modules.add(new PigPOVModule());
     this.modules.add(new PortalInvulnerabilityModule());
+    this.modules.add(new SearchModule());
     this.modules.add(new NoCloseModule());
     this.modules.add(new TrueDurabilityModule());
     this.configuration = new Configuration(configuration_file);

@@ -1,8 +1,5 @@
 package family_fun_pack.gui.interfaces;
 
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
-
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiButton;
@@ -15,6 +12,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.item.ItemStack;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.IOException;
 import java.util.List;

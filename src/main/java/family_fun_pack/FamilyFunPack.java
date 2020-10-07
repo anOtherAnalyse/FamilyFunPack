@@ -91,6 +91,7 @@ public class FamilyFunPack
         List<InterfaceModule> interfaces = new LinkedList<InterfaceModule>();
         interfaces.add(new PacketsSelectionModule().dependsOn(FamilyFunPack.modules.getByName("Packets interception")));
         interfaces.add(new InfoItemModule());
+        interfaces.add(new SearchSelectionModule().dependsOn(FamilyFunPack.modules.getByName("Search")));
 
         // Init interface
         MainGui gui = new MainGui(FamilyFunPack.modules, interfaces);
