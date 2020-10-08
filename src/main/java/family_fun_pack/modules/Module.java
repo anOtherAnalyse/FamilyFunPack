@@ -14,8 +14,8 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
 
   private boolean enabled;
 
-  private String name;
-  private String description;
+  protected String name;
+  protected String description;
 
   public Module(String name, String description) {
     this.name = name;

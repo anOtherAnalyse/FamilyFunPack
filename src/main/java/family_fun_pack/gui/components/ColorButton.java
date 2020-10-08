@@ -10,7 +10,7 @@ import family_fun_pack.modules.SearchModule;
 @SideOnly(Side.CLIENT)
 public class ColorButton extends ActionButton {
 
-  private static final int[] COLORS = {0xffff0000, 0xffff9900, 0xffffff00, 0xffff6666, 0xff663300, 0xffff00ff, 0xff00ff99, 0xff00ff00, 0xff99ff99, 0xff0099cc, 0xff0066ff, 0xff6600ff, 0xff0000ff};
+  public static final int[] COLORS = {0xffff0000, 0xffff9900, 0xffffff00, 0xffff6666, 0xff663300, 0xffff00ff, 0xff00ff99, 0xff00ff00, 0xff99ff99, 0xff0099cc, 0xff0066ff, 0xff6600ff, 0xff0000ff};
 
   private static final int BORDER = 0xff000000;
 

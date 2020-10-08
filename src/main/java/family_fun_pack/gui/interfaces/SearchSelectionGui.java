@@ -56,7 +56,7 @@ public class SearchSelectionGui extends RightPanel {
     this.y_end = SearchSelectionGui.guiHeight + this.y;
 
     this.blocks = new ArrayList<Block>();
-    for (Block b : Block.REGISTRY) {
+    for(Block b : Block.REGISTRY) {
       this.blocks.add(b);
     }
 

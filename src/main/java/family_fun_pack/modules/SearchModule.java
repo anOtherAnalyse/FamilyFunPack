@@ -24,6 +24,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.gui.components.ColorButton;
 import family_fun_pack.network.PacketListener;
 
 @SideOnly(Side.CLIENT)
@@ -133,6 +135,34 @@ public class SearchModule extends Module implements PacketListener {
   public void onDisconnect() {
     this.targets.clear();
     this.new_chunks.clear();
+  }
+
+  public void save(Configuration configuration) {
+    for(Block b : Block.REGISTRY) {
+      int id = Block.getIdFromBlock(b);
+      Property p = this.to_search.get(b);
+      if(p == null) {
+        configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
+      } else {
+        configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
+        configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(p.tracer);
+        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.COLORS[0]).set(p.color);
+      }
+    }
+    super.save(configuration);
+  }
+
+  public void load(Configuration configuration) {
+    for(Block b : Block.REGISTRY) {
+      int id = Block.getIdFromBlock(b);
+      boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
+      if(search) {
+        boolean tracer = configuration.get(this.name, "tracer_" + Integer.toString(id), false).getBoolean();
+        int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.COLORS[0]).getInt();
+        this.to_search.put(b, new Property(tracer, color));
+      }
+    }
+    super.load(configuration);
   }
 
   @SubscribeEvent
@@ -340,7 +370,7 @@ public class SearchModule extends Module implements PacketListener {
   public int getColor(int block_id) {
     Block block = Block.getBlockById(block_id);
     Property p = this.to_search.get(block);
-    if(p == null) return -1;
+    if(p == null) return ColorButton.COLORS[0];
     return p.color;
   }
 
