@@ -53,4 +53,7 @@ public abstract class RightPanel extends GuiScreen {
     super.mouseReleased(mouseX, mouseY, state);
   }
 
+  public void keyTyped(char keyChar, int keyCode) throws IOException {
+  }
+
 }

@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiLabel;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -41,6 +42,8 @@ public class SearchSelectionGui extends RightPanel {
   private static final int maxLabelsDisplayed = 10;
 
   private ScrollBar scroll;
+  private GuiTextField selection;
+  private String last_search;
 
   private int x, y, x_end, y_end;
 
@@ -64,6 +67,13 @@ public class SearchSelectionGui extends RightPanel {
     if(max_scroll < 0) max_scroll = 0;
     this.scroll = new ScrollBar(0, this.x_end - 10, this.y + 4, max_scroll, this.y_end - 4);
     this.buttonList.add(this.scroll);
+
+    this.selection = new GuiTextField(0, this.fontRenderer, this.x + 4, this.y + 5, (int)((float)(this.x_end - 6 - this.scroll.width - this.x - 4) * 0.571f) - 6, 10);
+    this.selection.setFocused(true);
+    this.selection.setCanLoseFocus(false);
+    this.selection.setMaxStringLength(256);
+
+    this.last_search = "";
   }
 
   public void dependsOn(Module dependence) {
@@ -100,6 +110,16 @@ public class SearchSelectionGui extends RightPanel {
     }
   }
 
+  private void searchBlocks(String keyword) {
+    this.blocks.clear();
+    for(Block b : Block.REGISTRY) {
+      String label = Block.REGISTRY.getNameForObject(b).getResourcePath().replace("_", " ").toLowerCase();
+      if(label.contains(keyword)) this.blocks.add(b);
+    }
+    this.scroll.resetMaxScroll(this.blocks.size());
+    this.dependsOn(this.dependence);
+  }
+
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
 
@@ -117,22 +137,24 @@ public class SearchSelectionGui extends RightPanel {
     // Draw buttons
     super.drawScreen(mouseX, mouseY, partialTicks);
 
+    // search bar
+    this.selection.drawTextBox();
+
     // Draw titles
     int chart_end = this.x_end - 6 - this.scroll.width;
     int chart_width = chart_end - this.x - 4;
     GlStateManager.pushMatrix();
     GlStateManager.scale(0.9f, 0.9f, 0.9f);
-    String[] labels = {"Blocks", "Search", "Tracer", "Color"};
-    int x_total = this.x + 4;
+    String[] labels = {"Search", "Tracer", "Color"};
+    int x_total = this.x + 10 + this.selection.width;
     int decal_y = (int)((float)(this.y + 8) / 0.9f);
     int decal_x;
     for(String i : labels) {
-      float f = i.equals("Blocks") ? 0.571f : 0.143f;
-      int width = (int)((float)chart_width * f);
+      int width = (int)((float)chart_width * 0.143f);
       int str_width = this.fontRenderer.getStringWidth(i);
       int x = x_total + ((width - str_width) / 2);
       decal_x = (int)((float)(x) / 0.9f);
-      this.drawString(this.fontRenderer, i, decal_x, decal_y, 0xffbbbbbb);
+      this.drawString(this.fontRenderer, i, decal_x, decal_y, 0xffffffff);
       x_total += width;
     }
     GlStateManager.popMatrix();
@@ -152,7 +174,7 @@ public class SearchSelectionGui extends RightPanel {
       decal_x = (int)((float)(this.x + 22) / 0.7f);
       String label = Block.REGISTRY.getNameForObject(this.blocks.get(i)).getResourcePath().replace("_", " ");
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-      this.drawString(this.fontRenderer, label, decal_x, decal_y, 0xffbbbbbb);
+      this.drawString(this.fontRenderer, label, decal_x, decal_y, 0xffeeeeee);
       GlStateManager.popMatrix();
 
       // Draw buttons
@@ -270,6 +292,7 @@ public class SearchSelectionGui extends RightPanel {
           return;
         }
       }
+      this.selection.mouseClicked(mouseX, mouseY, mouseButton);
       super.mouseClicked(mouseX, mouseY, mouseButton);
     }
   }
@@ -279,4 +302,18 @@ public class SearchSelectionGui extends RightPanel {
       this.scroll.mouseReleased(mouseX, mouseY);
     }
   }
+
+  public void updateScreen() {
+    this.selection.updateCursorCounter();
+  }
+
+  public void keyTyped(char keyChar, int keyCode) throws IOException {
+    this.selection.textboxKeyTyped(keyChar, keyCode);
+    String keyword = this.selection.getText().trim().toLowerCase();
+    if(! this.last_search.equals(keyword)) {
+      this.last_search = keyword;
+      this.searchBlocks(keyword);
+    }
+  }
+
 }

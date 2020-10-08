@@ -130,7 +130,7 @@ public class MainGui extends GuiScreen {
       if (this.mc.currentScreen == null) {
         this.mc.setIngameFocus();
       }
-    }
+    } else if(this.right_panel != null) this.right_panel.keyTyped(typedChar, keyCode);
   }
 
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -165,6 +165,12 @@ public class MainGui extends GuiScreen {
     super.mouseReleased(mouseX, mouseY, state);
     if(this.right_panel != null) {
       this.right_panel.mouseReleased(mouseX, mouseY, state);
+    }
+  }
+
+  public void updateScreen() {
+    if(this.right_panel != null) {
+      this.right_panel.updateScreen();
     }
   }
 }
