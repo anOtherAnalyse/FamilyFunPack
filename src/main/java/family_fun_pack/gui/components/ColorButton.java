@@ -29,6 +29,10 @@ public class ColorButton extends ActionButton {
     this(0, x, y, block_id, module);
   }
 
+  public void reset() {
+    this.index = 0;
+  }
+
   public void setColor(int color) {
     for(int i = 0; i < ColorButton.COLORS.length; i ++) {
       if(ColorButton.COLORS[i] == color) {
@@ -38,19 +42,26 @@ public class ColorButton extends ActionButton {
     }
   }
 
+  public int getColor() {
+    return ColorButton.COLORS[this.index];
+  }
+
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
     int x_end = this.x + this.width;
     int y_end = this.y + this.height;
 
-    this.drawRect(this.x, this.y, x_end, y_end, ColorButton.COLORS[this.index]);
+    this.drawRect(this.x, this.y, x_end, y_end, this.getColor());
     this.drawRect(this.x, this.y, x_end, this.y + 1, ColorButton.BORDER);
     this.drawRect(this.x, this.y, this.x + 1, y_end, ColorButton.BORDER);
     this.drawRect(this.x, y_end - 1, x_end, y_end, ColorButton.BORDER);
     this.drawRect(x_end - 1, this.y, x_end, y_end, ColorButton.BORDER);
+
+    if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
   public void onClick(Gui parent) {
+    if(! this.enabled) return;
     this.index = (this.index + 1) % ColorButton.COLORS.length;
-    this.module.setSearchSColor(this.block_id, ColorButton.COLORS[this.index]);
+    this.module.setSearchSColor(this.block_id, this.getColor());
   }
 }

@@ -1,8 +1,5 @@
 package family_fun_pack.network;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.buffer.ByteBuf;
-
 import net.minecraft.network.Packet;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.NettyPacketDecoder;
@@ -10,6 +7,9 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.EnumConnectionState;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.buffer.ByteBuf;
 
 import java.lang.Exception;
 import java.lang.IllegalAccessException;

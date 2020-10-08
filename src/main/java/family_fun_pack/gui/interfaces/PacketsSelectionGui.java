@@ -2,7 +2,6 @@ package family_fun_pack.gui.interfaces;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiButton;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.client.renderer.GlStateManager;
 

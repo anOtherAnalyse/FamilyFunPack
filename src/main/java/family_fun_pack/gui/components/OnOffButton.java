@@ -32,6 +32,10 @@ public class OnOffButton extends ActionButton {
     this.state = state;
   }
 
+  public boolean getState() {
+    return this.state;
+  }
+
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
 		GlStateManager.enableAlpha();
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -41,9 +45,12 @@ public class OnOffButton extends ActionButton {
     if(! this.state) i = this.height;
 
     Gui.drawModalRectWithCustomSizedTexture(this.x, this.y, 0, i, this.width, this.height, this.width, this.height * 2);
+
+    if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
   public void onClick(Gui parent) {
+    if(! this.enabled) return;
     this.state = !this.state;
     this.action.toggle(this.state);
   }

@@ -4,7 +4,6 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -20,7 +19,6 @@ import family_fun_pack.modules.Modules;
 import family_fun_pack.modules.interfaces.InterfaceModule;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OpenGuiButton;
-import family_fun_pack.gui.components.OnOffButton;
 import family_fun_pack.gui.interfaces.RightPanel;
 
 @SideOnly(Side.CLIENT)

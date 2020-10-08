@@ -76,14 +76,23 @@ public class SearchSelectionGui extends RightPanel {
     int chart_width = this.x_end - 6 - this.scroll.width - this.x - 4;
 
     for(int i = 0; i < this.blocks.size(); i ++) {
-      OnOffButton tracer = new OnOffButton(i, 0, 0, new OnOffTracer(Block.getIdFromBlock(this.blocks.get(i)), (SearchModule) this.dependence));
+
+      int block_id = Block.getIdFromBlock(this.blocks.get(i));
+      boolean search_state = ((SearchModule) this.dependence).getSearchState(block_id);
+
+      OnOffButton tracer = new OnOffButton(i, 0, 0, new OnOffTracer(block_id, (SearchModule) this.dependence));
       tracer.x = ((((int)((float)chart_width * 0.143f)) - tracer.width) / 2) + (int)((float)chart_width * 0.714f) + this.x + 4;
+      if(search_state) tracer.setState(((SearchModule) this.dependence).getTracerState(block_id));
+      else tracer.enabled = false;
 
-      OnOffButton search = new OnOffButton(i, 0, 0, new OnOffSearch(Block.getIdFromBlock(this.blocks.get(i)), (SearchModule) this.dependence));
-      search.x = ((((int)((float)chart_width * 0.143f)) - search.width) / 2) + (int)((float)chart_width * 0.571f) + this.x + 4;
-
-      ColorButton color = new ColorButton(0, 0, Block.getIdFromBlock(this.blocks.get(i)), (SearchModule) this.dependence);
+      ColorButton color = new ColorButton(0, 0, block_id, (SearchModule) this.dependence);
       color.x = ((((int)((float)chart_width * 0.143f)) - color.width) / 2) + (int)((float)chart_width * 0.857f) + this.x + 4;
+      if(search_state) color.setColor(((SearchModule) this.dependence).getColor(block_id));
+      else color.enabled = false;
+
+      OnOffButton search = new OnOffButton(i, 0, 0, new OnOffSearch(block_id, (SearchModule) this.dependence, tracer, color));
+      search.x = ((((int)((float)chart_width * 0.143f)) - search.width) / 2) + (int)((float)chart_width * 0.571f) + this.x + 4;
+      search.setState(search_state);
 
       this.tracers.add(tracer);
       this.search.add(search);
