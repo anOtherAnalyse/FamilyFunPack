@@ -116,7 +116,9 @@ public class SearchSelectionGui extends RightPanel {
       String label = Block.REGISTRY.getNameForObject(b).getResourcePath().replace("_", " ").toLowerCase();
       if(label.contains(keyword)) this.blocks.add(b);
     }
-    this.scroll.resetMaxScroll(this.blocks.size());
+    int max_scroll = this.blocks.size() - SearchSelectionGui.maxLabelsDisplayed;
+    if(max_scroll < 0) max_scroll = 0;
+    this.scroll.resetMaxScroll(max_scroll);
     this.dependsOn(this.dependence);
   }
 
