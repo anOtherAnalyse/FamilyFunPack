@@ -179,13 +179,17 @@ public class SearchModule extends Module implements PacketListener {
 
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
-    for(int i = 0; i < this.new_chunks.size(); i ++) {
-      ChunkPos position = this.new_chunks.get(i);
-      Chunk c = Minecraft.getMinecraft().world.getChunkProvider().getLoadedChunk(position.x, position.z);
-      if(c != null) {
-        this.searchChunk(c);
-        this.new_chunks.remove(i);
-        i --;
+    if(this.new_chunks.size() > 0) {
+      Minecraft mc = Minecraft.getMinecraft();
+      if(mc.world == null) return;
+      for(int i = 0; i < this.new_chunks.size(); i ++) {
+        ChunkPos position = this.new_chunks.get(i);
+        Chunk c = mc.world.getChunkProvider().getLoadedChunk(position.x, position.z);
+        if(c != null) {
+          this.searchChunk(c);
+          this.new_chunks.remove(i);
+          i --;
+        }
       }
     }
   }
@@ -237,19 +241,15 @@ public class SearchModule extends Module implements PacketListener {
     try {
 
       for(BlockPos position : this.targets.keySet()) {
-        AxisAlignedBB bb = new AxisAlignedBB(position.getX() - renderManager.viewerPosX, position.getY() - renderManager.viewerPosY,
-                      position.getZ() - renderManager.viewerPosZ, position.getX() + 1 - renderManager.viewerPosX, position.getY() + 1 - renderManager.viewerPosY,
-                      position.getZ() + 1 - renderManager.viewerPosZ);
-        bb.grow(0.0020000000949949026D);
-
+        AxisAlignedBB bb = mc.world.getBlockState(position).getSelectedBoundingBox(mc.world, position).grow(0.0020000000949949026D).offset(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ);
+        
         Property p = this.targets.get(position);
         if(p.tracer) {
           tracers.add(new Target(position, p));
         }
 
-        this.camera.setPosition(mc.getRenderViewEntity().posX, mc.getRenderViewEntity().posY, mc.getRenderViewEntity().posZ);
-        if (camera.isBoundingBoxInFrustum(new AxisAlignedBB(bb.minX + renderManager.viewerPosX, bb.minY + renderManager.viewerPosY, bb.minZ + renderManager.viewerPosZ,
-                      bb.maxX + renderManager.viewerPosX, bb.maxY + renderManager.viewerPosY, bb.maxZ + renderManager.viewerPosZ))) {
+        this.camera.setPosition(0d, 0d, 0d);
+        if (camera.isBoundingBoxInFrustum(bb)) {
 
             float red = ((float)((p.color >> 16) & 255)) / 255f;
             float blue = ((float)((p.color >> 8) & 255)) / 255f;
@@ -275,8 +275,8 @@ public class SearchModule extends Module implements PacketListener {
 
     for(Target t : tracers) {
       Vec3d pos = new Vec3d(t.position).addVector(0.5, 0.5, 0.5).subtract(renderManager.viewerPosX, renderManager.viewerPosY, renderManager.viewerPosZ);
-      Vec3d forward = new Vec3d(0, 0, 1).rotatePitch(-(float) Math.toRadians(mc.player.rotationPitch)).rotateYaw(-(float) Math.toRadians(mc.player.rotationYaw));
-      this.drawLine3D((float) forward.x, (float) forward.y + mc.player.getEyeHeight(), (float) forward.z, (float) pos.x, (float) pos.y, (float) pos.z, 0.85f, t.property.color);
+      Vec3d forward = new Vec3d(0, 0, 1).rotatePitch(-(float) Math.toRadians(mc.getRenderViewEntity().rotationPitch)).rotateYaw(-(float) Math.toRadians(mc.getRenderViewEntity().rotationYaw));
+      this.drawLine3D((float) forward.x, (float) forward.y + mc.getRenderViewEntity().getEyeHeight(), (float) forward.z, (float) pos.x, (float) pos.y, (float) pos.z, 0.85f, t.property.color);
     }
 
     mc.gameSettings.viewBobbing = bobbing;
@@ -299,7 +299,7 @@ public class SearchModule extends Module implements PacketListener {
     if(mc.world == null) return;
 
     this.targets.clear();
-    int x = (int)mc.player.posX >> 4, z = (int)mc.player.posZ >> 4;
+    int x = (int)mc.getRenderViewEntity().posX >> 4, z = (int)mc.getRenderViewEntity().posZ >> 4;
     for(int i = x - mc.gameSettings.renderDistanceChunks; i <= x + mc.gameSettings.renderDistanceChunks; i ++) {
       for(int j = z - mc.gameSettings.renderDistanceChunks; j <= z + mc.gameSettings.renderDistanceChunks; j ++) {
         Chunk c = mc.world.getChunkProvider().getLoadedChunk(i, j);

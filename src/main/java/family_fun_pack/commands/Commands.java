@@ -21,6 +21,7 @@ public class Commands {
     this.registerCommand(new HClipCommand());
     this.registerCommand(new RaytraceCommand());
     this.registerCommand(new UnloadedRideCommand());
+    this.registerCommand(new StalkCommand());
   }
 
   public void registerCommand(Command cmd) {

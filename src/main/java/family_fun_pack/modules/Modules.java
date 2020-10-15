@@ -23,6 +23,7 @@ public class Modules {
     this.modules.add(new PortalInvulnerabilityModule());
     this.modules.add(new SearchModule());
     this.modules.add(new NoCloseModule());
+    this.modules.add(new StalkModule());
     this.modules.add(new TrueDurabilityModule());
     this.configuration = new Configuration(configuration_file);
     this.load();
@@ -36,6 +37,10 @@ public class Modules {
     for(Module i : this.modules) {
       i.onDisconnect();
     }
+  }
+
+  public Configuration getConfiguration() {
+    return this.configuration;
   }
 
   public Module getByName(String name) {

@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketClickWindow;
+import net.minecraft.network.play.client.CPacketPlayerDigging;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.server.SPacketSpawnObject;
@@ -71,7 +72,8 @@ public class UnloadedRideCommand extends Command implements PacketListener {
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 0);
 
         FamilyFunPack.getNetworkHandler().sendPacket(new CPacketClickWindow(0, id, 0, ClickType.THROW, ItemStack.EMPTY, (short)0));
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z));
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.START_DESTROY_BLOCK, new BlockPos(x, y, z), EnumFacing.UP));
+        //FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z));
         FamilyFunPack.getNetworkHandler().sendPacket(new CPacketClickWindow(0, id, 0, ClickType.THROW, ItemStack.EMPTY, (short)1));
 
       } catch(NumberFormatException e) {
