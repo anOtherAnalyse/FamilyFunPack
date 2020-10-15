@@ -3,6 +3,7 @@ package family_fun_pack.modules;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.network.EnumPacketDirection;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.util.text.TextFormatting;
@@ -25,17 +26,37 @@ public class StalkModule extends Module implements PacketListener {
 
   private Set<String> players;
 
+  private boolean just_connected;
+
   public StalkModule() {
     super("Stalk players", "See when given players connect/disconnect");
     this.players = new HashSet<String>();
+    this.just_connected = true;
   }
 
   protected void enable() {
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 55);
+    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 46);
+
+    INetHandler inet_hanlder = FamilyFunPack.getNetworkHandler().getNetHandler();
+    if(inet_hanlder != null && inet_hanlder instanceof NetHandlerPlayClient) {
+      NetHandlerPlayClient handler = (NetHandlerPlayClient) inet_hanlder;
+
+      for(NetworkPlayerInfo info : handler.getPlayerInfoMap()) {
+        if(this.players.contains(info.getGameProfile().getName())) {
+          FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + info.getGameProfile().getName() + " is connected [" + info.getGameType().getName() + "]");
+        }
+      }
+
+    }
+
   }
 
   protected void disable() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 55);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 46);
+  }
+
+  public void onDisconnect() {
+    this.just_connected = true;
   }
 
   public void addPlayer(String player) {
@@ -70,9 +91,14 @@ public class StalkModule extends Module implements PacketListener {
         switch(list.getAction()) {
           case ADD_PLAYER:
             {
+              String verb = null;
+              if(this.just_connected) {
+                verb = " is connected";
+                this.just_connected = false;
+              } else verb = " joined";
               if(entry.getDisplayName() == null)
-                FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + name + " joined [" + entry.getGameMode().getName() + "]");
-              else FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + name + " joined under the name \"" + entry.getDisplayName().toString() + "\" [" + entry.getGameMode().getName() + "]");
+                FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + name + verb + " [" + entry.getGameMode().getName() + "]");
+              else FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + name + verb + " under the name \"" + entry.getDisplayName().toString() + "\" [" + entry.getGameMode().getName() + "]");
             }
             break;
           case REMOVE_PLAYER:
@@ -98,7 +124,13 @@ public class StalkModule extends Module implements PacketListener {
 
   public void save(Configuration configuration) {
     super.save(configuration);
-    configuration.get(this.name, "players", new String[0]).set((String[])(this.players.toArray()));
+    String[] array = new String[this.players.size()];
+    int i = 0;
+    for(String s : this.players) {
+      array[i] = s;
+      i ++;
+    }
+    configuration.get(this.name, "players", new String[0]).set(array);
   }
 
   public void load(Configuration configuration) {
