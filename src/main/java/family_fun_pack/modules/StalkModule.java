@@ -26,12 +26,9 @@ public class StalkModule extends Module implements PacketListener {
 
   private Set<String> players;
 
-  private boolean just_connected;
-
   public StalkModule() {
     super("Stalk players", "See when given players connect/disconnect");
     this.players = new HashSet<String>();
-    this.just_connected = true;
   }
 
   protected void enable() {
@@ -55,16 +52,12 @@ public class StalkModule extends Module implements PacketListener {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 46);
   }
 
-  public void onDisconnect() {
-    this.just_connected = true;
-  }
-
   public void addPlayer(String player) {
-    this.players.add(player);
+    this.players.add(player.toLowerCase());
   }
 
   public void delPlayer(String player) {
-    this.players.remove(player);
+    this.players.remove(player.toLowerCase());
   }
 
   public Set<String> getPlayers() {
@@ -87,14 +80,13 @@ public class StalkModule extends Module implements PacketListener {
         name = info.getGameProfile().getName();
       }
 
-      if(this.players.contains(name)) {
+      if(this.players.contains(name.toLowerCase())) {
         switch(list.getAction()) {
           case ADD_PLAYER:
             {
               String verb = null;
-              if(this.just_connected) {
+              if(hanlder.getPlayerInfoMap().isEmpty()) {
                 verb = " is connected";
-                this.just_connected = false;
               } else verb = " joined";
               if(entry.getDisplayName() == null)
                 FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + name + verb + " [" + entry.getGameMode().getName() + "]");
