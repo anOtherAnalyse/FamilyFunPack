@@ -39,7 +39,7 @@ public class StalkModule extends Module implements PacketListener {
       NetHandlerPlayClient handler = (NetHandlerPlayClient) inet_hanlder;
 
       for(NetworkPlayerInfo info : handler.getPlayerInfoMap()) {
-        if(this.players.contains(info.getGameProfile().getName())) {
+        if(this.players.contains(info.getGameProfile().getName().toLowerCase())) {
           FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + info.getGameProfile().getName() + " is connected [" + info.getGameType().getName() + "]");
         }
       }
