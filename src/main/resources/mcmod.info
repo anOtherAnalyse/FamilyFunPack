@@ -2,7 +2,7 @@
 {
   "modid": "family_fun_pack",
   "name": "Family Fun Pack",
-  "description": "Family Fun Pack - fun for the whole family.\n\nFeatures:\n- Show items true durability + display unbreakables with red enchant effect\n- Show item tags + shulker preview\n- Network packets interception\n- Portal invulnerability\n- Pig POV (for 1x1 digging)\n\nTo use only on anarchy servers where hacks are allowed",
+  "description": "Family Fun Pack - fun for the whole family.\n\nGo to https://github.com/anOtherAnalyse/FamilyFunPack for a list of features.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
