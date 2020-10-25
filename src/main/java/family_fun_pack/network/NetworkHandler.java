@@ -6,6 +6,7 @@ import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -39,8 +40,12 @@ public class NetworkHandler {
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf buf) {
     List<PacketListener>[] listeners = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_listeners : this.outbound_listeners);
     if(listeners[id] == null) return packet;
-    for(PacketListener listener : listeners[id]) {
-      if((packet = listener.packetReceived(direction, id, packet, buf)) == null) return null;
+    try {
+      for(PacketListener listener : listeners[id]) {
+        if((packet = listener.packetReceived(direction, id, packet, buf)) == null) return null;
+      }
+    } catch (java.util.ConcurrentModificationException e) { // TO FIX with mutex
+
     }
     return packet;
   }
@@ -82,6 +87,12 @@ public class NetworkHandler {
       return this.networkManager.getNetHandler();
     }
     return null;
+  }
+
+  public void disconnect() {
+    if(this.networkManager != null) {
+      this.networkManager.closeChannel(new TextComponentString("You have been successfully disconnected from server"));
+    }
   }
 
   @SubscribeEvent

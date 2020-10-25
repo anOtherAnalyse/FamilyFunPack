@@ -22,6 +22,8 @@ public class Commands {
     this.registerCommand(new RaytraceCommand());
     this.registerCommand(new UnloadedRideCommand());
     this.registerCommand(new StalkCommand());
+    this.registerCommand(new OpenDonkeyCommand());
+    this.registerCommand(new DisconnectCommand());
   }
 
   public void registerCommand(Command cmd) {

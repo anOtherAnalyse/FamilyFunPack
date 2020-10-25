@@ -56,3 +56,9 @@ Few commands, use them in chat (Command module must be enabled):
 
 ##### get vanished players (online but not shown in the player tab)
 ```.diff```
+
+##### Disconnect from server
+```.disconnect```
+
+##### Open inventory from ride
+```.open```

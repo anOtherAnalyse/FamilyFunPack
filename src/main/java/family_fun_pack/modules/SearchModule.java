@@ -21,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -182,9 +183,12 @@ public class SearchModule extends Module implements PacketListener {
     if(this.new_chunks.size() > 0) {
       Minecraft mc = Minecraft.getMinecraft();
       if(mc.world == null) return;
+      IChunkProvider provider = mc.world.getChunkProvider();
+      if(provider == null) return;
+
       for(int i = 0; i < this.new_chunks.size(); i ++) {
         ChunkPos position = this.new_chunks.get(i);
-        Chunk c = mc.world.getChunkProvider().getLoadedChunk(position.x, position.z);
+        Chunk c = provider.getLoadedChunk(position.x, position.z);
         if(c != null) {
           this.searchChunk(c);
           this.new_chunks.remove(i);
@@ -242,7 +246,7 @@ public class SearchModule extends Module implements PacketListener {
 
       for(BlockPos position : this.targets.keySet()) {
         AxisAlignedBB bb = mc.world.getBlockState(position).getSelectedBoundingBox(mc.world, position).grow(0.0020000000949949026D).offset(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ);
-        
+
         Property p = this.targets.get(position);
         if(p.tracer) {
           tracers.add(new Target(position, p));

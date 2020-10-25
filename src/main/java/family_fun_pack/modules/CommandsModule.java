@@ -23,6 +23,10 @@ public class CommandsModule extends Module {
     this.commands = new Commands();
   }
 
+  public Command getCommand(String name) {
+    return this.commands.getCommand(name);
+  }
+
   protected void enable() {
     MinecraftForge.EVENT_BUS.register(this);
   }

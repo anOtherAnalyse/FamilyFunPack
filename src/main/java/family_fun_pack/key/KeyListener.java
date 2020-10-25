@@ -60,6 +60,7 @@ public class KeyListener {
           Module m = this.actions.get(i);
           m.toggle();
           m.save(FamilyFunPack.getModules().getConfiguration());
+          FamilyFunPack.getModules().getConfiguration().save();
           return;
         }
       }

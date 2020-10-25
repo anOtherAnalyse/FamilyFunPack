@@ -16,6 +16,9 @@ public class Modules {
   private Configuration configuration;
 
   public Modules(File configuration_file) {
+
+    this.configuration = new Configuration(configuration_file);
+
     this.modules = new ArrayList<Module>();
     this.modules.add(new CommandsModule());
     this.modules.add(new PacketInterceptionModule());
@@ -25,7 +28,7 @@ public class Modules {
     this.modules.add(new NoCloseModule());
     this.modules.add(new StalkModule());
     this.modules.add(new TrueDurabilityModule());
-    this.configuration = new Configuration(configuration_file);
+
     this.load();
   }
 
