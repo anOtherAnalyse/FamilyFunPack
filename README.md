@@ -60,5 +60,29 @@ Few commands, use them in chat (Command module must be enabled):
 ##### Disconnect from server
 ```.disconnect```
 
-##### Open inventory from ride
+##### Open mount inventory
 ```.open```
+
+##### Use entity from unloaded chunk
+While standing near an unloaded chunk, be able to load it and use an entity (minecraft, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
+
+How it works (actions performed sequentially):
+ - drop one dirt on floor
+ - use / break a block from unloaded chunk to load the chunk and its entities.
+ - drop one cobblestone on floor
+ - After receiving from server the entities ids of the dirt & cobblestone items: try to use every entity id between the dirt id and the cooblestone id (guess the target entity id).
+ - If everything worked correctly your action was performed, then the chunk will unload. For example if you tried to mount a horse you can then use the ```.open``` command to open its inventory (dupe ?).
+
+Set up command: register the block to be used to load the chunk (it has to be a block in the unloaded chunk):  
+```.ldride reg```
+
+Check the registered block:  
+```.ldride get```
+
+Actual command: load the chunk, guess entity id & use the entity:  
+```.ldride exe [break] [nb_tries]```
+
+You need at least one dirt & cobblestone item in your inventory to use the ```.ldride exe``` command.
+
+Specify ```break``` if you want to send a break packet instead of a use packet, to load the chunk.  
+```nb_tries``` is a number, the maximum number of entity ids to try. This is used to limit the packet spam if the gap between dirt id & cobblestone id is too big. Default is 15, maximum 15 use entity packets sent.

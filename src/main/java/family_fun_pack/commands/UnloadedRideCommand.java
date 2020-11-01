@@ -204,7 +204,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
           }
 
           // Try to open donkey inventory
-          ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("open").execute(new String[0]);
+          // ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("open").execute(new String[0]);
         }
       }
     } else { // SPacketSetPassengers
