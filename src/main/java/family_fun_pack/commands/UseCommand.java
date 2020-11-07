@@ -1,6 +1,7 @@
 package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.util.EnumFacing;
@@ -21,16 +22,17 @@ public class UseCommand extends Command {
   }
 
   public String usage() {
-    return this.getName() + " <entity_id> | <block_x> <block_y> <block_z>";
+    return this.getName() + " ([sneak] <entity_id> | <block_x> <block_y> <block_z>)";
   }
 
   public String execute(String[] args) {
+    Minecraft mc = Minecraft.getMinecraft();
     if(args.length > 3) {
       try {
         int x = Integer.parseInt(args[1]);
         int y = Integer.parseInt(args[2]);
         int z = Integer.parseInt(args[3]);
-        Vec3d look = Minecraft.getMinecraft().player.getLookVec();
+        Vec3d look = mc.player.getLookVec();
         CPacketPlayerTryUseItemOnBlock packet = new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z);
         FamilyFunPack.getNetworkHandler().sendPacket(packet);
         return "Using block (" + Integer.toString(x) + ", " + Integer.toString(y) + ", " + Integer.toString(z) + ")";
@@ -39,9 +41,16 @@ public class UseCommand extends Command {
       }
     } else if(args.length > 1) {
       try {
-        int id = Integer.parseInt(args[1]);
-        CPacketUseEntity packet = new CPacketUseEntity(new EntityVoid(Minecraft.getMinecraft().world, id), EnumHand.MAIN_HAND);
-        FamilyFunPack.getNetworkHandler().sendPacket(packet);
+        int i = 1;
+        boolean sneak = false;
+        if(args[i].equals("sneak")) {
+          sneak = true;
+          i += 1;
+        }
+        int id = Integer.parseInt(args[i]);
+        if(sneak)
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id), EnumHand.MAIN_HAND));
         return "Using entity " + Integer.toString(id);
       } catch(NumberFormatException e) {
         return "Entity id must be an integer";

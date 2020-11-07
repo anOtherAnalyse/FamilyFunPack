@@ -2,15 +2,20 @@ package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.AbstractHorse;
+import net.minecraft.entity.passive.EntityDonkey;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketClickWindow;
+import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.server.SPacketConfirmTransaction;
+import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.inventory.ClickType;
+import net.minecraft.inventory.ContainerHorseChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -20,6 +25,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -59,15 +65,11 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   }
 
   private int saved_id;
-
   private int[] limits;
-
   private int[] slots;
-
   private int max_tries;
-
   private boolean success;
-
+  private boolean sneak_use;
   private BlockPos target;
 
   public UnloadedRideCommand() {
@@ -78,7 +80,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName() + " <reg|exe|get> [break] [nb_tries]";
+    return this.getName() + " <reg|exe|get> [break] [sneak] [nb_tries]";
   }
 
   public String execute(String[] args) {
@@ -113,9 +115,11 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
         this.max_tries = UnloadedRideCommand.MAX_TRIES;
         boolean to_break = false;
+        this.sneak_use = false;
 
         for(int i = 2; i < args.length; i ++) {
           if(args[i].equals("break")) to_break = true;
+          else if(args[i].equals("sneak")) this.sneak_use = true;
           else {
             try {
               this.max_tries = Integer.parseInt(args[i]);
@@ -156,7 +160,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   }
 
   public void onDisconnect() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 0, 17);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 0, 17, 19);
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
@@ -196,6 +200,11 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           FamilyFunPack.printMessage("Entity id from " + Integer.toString(start) + " to " + Integer.toString(stop - 1));
 
+          if(this.sneak_use) {
+            FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
+            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
+          }
+
           for(int i = start; i < stop; i ++) {
             FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, i), EnumHand.MAIN_HAND));
           }
@@ -203,6 +212,34 @@ public class UnloadedRideCommand extends Command implements PacketListener {
           // Try to open donkey inventory - Yes you can / could dupe with this command
           // ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("open").execute(new String[0]);
         }
+      }
+    } else { // SPacketOpenWindow
+      SPacketOpenWindow open = (SPacketOpenWindow) packet;
+
+      // Unregister in any case, don't keep listening
+      FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 19);
+
+      if("EntityHorse".equals(open.getGuiId())) {
+        Minecraft mc = Minecraft.getMinecraft();
+
+        int entity_id = open.getEntityId();
+        Entity entity = mc.world.getEntityByID(entity_id);
+
+        if(entity == null) { // desync between client & server, let's assume it's a donkey
+          EntityDonkey fake = new EntityDonkey(mc.world);
+          fake.setHorseSaddled(true);
+          fake.setChested(true); // everything we need
+
+          mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle(), open.getSlotCount()));
+          mc.player.openContainer.windowId = open.getWindowId();
+        } else if(entity instanceof AbstractHorse) {
+          AbstractHorse horse = (AbstractHorse) entity;
+
+          mc.player.openGuiHorseInventory(horse, new ContainerHorseChest(open.getWindowTitle(), open.getSlotCount()));
+          mc.player.openContainer.windowId = open.getWindowId();
+        } else FamilyFunPack.printMessage(TextFormatting.DARK_RED + "Error:" + TextFormatting.RESET + " Server gave us the inventory of an entity which is not an AbstractHorse");
+
+        return null;
       }
     }
     return packet;

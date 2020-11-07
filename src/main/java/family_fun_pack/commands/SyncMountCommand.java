@@ -36,6 +36,10 @@ public class SyncMountCommand extends Command implements PacketListener {
     return null;
   }
 
+  public void onDisconnect() {
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41);
+  }
+
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41);
 
