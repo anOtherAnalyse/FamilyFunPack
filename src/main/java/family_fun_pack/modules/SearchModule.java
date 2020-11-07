@@ -264,7 +264,7 @@ public class SearchModule extends Module implements PacketListener {
         }
       }
 
-    } catch (ConcurrentModificationException e) {}
+    } catch (ConcurrentModificationException e) {} // TODO: Fix me with locks
 
     GL11.glDisable(GL11.GL_LINE_SMOOTH);
     GlStateManager.depthMask(true);

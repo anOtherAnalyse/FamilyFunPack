@@ -61,7 +61,8 @@ Few commands, use them in chat (Command module must be enabled):
 ```.disconnect```
 
 ##### Open mount inventory
-```.open```
+```.open```  
+Will create a ghost donkey if your mount does not exist client side (server desync).
 
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecraft, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.

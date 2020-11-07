@@ -9,7 +9,6 @@ import net.minecraft.network.play.client.CPacketPlayerDigging;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.server.SPacketConfirmTransaction;
-import net.minecraft.network.play.server.SPacketSetPassengers;
 import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Slot;
@@ -157,7 +156,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   }
 
   public void onDisconnect() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 0, 17, 67);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 0, 17);
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
@@ -197,29 +196,13 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           FamilyFunPack.printMessage("Entity id from " + Integer.toString(start) + " to " + Integer.toString(stop - 1));
 
-          FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 67);
-
           for(int i = start; i < stop; i ++) {
             FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, i), EnumHand.MAIN_HAND));
           }
 
-          // Try to open donkey inventory
+          // Try to open donkey inventory - Yes you can / could dupe with this command
           // ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("open").execute(new String[0]);
         }
-      }
-    } else { // SPacketSetPassengers
-      FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 67);
-
-      SPacketSetPassengers passenger = (SPacketSetPassengers) packet;
-      Minecraft mc = Minecraft.getMinecraft();
-      Entity ride = mc.player.getRidingEntity();
-      if(ride != null && ride.getEntityId() == passenger.getEntityId()) {
-        for(int i : passenger.getPassengerIds()) {
-          if(i == mc.player.getEntityId()) return packet;
-        }
-        mc.player.dismountRidingEntity();
-        mc.player.setPosition(ride.posX, ride.posY, ride.posZ); // set position so we don't fall on unloaded chunk
-        return null;
       }
     }
     return packet;

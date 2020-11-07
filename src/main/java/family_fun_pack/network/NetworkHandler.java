@@ -16,8 +16,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.LinkedList;
 
 import family_fun_pack.FamilyFunPack;
 
@@ -27,6 +29,8 @@ public class NetworkHandler {
   private boolean isConnected;
   private NetworkManager networkManager;
 
+  private ReadWriteLock[] outbound_lock;
+  private ReadWriteLock[] inbound_lock;
   private List<PacketListener>[] outbound_listeners;
   private List<PacketListener>[] inbound_listeners;
 
@@ -34,45 +38,123 @@ public class NetworkHandler {
     this.isConnected = false;
     this.networkManager = null;
     this.outbound_listeners = new List[33];
+    this.outbound_lock = new ReadWriteLock[33];
+
+    for(int i = 0; i < 33; i ++) {
+      this.outbound_lock[i] = new ReentrantReadWriteLock();
+    }
+
     this.inbound_listeners = new List[80];
+    this.inbound_lock = new ReadWriteLock[80];
+
+    for(int i = 0; i < 80; i ++) {
+      this.inbound_lock[i] = new ReentrantReadWriteLock();
+    }
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf buf) {
-    List<PacketListener>[] listeners = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_listeners : this.outbound_listeners);
-    if(listeners[id] == null) return packet;
-    try {
-      for(PacketListener listener : listeners[id]) {
-        if((packet = listener.packetReceived(direction, id, packet, buf)) == null) return null;
-      }
-    } catch (java.util.ConcurrentModificationException e) { // TO FIX with mutex
+    List<PacketListener> listeners;
+    ReadWriteLock lock;
 
+    if(direction == EnumPacketDirection.CLIENTBOUND) {
+      listeners = this.inbound_listeners[id];
+      lock = this.inbound_lock[id];
+    } else {
+      listeners = this.outbound_listeners[id];
+      lock = this.outbound_lock[id];
     }
+
+    if(listeners != null) {
+
+      lock.readLock().lock();
+      int size = listeners.size(); // Get starting size, we assume that a listener can unregister itself & only itself
+      lock.readLock().unlock();
+
+      for(int i = 0; i < size; i ++) {
+        lock.readLock().lock();
+        PacketListener l = listeners.get(i - (size - listeners.size()));
+        lock.readLock().unlock();
+
+        if((packet = l.packetReceived(direction, id, packet, buf)) == null) return null;
+      }
+    }
+
     return packet;
   }
 
   public void registerListener(EnumPacketDirection direction, PacketListener listener, int ... ids) {
-    List<PacketListener>[] listeners = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_listeners : this.outbound_listeners);
+    List<PacketListener>[] listeners;
+    ReadWriteLock[] locks;
+
+    if(direction == EnumPacketDirection.CLIENTBOUND) {
+      listeners = this.inbound_listeners;
+      locks = this.inbound_lock;
+    } else {
+      listeners = this.outbound_listeners;
+      locks = this.outbound_lock;
+    }
+
     for(int id : ids) {
-      if(listeners[id] == null) listeners[id] = new LinkedList<PacketListener>();
-      listeners[id].add(listener);
+      try {
+        locks[id].writeLock().lock();
+
+        if(listeners[id] == null) listeners[id] = new ArrayList<PacketListener>();
+        if(! listeners[id].contains(listener)) { // Not twice
+          listeners[id].add(listener);
+        }
+      } finally {
+        locks[id].writeLock().unlock();
+      }
     }
   }
 
   public void unregisterListener(EnumPacketDirection direction, PacketListener listener) {
-    List<PacketListener>[] listeners = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_listeners : this.outbound_listeners);
+    List<PacketListener>[] listeners;
+    ReadWriteLock[] locks;
+
+    if(direction == EnumPacketDirection.CLIENTBOUND) {
+      listeners = this.inbound_listeners;
+      locks = this.inbound_lock;
+    } else {
+      listeners = this.outbound_listeners;
+      locks = this.outbound_lock;
+    }
+
     for(int i = 0; i < listeners.length; i ++) {
-      if(listeners[i] == null) continue;
-      listeners[i].remove(listener);
-      if(listeners[i].size() == 0) listeners[i] = null;
+      try {
+        locks[i].writeLock().lock();
+        if(listeners[i] != null) {
+          listeners[i].remove(listener);
+          if(listeners[i].size() == 0) listeners[i] = null;
+        }
+      } finally {
+        locks[i].writeLock().unlock();
+      }
     }
   }
 
   public void unregisterListener(EnumPacketDirection direction, PacketListener listener, int ... ids) {
-    List<PacketListener>[] listeners = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_listeners : this.outbound_listeners);
+    List<PacketListener>[] listeners;
+    ReadWriteLock[] locks;
+
+    if(direction == EnumPacketDirection.CLIENTBOUND) {
+      listeners = this.inbound_listeners;
+      locks = this.inbound_lock;
+    } else {
+      listeners = this.outbound_listeners;
+      locks = this.outbound_lock;
+    }
+
     for(int id : ids) {
-      if(listeners[id] == null) return;
-      listeners[id].remove(listener);
-      if(listeners[id].size() == 0) listeners[id] = null;
+      try {
+        locks[id].writeLock().lock();
+        if(listeners[id] != null) {
+          listeners[id].remove(listener);
+          if(listeners[id].size() == 0) listeners[id] = null;
+        }
+      } finally {
+        locks[id].writeLock().unlock();
+      }
     }
   }
 

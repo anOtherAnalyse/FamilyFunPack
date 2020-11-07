@@ -24,6 +24,7 @@ public class Commands {
     this.registerCommand(new StalkCommand());
     this.registerCommand(new OpenDonkeyCommand());
     this.registerCommand(new DisconnectCommand());
+    this.registerCommand(new SyncMountCommand());
   }
 
   public void registerCommand(Command cmd) {
