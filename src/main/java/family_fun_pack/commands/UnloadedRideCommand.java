@@ -2,10 +2,14 @@ package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.AbstractChestHorse;
 import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.passive.EntityDonkey;
+import net.minecraft.entity.passive.EntityLlama;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.play.client.CPacketClickWindow;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
@@ -225,10 +229,19 @@ public class UnloadedRideCommand extends Command implements PacketListener {
         int entity_id = open.getEntityId();
         Entity entity = mc.world.getEntityByID(entity_id);
 
-        if(entity == null) { // desync between client & server, let's assume it's a donkey
-          EntityDonkey fake = new EntityDonkey(mc.world);
-          fake.setHorseSaddled(true);
-          fake.setChested(true); // everything we need
+        if(entity == null) { // desync between client & server
+
+          AbstractChestHorse fake = null;
+
+          if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama ?
+            fake = new EntityLlama(mc.world);
+            fake.setChested(true);
+            fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
+          } else { // donkey ?
+            fake = new EntityDonkey(mc.world);
+            fake.setHorseSaddled(true);
+            fake.setChested(true); // everything we need
+          }
 
           mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle(), open.getSlotCount()));
           mc.player.openContainer.windowId = open.getWindowId();
