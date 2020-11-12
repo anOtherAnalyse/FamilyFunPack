@@ -65,7 +65,7 @@ Few commands, use them in chat (Command module must be enabled):
 Will create a ghost donkey if your mount does not exist client side (server desync).
 
 ##### Use entity from unloaded chunk
-While standing near an unloaded chunk, be able to load it and use an entity (minecraft, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
+While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
 
 How it works (actions performed sequentially):
  - drop one dirt on floor
@@ -74,7 +74,7 @@ How it works (actions performed sequentially):
  - After receiving from server the entities ids of the dirt & cobblestone items: try to use every entity id between the dirt id and the cooblestone id (guess the target entity id).
  - If everything worked correctly your action was performed, then the chunk will unload. For example if you tried to mount a horse you can then use the ```.open``` command to open its inventory (dupe ?).
 
-Set up command: register the block to be used to load the chunk (it has to be a block in the unloaded chunk):  
+Set up command: register the block to be used to load the chunk (it has to be a block in the [future] unloaded chunk):  
 ```.ldride reg```
 
 Check the registered block:  
