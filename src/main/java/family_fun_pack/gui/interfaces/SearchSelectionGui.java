@@ -1,6 +1,7 @@
 package family_fun_pack.gui.interfaces;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiLabel;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -21,6 +23,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+import org.lwjgl.input.Mouse;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ColorButton;
@@ -34,7 +37,7 @@ import family_fun_pack.modules.SearchModule;
 @SideOnly(Side.CLIENT)
 public class SearchSelectionGui extends RightPanel {
 
-  private static final int INNER_BORDER = 0xff000022;
+  private static final int INNER_BORDER = 0xffeeeeee;
 
   private static final int guiWidth = 268;
   private static final int guiHeight = 200;
@@ -92,13 +95,13 @@ public class SearchSelectionGui extends RightPanel {
 
       OnOffButton tracer = new OnOffButton(i, 0, 0, new OnOffTracer(block_id, (SearchModule) this.dependence));
       tracer.x = ((((int)((float)chart_width * 0.143f)) - tracer.width) / 2) + (int)((float)chart_width * 0.714f) + this.x + 4;
-      if(search_state) tracer.setState(((SearchModule) this.dependence).getTracerState(block_id));
-      else tracer.enabled = false;
+      tracer.setState(((SearchModule) this.dependence).getTracerState(block_id));
+      if(! search_state) tracer.enabled = false;
 
       ColorButton color = new ColorButton(0, 0, block_id, (SearchModule) this.dependence);
       color.x = ((((int)((float)chart_width * 0.143f)) - color.width) / 2) + (int)((float)chart_width * 0.857f) + this.x + 4;
-      if(search_state) color.setColor(((SearchModule) this.dependence).getColor(block_id));
-      else color.enabled = false;
+      color.setColor(((SearchModule) this.dependence).getColor(block_id));
+      if(! search_state) color.enabled = false;
 
       OnOffButton search = new OnOffButton(i, 0, 0, new OnOffSearch(block_id, (SearchModule) this.dependence, tracer, color));
       search.x = ((((int)((float)chart_width * 0.143f)) - search.width) / 2) + (int)((float)chart_width * 0.571f) + this.x + 4;
@@ -167,7 +170,7 @@ public class SearchSelectionGui extends RightPanel {
     Gui.drawRect(this.x + 4, y - 1, chart_end, y, SearchSelectionGui.INNER_BORDER);
     for(int i = this.scroll.current_scroll; i < scroll_end; i ++) {
       // Draw block
-      this.displayBlockGui(this.x + 4, y, this.blocks.get(i));
+      this.displayBlockFlat(this.x + 4, y, this.blocks.get(i));
 
       // Draw label
       GlStateManager.pushMatrix();
@@ -209,23 +212,18 @@ public class SearchSelectionGui extends RightPanel {
     Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
   }
 
-  public void displayBlockGui(int x, int y, Block block) {
-    Minecraft mc = Minecraft.getMinecraft();
-    ItemStack stack = new ItemStack(block);
-
-    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-    RenderHelper.enableGUIStandardItemLighting();
-
-    this.itemRender.renderItemAndEffectIntoGUI(mc.player, stack, x, y);
-    this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, stack, x, y, null);
-  }
-
   public void displayBlockFlat(int x, int y, Block block) {
+    IBlockState state = block.getDefaultState();
+    if(state.getRenderType() == EnumBlockRenderType.INVISIBLE) return;
+
     Minecraft mc = Minecraft.getMinecraft();
     ItemStack stack = new ItemStack(block);
 
-    IBakedModel model = mc.getBlockRendererDispatcher().getModelForState(block.getDefaultState());
-    // IBakedModel model = this.itemRender.getItemModelWithOverrides(stack, null, mc.player);
+    IBakedModel model = mc.getBlockRendererDispatcher().getModelForState(state);
+    if(model == null || model == mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel()) {
+      //model = mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getModel(new ModelResourceLocation(Block.REGISTRY.getNameForObject(block).getResourcePath(), "inventory"));
+      model = this.itemRender.getItemModelWithOverrides(stack, null, mc.player);
+    }
 
     GlStateManager.pushMatrix();
     mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
@@ -239,29 +237,31 @@ public class SearchSelectionGui extends RightPanel {
 
     RenderHelper.enableGUIStandardItemLighting();
 
-    GlStateManager.translate(x, y, 100.0F);
+    GlStateManager.translate(x, y, 150.0F);
     GlStateManager.translate(8.0F, 8.0F, 0.0F);
     GlStateManager.scale(1.0F, -1.0F, 1.0F);
     GlStateManager.scale(16.0F, 16.0F, 16.0F);
 
-    /// if (model.isGui3d()) {
-    //  GlStateManager.enableLighting();
-    //} else {
     GlStateManager.disableLighting();
-    //}
 
     GlStateManager.pushMatrix();
     GlStateManager.translate(-0.5F, -0.5F, -0.5F);
 
-    Tessellator tessellator = Tessellator.getInstance();
-    BufferBuilder bufferbuilder = tessellator.getBuffer();
-    bufferbuilder.begin(7, DefaultVertexFormats.ITEM);
-    for (EnumFacing enumfacing : EnumFacing.values())
-    {
-      this.itemRender.renderQuads(bufferbuilder, model.getQuads(null, enumfacing, 0L), -1, stack);
+    if(model.isBuiltInRenderer()) {
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.enableRescaleNormal();
+      stack.getItem().getTileEntityItemStackRenderer().renderByItem(stack);
+    } else {
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder bufferbuilder = tessellator.getBuffer();
+      bufferbuilder.begin(7, DefaultVertexFormats.ITEM);
+      for (EnumFacing enumfacing : EnumFacing.values())
+      {
+        this.itemRender.renderQuads(bufferbuilder, model.getQuads(state, enumfacing, 4242L), -1, stack);
+      }
+      this.itemRender.renderQuads(bufferbuilder, model.getQuads(state, null, 4242L), -1, stack);
+      tessellator.draw();
     }
-    this.itemRender.renderQuads(bufferbuilder, model.getQuads(null, null, 0L), -1, stack);
-    tessellator.draw();
 
     GlStateManager.popMatrix();
 
@@ -279,20 +279,18 @@ public class SearchSelectionGui extends RightPanel {
         OnOffButton search = this.search.get(i);
         if(search.mousePressed(this.mc, mouseX, mouseY)) {
           search.onClick(this);
+          search.playPressSound(this.mc.getSoundHandler());
           return;
         }
 
         OnOffButton tracer = this.tracers.get(i);
         if(tracer.mousePressed(this.mc, mouseX, mouseY)) {
           tracer.onClick(this);
+          tracer.playPressSound(this.mc.getSoundHandler());
           return;
         }
 
-        ColorButton color = this.colors.get(i);
-        if(color.mousePressed(this.mc, mouseX, mouseY)) {
-          color.onClick(this);
-          return;
-        }
+        this.colors.get(i).mousePressed(this.mc, mouseX, mouseY);
       }
       this.selection.mouseClicked(mouseX, mouseY, mouseButton);
       super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -302,6 +300,10 @@ public class SearchSelectionGui extends RightPanel {
   public void mouseReleased(int mouseX, int mouseY, int state) {
     if(state == 0) {
       this.scroll.mouseReleased(mouseX, mouseY);
+
+      for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
+        this.colors.get(i).mouseReleased(mouseX, mouseY);
+      }
     }
   }
 
@@ -317,5 +319,4 @@ public class SearchSelectionGui extends RightPanel {
       this.searchBlocks(keyword);
     }
   }
-
 }

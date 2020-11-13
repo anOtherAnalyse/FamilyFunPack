@@ -59,7 +59,7 @@ public class KeyListener {
         if(this.keys.get(i).isPressed()) {
           Module m = this.actions.get(i);
           m.toggle();
-          m.save(FamilyFunPack.getModules().getConfiguration());
+          m.save_state(FamilyFunPack.getModules().getConfiguration());
           FamilyFunPack.getModules().getConfiguration().save();
           return;
         }

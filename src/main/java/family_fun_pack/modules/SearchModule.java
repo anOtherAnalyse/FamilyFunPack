@@ -41,7 +41,8 @@ import java.lang.IllegalAccessException;
 import java.lang.NoSuchMethodException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ConcurrentModificationException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
@@ -90,7 +91,10 @@ public class SearchModule extends Module implements PacketListener {
     GlStateManager.popMatrix();
   }
 
+  private ReadWriteLock search_lock;
   private Map<Block, Property> to_search;
+
+  private ReadWriteLock targets_lock;
   private Map<BlockPos, Property> targets;
 
   private List<ChunkPos> new_chunks;
@@ -102,7 +106,9 @@ public class SearchModule extends Module implements PacketListener {
   public SearchModule() {
     super("Search", "Search for blocks");
     this.to_search = new HashMap<Block, Property>();
+    this.search_lock = new ReentrantReadWriteLock();
     this.targets = new HashMap<BlockPos, Property>();
+    this.targets_lock = new ReentrantReadWriteLock();
     this.new_chunks = new ArrayList<ChunkPos>();
     this.camera = new Frustum();
 
@@ -134,20 +140,26 @@ public class SearchModule extends Module implements PacketListener {
   }
 
   public void onDisconnect() {
+    this.targets_lock.writeLock().lock();
     this.targets.clear();
+    this.targets_lock.writeLock().unlock();
     this.new_chunks.clear();
   }
 
   public void save(Configuration configuration) {
     for(Block b : Block.REGISTRY) {
       int id = Block.getIdFromBlock(b);
+
+      this.search_lock.readLock().lock();
       Property p = this.to_search.get(b);
+      this.search_lock.readLock().unlock();
+
       if(p == null) {
         configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
       } else {
         configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
         configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(p.tracer);
-        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.COLORS[0]).set(p.color);
+        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(p.color);
       }
     }
     super.save(configuration);
@@ -159,8 +171,11 @@ public class SearchModule extends Module implements PacketListener {
       boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
       if(search) {
         boolean tracer = configuration.get(this.name, "tracer_" + Integer.toString(id), false).getBoolean();
-        int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.COLORS[0]).getInt();
+        int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).getInt();
+
+        this.search_lock.writeLock().lock();
         this.to_search.put(b, new Property(tracer, color));
+        this.search_lock.writeLock().unlock();
       }
     }
     super.load(configuration);
@@ -169,6 +184,8 @@ public class SearchModule extends Module implements PacketListener {
   @SubscribeEvent
   public void onUnLoad(ChunkEvent.Unload event) {
     int x = event.getChunk().x, z = event.getChunk().z;
+
+    this.targets_lock.readLock().lock();
     Iterator<BlockPos> iterator = this.targets.keySet().iterator();
     while(iterator.hasNext()) {
       BlockPos position = iterator.next();
@@ -176,6 +193,7 @@ public class SearchModule extends Module implements PacketListener {
         iterator.remove();
       }
     }
+    this.targets_lock.readLock().unlock();
   }
 
   @SubscribeEvent
@@ -204,16 +222,28 @@ public class SearchModule extends Module implements PacketListener {
       this.new_chunks.add(new ChunkPos(chunk.getChunkX(), chunk.getChunkZ()));
     } else if(id == 11) {
       SPacketBlockChange change = (SPacketBlockChange) packet;
+
+      this.search_lock.readLock().lock();
       Property p = this.to_search.get(change.getBlockState().getBlock());
+      this.search_lock.readLock().unlock();
+
+      this.targets_lock.writeLock().lock();
       if(p != null) {
         this.targets.put(change.getBlockPosition(), p);
       } else this.targets.remove(change.getBlockPosition());
+      this.targets_lock.writeLock().unlock();
     } else {
       SPacketMultiBlockChange change = (SPacketMultiBlockChange) packet;
       for(SPacketMultiBlockChange.BlockUpdateData up : change.getChangedBlocks()) {
+
+        this.search_lock.readLock().lock();
         Property p = this.to_search.get(up.getBlockState().getBlock());
+        this.search_lock.readLock().unlock();
+
+        this.targets_lock.writeLock().lock();
         if(p != null) this.targets.put(up.getPos(), p);
         else this.targets.remove(up.getPos());
+        this.targets_lock.writeLock().unlock();
       }
     }
     return packet;
@@ -242,29 +272,27 @@ public class SearchModule extends Module implements PacketListener {
 
     List<Target> tracers = new LinkedList<Target>();
 
-    try {
+    this.targets_lock.readLock().lock();
+    for(BlockPos position : this.targets.keySet()) {
+      AxisAlignedBB bb = mc.world.getBlockState(position).getSelectedBoundingBox(mc.world, position).grow(0.0020000000949949026D).offset(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ);
 
-      for(BlockPos position : this.targets.keySet()) {
-        AxisAlignedBB bb = mc.world.getBlockState(position).getSelectedBoundingBox(mc.world, position).grow(0.0020000000949949026D).offset(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ);
-
-        Property p = this.targets.get(position);
-        if(p.tracer) {
-          tracers.add(new Target(position, p));
-        }
-
-        this.camera.setPosition(0d, 0d, 0d);
-        if (camera.isBoundingBoxInFrustum(bb)) {
-
-            float red = ((float)((p.color >> 16) & 255)) / 255f;
-            float blue = ((float)((p.color >> 8) & 255)) / 255f;
-            float green = ((float)(p.color & 255)) / 255f;
-
-            RenderGlobal.drawBoundingBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.65f);
-            RenderGlobal.renderFilledBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.5f);
-        }
+      Property p = this.targets.get(position);
+      if(p.tracer) {
+        tracers.add(new Target(position, p));
       }
 
-    } catch (ConcurrentModificationException e) {} // TODO: Fix me with locks
+      this.camera.setPosition(0d, 0d, 0d);
+      if (camera.isBoundingBoxInFrustum(bb)) {
+
+          float red = ((float)((p.color >> 16) & 255)) / 255f;
+          float blue = ((float)((p.color >> 8) & 255)) / 255f;
+          float green = ((float)(p.color & 255)) / 255f;
+
+          RenderGlobal.drawBoundingBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.65f);
+          RenderGlobal.renderFilledBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.5f);
+      }
+    }
+    this.targets_lock.readLock().unlock();
 
     GL11.glDisable(GL11.GL_LINE_SMOOTH);
     GlStateManager.depthMask(true);
@@ -302,7 +330,10 @@ public class SearchModule extends Module implements PacketListener {
     Minecraft mc = Minecraft.getMinecraft();
     if(mc.world == null) return;
 
+    this.targets_lock.writeLock().lock();
     this.targets.clear();
+    this.targets_lock.writeLock().unlock();
+
     int x = (int)mc.getRenderViewEntity().posX >> 4, z = (int)mc.getRenderViewEntity().posZ >> 4;
     for(int i = x - mc.gameSettings.renderDistanceChunks; i <= x + mc.gameSettings.renderDistanceChunks; i ++) {
       for(int j = z - mc.gameSettings.renderDistanceChunks; j <= z + mc.gameSettings.renderDistanceChunks; j ++) {
@@ -322,10 +353,16 @@ public class SearchModule extends Module implements PacketListener {
       for(int i = 0; i < 16; i ++) {
         for(int j = 0; j < 16; j ++) {
           for(int k = 0; k < 16; k ++) {
+
+            this.search_lock.readLock().lock();
             Property p = this.to_search.get(storage.get(i, j, k).getBlock());
+            this.search_lock.readLock().unlock();
+
             if(p != null) {
               BlockPos position = new BlockPos((chunk.x << 4) + i, (m << 4) + j, (chunk.z << 4) + k);
+              this.targets_lock.writeLock().lock();
               this.targets.put(position, p);
+              this.targets_lock.writeLock().unlock();
             }
           }
         }
@@ -335,25 +372,38 @@ public class SearchModule extends Module implements PacketListener {
 
   public void setSearchState(int block_id, boolean state, boolean tracer, int color) {
     Block block = Block.getBlockById(block_id);
+
+    this.search_lock.writeLock().lock();
     if(state) {
       this.to_search.put(block, new Property(tracer, color));
     } else {
+      Property p = this.to_search.get(block);
+      if(p != null) {
+        FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).set(p.tracer);
+        FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).set(p.color);
+      }
       this.to_search.remove(block);
     }
+    this.search_lock.writeLock().unlock();
+
     if(this.isEnabled()) this.resetTargets();
   }
 
   public void setTracerState(int block_id, boolean state) {
     Block block = Block.getBlockById(block_id);
+    this.search_lock.readLock().lock();
     Property p = this.to_search.get(block);
+    this.search_lock.readLock().unlock();
     if(p != null) {
       p.tracer = state;
     }
   }
 
-  public void setSearchSColor(int block_id, int color) {
+  public void setSearchColor(int block_id, int color) {
     Block block = Block.getBlockById(block_id);
+    this.search_lock.readLock().lock();
     Property p = this.to_search.get(block);
+    this.search_lock.readLock().unlock();
     if(p != null) {
       p.color = color;
     }
@@ -361,21 +411,28 @@ public class SearchModule extends Module implements PacketListener {
 
   public boolean getSearchState(int block_id) {
     Block block = Block.getBlockById(block_id);
-    return (this.to_search.get(block) != null);
+    this.search_lock.readLock().lock();
+    boolean ret = (this.to_search.get(block) != null);
+    this.search_lock.readLock().unlock();
+    return ret;
   }
 
   public boolean getTracerState(int block_id) {
     Block block = Block.getBlockById(block_id);
+    this.search_lock.readLock().lock();
     Property p = this.to_search.get(block);
-    if(p == null) return false;
-    return p.tracer;
+    this.search_lock.readLock().unlock();
+    if(p != null) return p.tracer;
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).getBoolean();
   }
 
   public int getColor(int block_id) {
     Block block = Block.getBlockById(block_id);
+    this.search_lock.readLock().lock();
     Property p = this.to_search.get(block);
-    if(p == null) return ColorButton.COLORS[0];
-    return p.color;
+    this.search_lock.readLock().unlock();
+    if(p != null) return p.color;
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).getInt();
   }
 
   private static class Property {

@@ -160,6 +160,7 @@ public class InfoItemGui extends RightPanel {
       if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
       else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
         this.previewOpen.onClick(this.parent);
+        this.previewOpen.playPressSound(this.mc.getSoundHandler());
         return;
       }
 
@@ -207,6 +208,7 @@ public class InfoItemGui extends RightPanel {
 
           }
         } else this.current_slot = -1;
+        this.scroll.playPressSound(this.mc.getSoundHandler());
       }
     }
   }

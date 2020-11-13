@@ -98,7 +98,7 @@ public class MainGui extends GuiScreen {
     }
 
     // reset right panel
-    this.right_panel = null;
+    // this.right_panel = null;
   }
 
   public void onGuiClosed() {

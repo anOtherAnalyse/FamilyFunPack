@@ -1,6 +1,7 @@
 package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.GuiButton;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -36,6 +37,14 @@ public class ScrollBar extends GuiButton {
     this.clicked = false;
   }
 
+  public void scroll(int count) {
+    this.current_scroll += count;
+    if(this.current_scroll < 0) this.current_scroll = 0;
+    else if(this.current_scroll > this.max_scroll) this.current_scroll = this.max_scroll;
+    this.y = this.min_y + (int)(((float)this.current_scroll / (float)this.max_scroll) * (float)(this.max_y - this.min_y));
+    this.clicked = false;
+  }
+
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
     this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
   }
@@ -60,4 +69,7 @@ public class ScrollBar extends GuiButton {
   public void mouseReleased(int mouseX, int mouseY) {
     this.clicked = false;
   }
+
+  public void playPressSound(SoundHandler handler) {}
+
 }

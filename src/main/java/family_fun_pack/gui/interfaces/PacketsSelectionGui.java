@@ -107,6 +107,7 @@ public class PacketsSelectionGui extends RightPanel {
         OnOffButton current = this.enableList.get(i);
         if(current.mousePressed(this.mc, mouseX, mouseY)) {
           current.onClick(this);
+          current.playPressSound(this.mc.getSoundHandler());
           return;
         }
       }

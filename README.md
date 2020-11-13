@@ -87,3 +87,6 @@ You need at least one dirt & cobblestone item in your inventory to use the ```.l
 
 Specify ```break``` if you want to send a break packet instead of a use packet, to load the chunk.  
 ```nb_tries``` is a number, the maximum number of entity ids to try. This is used to limit the packet spam if the gap between dirt id & cobblestone id is too big. Default is 15, maximum 15 use entity packets sent.
+
+### Disclaimer
+Most of these features are based on Minecraft network stack and do not work on singleplayer.

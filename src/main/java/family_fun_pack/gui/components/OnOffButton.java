@@ -13,7 +13,7 @@ import family_fun_pack.gui.components.actions.OnOffAction;
 @SideOnly(Side.CLIENT)
 public class OnOffButton extends ActionButton {
 
-  private static final ResourceLocation on_off = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
+  private static final ResourceLocation ON_OFF = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
 
   private boolean state;
   private OnOffAction action;
@@ -40,7 +40,7 @@ public class OnOffButton extends ActionButton {
 		GlStateManager.enableAlpha();
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-    client.getTextureManager().bindTexture(OnOffButton.on_off);
+    client.getTextureManager().bindTexture(OnOffButton.ON_OFF);
     int i = 0;
     if(! this.state) i = this.height;
 

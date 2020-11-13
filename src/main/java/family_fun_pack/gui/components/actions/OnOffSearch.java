@@ -26,10 +26,6 @@ public class OnOffSearch implements OnOffAction {
   public void toggle(boolean state) {
     this.tracer.enabled = state;
     this.color.enabled = state;
-    if(! state) {
-      this.tracer.setState(false);
-      this.color.reset();
-    }
     module.setSearchState(this.block_id, state, this.tracer.getState(), this.color.getColor());
   }
 
