@@ -91,14 +91,15 @@ public class MainGui extends GuiScreen {
       button.y = y + 2;
       this.buttonList.add(button);
 
+      if(button instanceof OpenGuiButton && this.right_panel != null && ((OpenGuiButton) button).getPanel() == this.right_panel.getClass()) {
+        ((OpenGuiButton)button).setClicked();
+      }
+
       int height = button.height > this.fontRenderer.FONT_HEIGHT ? button.height + 4 : this.fontRenderer.FONT_HEIGHT + 4;
       y += height;
 
       i ++;
     }
-
-    // reset right panel
-    // this.right_panel = null;
   }
 
   public void onGuiClosed() {
@@ -108,7 +109,7 @@ public class MainGui extends GuiScreen {
   protected void actionPerformed(GuiButton button) throws IOException {
     if(button instanceof ActionButton) {
       ActionButton action = (ActionButton) button;
-      action.onClick((Gui) this);
+      action.onClick((GuiScreen) this);
     }
   }
 
@@ -172,5 +173,9 @@ public class MainGui extends GuiScreen {
     if(this.right_panel != null) {
       this.right_panel.updateScreen();
     }
+  }
+
+  public void reset() {
+    this.right_panel = null;
   }
 }

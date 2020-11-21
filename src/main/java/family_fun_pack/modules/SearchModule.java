@@ -1,6 +1,8 @@
 package family_fun_pack.modules;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -11,11 +13,14 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketBlockChange;
 import net.minecraft.network.play.server.SPacketChunkData;
 import net.minecraft.network.play.server.SPacketMultiBlockChange;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -49,6 +54,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.components.ColorButton;
@@ -92,7 +99,7 @@ public class SearchModule extends Module implements PacketListener {
   }
 
   private ReadWriteLock search_lock;
-  private Map<Block, Property> to_search;
+  private Map<Block, SearchOptions> to_search;
 
   private ReadWriteLock targets_lock;
   private Map<BlockPos, Property> targets;
@@ -105,7 +112,7 @@ public class SearchModule extends Module implements PacketListener {
 
   public SearchModule() {
     super("Search", "Search for blocks");
-    this.to_search = new HashMap<Block, Property>();
+    this.to_search = new HashMap<Block, SearchOptions>();
     this.search_lock = new ReentrantReadWriteLock();
     this.targets = new HashMap<BlockPos, Property>();
     this.targets_lock = new ReentrantReadWriteLock();
@@ -127,15 +134,19 @@ public class SearchModule extends Module implements PacketListener {
     FamilyFunPack.addModuleKey(0, this);
   }
 
+  /*
+   * Basic module actions
+   */
+
   protected void enable() {
     MinecraftForge.EVENT_BUS.register(this);
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11, 16, 32);
+    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 9, 11, 16, 32);
     this.resetTargets();
   }
 
   protected void disable() {
     MinecraftForge.EVENT_BUS.unregister(this);
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 11, 16, 32);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 9, 11, 16, 32);
     this.onDisconnect();
   }
 
@@ -146,20 +157,24 @@ public class SearchModule extends Module implements PacketListener {
     this.new_chunks.clear();
   }
 
+  /*
+   * Configurations save & load
+   */
+
   public void save(Configuration configuration) {
     for(Block b : Block.REGISTRY) {
       int id = Block.getIdFromBlock(b);
 
       this.search_lock.readLock().lock();
-      Property p = this.to_search.get(b);
+      SearchOptions opt = this.to_search.get(b);
       this.search_lock.readLock().unlock();
 
-      if(p == null) {
+      if(opt == null) {
         configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
       } else {
         configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
-        configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(p.tracer);
-        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(p.color);
+        configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(opt.default_property.tracer);
+        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(opt.default_property.color);
       }
     }
     super.save(configuration);
@@ -174,18 +189,19 @@ public class SearchModule extends Module implements PacketListener {
         int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).getInt();
 
         this.search_lock.writeLock().lock();
-        this.to_search.put(b, new Property(tracer, color));
+        this.to_search.put(b, new SearchOptions(new Property(tracer, color)));
         this.search_lock.writeLock().unlock();
       }
     }
     super.load(configuration);
   }
 
+  // Remove targets data from unloaded chunks
   @SubscribeEvent
   public void onUnLoad(ChunkEvent.Unload event) {
     int x = event.getChunk().x, z = event.getChunk().z;
 
-    this.targets_lock.readLock().lock();
+    this.targets_lock.writeLock().lock();
     Iterator<BlockPos> iterator = this.targets.keySet().iterator();
     while(iterator.hasNext()) {
       BlockPos position = iterator.next();
@@ -193,9 +209,10 @@ public class SearchModule extends Module implements PacketListener {
         iterator.remove();
       }
     }
-    this.targets_lock.readLock().unlock();
+    this.targets_lock.writeLock().unlock();
   }
 
+  // Explore new chunks for new targets
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
     if(this.new_chunks.size() > 0) {
@@ -216,16 +233,28 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  /*
+   * Network handler
+   */
+
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     if(id == 32) {
       SPacketChunkData chunk = (SPacketChunkData) packet;
       this.new_chunks.add(new ChunkPos(chunk.getChunkX(), chunk.getChunkZ()));
+    } else if(id == 9) {
+      SPacketUpdateTileEntity updt = (SPacketUpdateTileEntity) packet;
+
+      Property p = this.isTargeted(Minecraft.getMinecraft().world.getBlockState(updt.getPos()), updt.getPos(), updt.getNbtCompound());
+
+      this.targets_lock.writeLock().lock();
+      if(p != null) this.targets.put(updt.getPos(), p);
+      else this.targets.remove(updt.getPos());
+      this.targets_lock.writeLock().unlock();
+
     } else if(id == 11) {
       SPacketBlockChange change = (SPacketBlockChange) packet;
 
-      this.search_lock.readLock().lock();
-      Property p = this.to_search.get(change.getBlockState().getBlock());
-      this.search_lock.readLock().unlock();
+      Property p = this.isTargeted(change.getBlockState(), change.getBlockPosition(), null);
 
       this.targets_lock.writeLock().lock();
       if(p != null) {
@@ -236,9 +265,7 @@ public class SearchModule extends Module implements PacketListener {
       SPacketMultiBlockChange change = (SPacketMultiBlockChange) packet;
       for(SPacketMultiBlockChange.BlockUpdateData up : change.getChangedBlocks()) {
 
-        this.search_lock.readLock().lock();
-        Property p = this.to_search.get(up.getBlockState().getBlock());
-        this.search_lock.readLock().unlock();
+        Property p = this.isTargeted(up.getBlockState(), up.getPos(), null);
 
         this.targets_lock.writeLock().lock();
         if(p != null) this.targets.put(up.getPos(), p);
@@ -248,6 +275,10 @@ public class SearchModule extends Module implements PacketListener {
     }
     return packet;
   }
+
+  /*
+   * Render function
+  */
 
   @SubscribeEvent
   public void onRender(RenderWorldLastEvent event) {
@@ -326,6 +357,10 @@ public class SearchModule extends Module implements PacketListener {
     GlStateManager.enableCull();
   }
 
+  /*
+   * Global Search functions, used to reset targets data for all loaded chunks in our field of view
+  */
+
   public void resetTargets() {
     Minecraft mc = Minecraft.getMinecraft();
     if(mc.world == null) return;
@@ -353,13 +388,10 @@ public class SearchModule extends Module implements PacketListener {
       for(int i = 0; i < 16; i ++) {
         for(int j = 0; j < 16; j ++) {
           for(int k = 0; k < 16; k ++) {
-
-            this.search_lock.readLock().lock();
-            Property p = this.to_search.get(storage.get(i, j, k).getBlock());
-            this.search_lock.readLock().unlock();
+            BlockPos position = new BlockPos((chunk.x << 4) + i, (m << 4) + j, (chunk.z << 4) + k);
+            Property p =  this.isTargeted(storage.get(i, j, k), position, null);
 
             if(p != null) {
-              BlockPos position = new BlockPos((chunk.x << 4) + i, (m << 4) + j, (chunk.z << 4) + k);
               this.targets_lock.writeLock().lock();
               this.targets.put(position, p);
               this.targets_lock.writeLock().unlock();
@@ -370,15 +402,20 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  /*
+   * Basic search (per Block) setter / getter
+   */
+
   public void setSearchState(int block_id, boolean state, boolean tracer, int color) {
     Block block = Block.getBlockById(block_id);
 
     this.search_lock.writeLock().lock();
     if(state) {
-      this.to_search.put(block, new Property(tracer, color));
+      this.to_search.put(block, new SearchOptions(new Property(tracer, color)));
     } else {
-      Property p = this.to_search.get(block);
-      if(p != null) {
+      SearchOptions opt = this.to_search.get(block);
+      if(opt != null) {
+        Property p = opt.default_property;
         FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).set(p.tracer);
         FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).set(p.color);
       }
@@ -392,20 +429,20 @@ public class SearchModule extends Module implements PacketListener {
   public void setTracerState(int block_id, boolean state) {
     Block block = Block.getBlockById(block_id);
     this.search_lock.readLock().lock();
-    Property p = this.to_search.get(block);
+    SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
-    if(p != null) {
-      p.tracer = state;
+    if(opt != null) {
+      opt.default_property.tracer = state;
     }
   }
 
   public void setSearchColor(int block_id, int color) {
     Block block = Block.getBlockById(block_id);
     this.search_lock.readLock().lock();
-    Property p = this.to_search.get(block);
+    SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
-    if(p != null) {
-      p.color = color;
+    if(opt != null) {
+      opt.default_property.color = color;
     }
   }
 
@@ -420,23 +457,120 @@ public class SearchModule extends Module implements PacketListener {
   public boolean getTracerState(int block_id) {
     Block block = Block.getBlockById(block_id);
     this.search_lock.readLock().lock();
-    Property p = this.to_search.get(block);
+    SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
-    if(p != null) return p.tracer;
+    if(opt != null) return opt.default_property.tracer;
     return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).getBoolean();
   }
 
   public int getColor(int block_id) {
     Block block = Block.getBlockById(block_id);
     this.search_lock.readLock().lock();
-    Property p = this.to_search.get(block);
+    SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
-    if(p != null) return p.color;
+    if(opt != null) return opt.default_property.color;
     return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).getInt();
   }
 
-  private static class Property {
+  /*
+   * Advanced searchs setter / getter
+   */
 
+   public void addAdvancedSearch(Block block, AdvancedSearch params) {
+     this.search_lock.readLock().lock();
+     SearchOptions opt = this.to_search.get(block);
+     this.search_lock.readLock().unlock();
+
+     if(opt == null) { // TODO: Load settings from file
+       int id = Block.getIdFromBlock(block);
+       opt = new SearchOptions(new Property(this.getTracerState(id), this.getColor(id)));
+       this.search_lock.writeLock().lock();
+       this.to_search.put(block, opt);
+       this.search_lock.writeLock().unlock();
+     }
+
+     opt.addTarget(params);
+     this.resetTargets();
+   }
+
+   public int getAdvancedSearchListSize(Block block) {
+     this.search_lock.readLock().lock();
+     SearchOptions opt = this.to_search.get(block);
+     this.search_lock.readLock().unlock();
+
+     if(opt != null) {
+       int size = 0;
+       opt.targets_locks.readLock().lock();
+       if(opt.advanced_targets != null) size = opt.advanced_targets.size();
+       opt.targets_locks.readLock().unlock();
+       return size;
+     } // else TODO load from file - read length field
+
+     return 0;
+   }
+
+   public AdvancedSearch getAdvancedSearch(Block block, int index) {
+     this.search_lock.readLock().lock();
+     SearchOptions opt = this.to_search.get(block);
+     this.search_lock.readLock().unlock();
+
+     if(opt != null) {
+       AdvancedSearch out = null;
+       opt.targets_locks.readLock().lock();
+       if(index >= 0 && index < opt.advanced_targets.size()) out = opt.advanced_targets.get(index);
+       opt.targets_locks.readLock().unlock();
+       return out;
+     } // else TODO load from file
+
+     return null;
+   }
+
+  /*
+  * Data structures management functions
+  */
+
+  // Does tag contains sub ?
+  public boolean containsTag(NBTTagCompound tag, NBTTagCompound sub) {
+    for(String key : sub.getKeySet()) {
+      if(tag.getTagId(key) != sub.getTagId(key)) return false;
+      if(sub.getTagId(key) == 10) { // NBTTagCompound
+        if(! this.containsTag(tag.getCompoundTag(key), sub.getCompoundTag(key))) return false;
+      } else {
+        if(! tag.getTag(key).equals(sub.getTag(key))) return false;
+      }
+    }
+    return true;
+  }
+
+  // Which color to use for highlighting given blockstate, null if none
+  public Property isTargeted(IBlockState state, BlockPos position, NBTTagCompound updt_tag) {
+    this.search_lock.readLock().lock();
+    SearchOptions options = this.to_search.get(state.getBlock());
+    this.search_lock.readLock().unlock();
+    if(options == null) return null;
+    if(options.advanced_targets == null) return options.default_property;
+    options.targets_locks.readLock().lock();
+    for(AdvancedSearch i : options.advanced_targets) {
+      if(i.states.contains(state)) {
+        if(i.tags != null) {
+          if(updt_tag == null) {
+            TileEntity tile = Minecraft.getMinecraft().world.getTileEntity(position);
+            if(tile == null || !(this.containsTag(tile.getUpdateTag(), i.tags))) continue;
+          } else if(! (this.containsTag(updt_tag, i.tags))) continue;
+        }
+        options.targets_locks.readLock().unlock();
+        return i.property;
+      }
+    }
+    options.targets_locks.readLock().unlock();
+    return null;
+  }
+
+  /*
+  * Sub-Classes used in data structures
+  */
+
+  public static class Property {
     public boolean tracer;
     public int color;
 
@@ -453,6 +587,90 @@ public class SearchModule extends Module implements PacketListener {
     public Target(BlockPos position, Property property) {
       this.position = position;
       this.property = property;
+    }
+  }
+
+  private static class SearchOptions {
+
+    public Property default_property;
+    public List<AdvancedSearch> advanced_targets;
+    public ReadWriteLock targets_locks;
+
+    public SearchOptions(Property def) {
+      this.default_property = def;
+      this.advanced_targets = null;
+      this.targets_locks = new ReentrantReadWriteLock();
+    }
+
+    public void addTarget(AdvancedSearch target) {
+      this.targets_locks.writeLock().lock();
+      if(this.advanced_targets == null) {
+        this.advanced_targets = new LinkedList<AdvancedSearch>();
+      }
+      this.advanced_targets.add(target);
+      this.targets_locks.writeLock().unlock();
+    }
+
+  }
+
+  public static class AdvancedSearch {
+
+    public Set<IBlockState> states;
+    public NBTTagCompound tags;
+    public Property property;
+
+    public AdvancedSearch(Block block) {
+      this.states = new HashSet<IBlockState>();
+      for(IBlockState state : block.getBlockState().getValidStates()) {
+        this.states.add(state);
+      }
+      this.tags = null;
+      this.property = new Property(false, ColorButton.DEFAULT_COLOR);
+    }
+
+    public void addProperty(IProperty<?> property, Comparable<?> value) {
+      Iterator iterator = this.states.iterator();
+      while(iterator.hasNext()) {
+        IBlockState state = (IBlockState)iterator.next();
+        if(! state.getValue(property).equals(value)) {
+          iterator.remove();
+        }
+      }
+    }
+
+    private NBTTagCompound addTagCompound(String path, NBTTagCompound base) {
+      NBTTagCompound tag = new NBTTagCompound();
+      base.setTag(path, tag);
+      return tag;
+    }
+
+    private NBTTagCompound pathLoop(String[] path) {
+      if(this.tags == null) this.tags = new NBTTagCompound();
+      NBTTagCompound tag = this.tags;
+      for(int i = 0; i < path.length - 1; i ++) {
+        tag = this.addTagCompound(path[i], tag);
+      }
+      return tag;
+    }
+
+    public void addTag(String[] path, int value) {
+      NBTTagCompound base = this.pathLoop(path);
+      base.setInteger(path[path.length - 1], value);
+    }
+
+    public void addTag(String[] path, short value) {
+      NBTTagCompound base = this.pathLoop(path);
+      base.setShort(path[path.length - 1], value);
+    }
+
+    public void addTag(String[] path, byte value) {
+      NBTTagCompound base = this.pathLoop(path);
+      base.setByte(path[path.length - 1], value);
+    }
+
+    public void addTag(String[] path, String value) {
+      NBTTagCompound base = this.pathLoop(path);
+      base.setString(path[path.length - 1], value);
     }
   }
 }

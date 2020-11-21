@@ -2,6 +2,7 @@ package family_fun_pack.gui.interfaces;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -50,7 +51,7 @@ public class PacketsSelectionGui extends RightPanel {
     this.enableList = new ArrayList<OnOffButton>();
 
     GenericButton selection = new GenericButton(1, this.x + 2, this.y + 4, "Emitted") {
-      public void onClick(Gui parent) {
+      public void onClick(GuiScreen parent) {
         if(this.displayString.equals("Emitted")) this.displayString = "Received";
         else this.displayString = "Emitted";
         this.width = this.fontRenderer.getStringWidth(this.displayString) + 4;

@@ -2,6 +2,7 @@ package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -49,9 +50,9 @@ public class OnOffButton extends ActionButton {
     if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
-  public void onClick(Gui parent) {
+  public void onClick(GuiScreen parent) {
     if(! this.enabled) return;
     this.state = !this.state;
-    this.action.toggle(this.state);
+    if(this.action != null) this.action.toggle(this.state);
   }
 }

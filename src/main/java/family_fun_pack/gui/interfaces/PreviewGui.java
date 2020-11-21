@@ -36,10 +36,9 @@ public class PreviewGui extends RightPanel {
   private int x, y, x_end, y_end;
 
   private InventoryBasic inventory;
-  private RightPanel previous;
   private List<Slot> slots;
 
-  public PreviewGui(NBTTagList list, RightPanel previous) {
+  public PreviewGui(NBTTagList list) {
     super();
 
     this.inventory = new InventoryBasic(null, false, 27);
@@ -56,7 +55,6 @@ public class PreviewGui extends RightPanel {
         this.slots.add(new Slot(this.inventory, index, 8 + (index % 9) * 18, 26 + (index / 9) * 18));
       }
     }
-    this.previous = previous;
 
     this.x = (this.width - MainGui.guiWidth - 12 - PreviewGui.guiWidth) / 2 + MainGui.guiWidth + 12;
     this.y = (MainGui.guiHeight - PreviewGui.guiHeight) / 2 + 12;
@@ -67,7 +65,7 @@ public class PreviewGui extends RightPanel {
       s.yPos += this.y;
     }
     this.buttonList.add(new GenericButton(0, this.x + 3, this.y + 3, "Back") {
-      public void onClick(Gui parent) {
+      public void onClick(GuiScreen parent) {
         ((PreviewGui) parent).close();
       }
     });
@@ -113,6 +111,6 @@ public class PreviewGui extends RightPanel {
   }
 
   public void close() {
-    this.transition(this.previous);
+    this.transition((RightPanel) this.parent);
   }
 }

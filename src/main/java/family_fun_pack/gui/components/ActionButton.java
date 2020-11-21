@@ -1,7 +1,7 @@
 package family_fun_pack.gui.components;
 
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -12,6 +12,6 @@ public abstract class ActionButton extends GuiButton {
     super(id, x, y, width, height, text);
   }
 
-  public abstract void onClick(Gui parent);
+  public abstract void onClick(GuiScreen parent);
 
 }

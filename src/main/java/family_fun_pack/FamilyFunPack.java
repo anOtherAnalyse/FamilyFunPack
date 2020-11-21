@@ -36,6 +36,7 @@ public class FamilyFunPack
     private static Modules modules;
     private static OverlayGui overlay;
     private static KeyListener keyListener;
+    private static MainGui mainGui;
 
     private File confFile;
 
@@ -49,6 +50,10 @@ public class FamilyFunPack
 
     public static OverlayGui getOverlay() {
       return FamilyFunPack.overlay;
+    }
+
+    public static MainGui getMainGui() {
+      return FamilyFunPack.mainGui;
     }
 
     public static void addModuleKey(int key, Module module) {
@@ -94,8 +99,8 @@ public class FamilyFunPack
         interfaces.add(new SearchSelectionModule().dependsOn(FamilyFunPack.modules.getByName("Search")));
 
         // Init interface
-        MainGui gui = new MainGui(FamilyFunPack.modules, interfaces);
-        FamilyFunPack.keyListener.setGui(gui);
+        FamilyFunPack.mainGui = new MainGui(FamilyFunPack.modules, interfaces);
+        FamilyFunPack.keyListener.setGui(FamilyFunPack.mainGui);
 
         // Register key listener
         MinecraftForge.EVENT_BUS.register(FamilyFunPack.keyListener);

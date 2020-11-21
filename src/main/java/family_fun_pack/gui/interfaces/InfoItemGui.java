@@ -159,7 +159,7 @@ public class InfoItemGui extends RightPanel {
 
       if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
       else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
-        this.previewOpen.onClick(this.parent);
+        this.previewOpen.onClick((GuiScreen) this);
         this.previewOpen.playPressSound(this.mc.getSoundHandler());
         return;
       }
@@ -194,12 +194,11 @@ public class InfoItemGui extends RightPanel {
               NBTTagCompound blockTag = tag.getCompoundTag("BlockEntityTag");
               if(blockTag.hasKey("Items") && blockTag.getTagId("Items") == 9) {
                 this.previewOpen = new GenericButton(0, this.x_end - 46, this.y + 3, "Preview") {
-                  public void onClick(Gui parent) {
+                  public void onClick(GuiScreen parent) {
                     PreviewGui preview = new PreviewGui(
-                      InfoItemGui.this.inventory.getSlot(InfoItemGui.this.current_slot).getStack().getTagCompound().getCompoundTag("BlockEntityTag").getTagList("Items", 10),
-                      InfoItemGui.this
+                      InfoItemGui.this.inventory.getSlot(InfoItemGui.this.current_slot).getStack().getTagCompound().getCompoundTag("BlockEntityTag").getTagList("Items", 10)
                     );
-                    preview.setParent((MainGui) parent);
+                    preview.setParent(parent);
                     InfoItemGui.this.transition(preview);
                   }
                 };

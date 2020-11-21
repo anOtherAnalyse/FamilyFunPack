@@ -41,6 +41,11 @@ public class ColorButton extends GuiButton {
     return this.color;
   }
 
+  public void reset() {
+    this.color = ColorButton.DEFAULT_COLOR;
+    this.drag = false;
+  }
+
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
     int x_end = this.x + this.width;
     int y_end = this.y + this.height;
@@ -66,11 +71,12 @@ public class ColorButton extends GuiButton {
     int index = (cursor - this.x) * (64 / this.width);
     if(index > 32) index += (64 / this.width) - 1;
     this.color = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-    this.module.setSearchColor(this.block_id, this.color);
+    if(this.module != null) this.module.setSearchColor(this.block_id, this.color);
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
     if(super.mousePressed(mc, mouseX, mouseY)) {
+      this.dragged(mouseX, mouseY);
       this.drag = true;
       return true;
     }

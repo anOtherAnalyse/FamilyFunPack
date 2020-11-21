@@ -209,6 +209,7 @@ public class NetworkHandler {
 	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
     this.isConnected = false;
     FamilyFunPack.getModules().onDisconnect();
+    FamilyFunPack.getMainGui().reset();
     this.networkManager = null;
   }
 

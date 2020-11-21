@@ -1,10 +1,14 @@
 package family_fun_pack.gui.interfaces;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDirectional;
+import net.minecraft.block.BlockHorizontal;
+import net.minecraft.block.BlockWall;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiLabel;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -13,26 +17,43 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.client.renderer.tileentity.TileEntitySkullRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityBanner;
+import net.minecraft.tileentity.TileEntityBed;
+import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.tileentity.TileEntityEnderChest;
+import net.minecraft.tileentity.TileEntityEndGateway;
+import net.minecraft.tileentity.TileEntityEndPortal;
+import net.minecraft.tileentity.TileEntityLockableLoot;
+import net.minecraft.tileentity.TileEntityShulkerBox;
+import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.lang.Class;
 import org.lwjgl.input.Mouse;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ColorButton;
 import family_fun_pack.gui.components.OnOffButton;
+import family_fun_pack.gui.components.OpenGuiButton;
 import family_fun_pack.gui.components.ScrollBar;
 import family_fun_pack.gui.components.actions.OnOffSearch;
 import family_fun_pack.gui.components.actions.OnOffTracer;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.SearchModule;
+import family_fun_pack.utils.FakeWorld;
 
 @SideOnly(Side.CLIENT)
 public class SearchSelectionGui extends RightPanel {
@@ -54,6 +75,9 @@ public class SearchSelectionGui extends RightPanel {
   private List<OnOffButton> tracers;
   private List<OnOffButton> search;
   private List<ColorButton> colors;
+  private List<OpenGuiButton> advanced;
+
+  private FakeWorld world;
 
   public SearchSelectionGui() {
     this.x = MainGui.guiWidth + 16;
@@ -75,8 +99,9 @@ public class SearchSelectionGui extends RightPanel {
     this.selection.setFocused(true);
     this.selection.setCanLoseFocus(false);
     this.selection.setMaxStringLength(256);
-
+    this.advanced = new ArrayList<OpenGuiButton>(SearchSelectionGui.maxLabelsDisplayed);
     this.last_search = "";
+    this.world = new FakeWorld(null, this.mc.world.provider);
   }
 
   public void dependsOn(Module dependence) {
@@ -111,6 +136,22 @@ public class SearchSelectionGui extends RightPanel {
       this.search.add(search);
       this.colors.add(color);
     }
+
+    for(int i = 0; i < SearchSelectionGui.maxLabelsDisplayed; i ++) {
+      this.advanced.add(new OpenGuiButton((int)((float)(this.x_end - 6 - this.scroll.width - this.x - 4) * 0.571f) - (int)((float)(this.fontRenderer.getStringWidth("More options")) * 0.6f) + this.x, 0, "More options", AdvancedSearchGui.class, this.dependence, 0.6f));
+      this.buttonList.add(this.advanced.get(i));
+    }
+  }
+
+  public Block getCurrentBlock() {
+    for(int i = 0; i < SearchSelectionGui.maxLabelsDisplayed; i ++) {
+      OpenGuiButton btn = this.advanced.get(i);
+      if(btn.isClicked()) {
+        btn.resetState();
+        return this.blocks.get(i + this.scroll.current_scroll);
+      }
+    }
+    return null;
   }
 
   private void searchBlocks(String keyword) {
@@ -126,21 +167,17 @@ public class SearchSelectionGui extends RightPanel {
   }
 
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
-
-    // borders
-    Gui.drawRect(this.x, this.y, this.x_end, this.y + 2, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y, this.x + 2, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x_end - 2, this.y, this.x_end, this.y_end, 0xffbbbbbb);
-    Gui.drawRect(this.x, this.y_end - 2, this.x_end, this.y_end, 0xffbbbbbb);
+    // background
+    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR);
+    Gui.drawRect(this.x, this.y, this.x_end, this.y + 2, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x, this.y, this.x + 2, this.y_end, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x_end - 2, this.y, this.x_end, this.y_end, MainGui.BORDER_COLOR);
+    Gui.drawRect(this.x, this.y_end - 2, this.x_end, this.y_end, MainGui.BORDER_COLOR);
 
     // Update scroll
     if(this.scroll.clicked) {
       this.scroll.dragged(mouseX, mouseY);
     }
-
-    // Draw buttons
-    super.drawScreen(mouseX, mouseY, partialTicks);
 
     // search bar
     this.selection.drawTextBox();
@@ -168,15 +205,16 @@ public class SearchSelectionGui extends RightPanel {
     int scroll_end = this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed > this.blocks.size() ? this.blocks.size() : this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed;
     int y = 20 + this.y;
     Gui.drawRect(this.x + 4, y - 1, chart_end, y, SearchSelectionGui.INNER_BORDER);
-    for(int i = this.scroll.current_scroll; i < scroll_end; i ++) {
+    int i;
+    for(i = this.scroll.current_scroll; i < scroll_end; i ++) {
       // Draw block
       this.displayBlockFlat(this.x + 4, y, this.blocks.get(i));
 
       // Draw label
       GlStateManager.pushMatrix();
       GlStateManager.scale(0.7f, 0.7f, 0.7f);
-      decal_y = (int)((float)(y + 4) / 0.7f);
-      decal_x = (int)((float)(this.x + 22) / 0.7f);
+      decal_y = (int)((float)y / 0.7f) + 4;
+      decal_x = (int)((float)(this.x + 23) / 0.7f);
       String label = Block.REGISTRY.getNameForObject(this.blocks.get(i)).getResourcePath().replace("_", " ");
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       this.drawString(this.fontRenderer, label, decal_x, decal_y, 0xffeeeeee);
@@ -198,7 +236,22 @@ public class SearchSelectionGui extends RightPanel {
       // Draw border
       Gui.drawRect(this.x + 4, y + 16, chart_end, y + 17, SearchSelectionGui.INNER_BORDER);
       y += 17;
+
+      // Draw more options button
+      OpenGuiButton options = this.advanced.get(i - this.scroll.current_scroll);
+      if(this.hasSpecialStates(this.blocks.get(i))) {
+        options.y = y - 9;
+        options.visible = true;
+      } else options.visible = false;
     }
+
+    while(i < this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed) {
+      this.advanced.get(i - this.scroll.current_scroll).visible = false;
+      i ++;
+    }
+
+    // Buttons
+    super.drawScreen(mouseX, mouseY, partialTicks);
 
     // Vertical borders
     Gui.drawRect(this.x + 3, this.y + 16, this.x + 4, this.y + 192, SearchSelectionGui.INNER_BORDER);
@@ -212,22 +265,55 @@ public class SearchSelectionGui extends RightPanel {
     Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
   }
 
+  public boolean hasSpecialStates(Block b) {
+    if(b.getBlockState().getValidStates().size() > 1) return true;
+    if(b.hasTileEntity(null)) {
+      return ((!(b.createTileEntity(this.mc.world, b.getDefaultState()) instanceof TileEntityLockableLoot))
+         && b != Blocks.POWERED_COMPARATOR && b != Blocks.UNPOWERED_COMPARATOR && b != Blocks.ENCHANTING_TABLE
+         && b != Blocks.DAYLIGHT_DETECTOR && b != Blocks.DAYLIGHT_DETECTOR_INVERTED && b != Blocks.ENDER_CHEST
+         && b != Blocks.END_PORTAL && b != Blocks.END_GATEWAY && b != Blocks.NOTEBLOCK && b != Blocks.STANDING_SIGN
+         && b != Blocks.WALL_SIGN);
+    }
+    return false;
+  }
+
   public void displayBlockFlat(int x, int y, Block block) {
     IBlockState state = block.getDefaultState();
-    if(state.getRenderType() == EnumBlockRenderType.INVISIBLE) return;
+    try {
+      state = state.withProperty(BlockHorizontal.FACING, EnumFacing.SOUTH);
+    } catch(IllegalArgumentException e) {}
+    try {
+      state = state.withProperty(BlockDirectional.FACING, EnumFacing.SOUTH);
+    } catch(IllegalArgumentException e) {}
 
-    Minecraft mc = Minecraft.getMinecraft();
-    ItemStack stack = new ItemStack(block);
+    // Better than default state rendering
+    if(block instanceof BlockWall) {
+      state = state.withProperty(BlockWall.UP, Boolean.valueOf(true));
+    } else if(block == Blocks.BED) {
+      state = state.withProperty(BlockHorizontal.FACING, EnumFacing.NORTH);
+    }
 
-    IBakedModel model = mc.getBlockRendererDispatcher().getModelForState(state);
-    if(model == null || model == mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel()) {
+    this.displayBlockFlat(x, y, state);
+  }
+
+  public void displayBlockFlat(int x, int y, IBlockState state) {
+    this.displayBlockFlat(x, y, state, null);
+  }
+
+  public void displayBlockFlat(int x, int y, IBlockState state, TileEntity tile) {
+    if(state.getBlock() == Blocks.AIR) return;
+
+    ItemStack stack = new ItemStack(state.getBlock());
+
+    IBakedModel model = this.mc.getBlockRendererDispatcher().getModelForState(state);
+    if(model == null || model == this.mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel()) {
       //model = mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getModel(new ModelResourceLocation(Block.REGISTRY.getNameForObject(block).getResourcePath(), "inventory"));
-      model = this.itemRender.getItemModelWithOverrides(stack, null, mc.player);
+      model = this.itemRender.getItemModelWithOverrides(stack, null, this.mc.player);
     }
 
     GlStateManager.pushMatrix();
-    mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-    mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
+    this.mc.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+    this.mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
     GlStateManager.enableRescaleNormal();
     GlStateManager.enableAlpha();
     GlStateManager.alphaFunc(516, 0.1F);
@@ -237,8 +323,8 @@ public class SearchSelectionGui extends RightPanel {
 
     RenderHelper.enableGUIStandardItemLighting();
 
-    GlStateManager.translate(x, y, 150.0F);
-    GlStateManager.translate(8.0F, 8.0F, 0.0F);
+    GlStateManager.translate(x, y, 150f);
+    GlStateManager.translate(8.0F, 8.0F, 0f);
     GlStateManager.scale(1.0F, -1.0F, 1.0F);
     GlStateManager.scale(16.0F, 16.0F, 16.0F);
 
@@ -247,10 +333,12 @@ public class SearchSelectionGui extends RightPanel {
     GlStateManager.pushMatrix();
     GlStateManager.translate(-0.5F, -0.5F, -0.5F);
 
-    if(model.isBuiltInRenderer()) {
+    if(model == null || model.isBuiltInRenderer() || model == this.mc.getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel()) {
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       GlStateManager.enableRescaleNormal();
-      stack.getItem().getTileEntityItemStackRenderer().renderByItem(stack);
+      if(tile == null) tile = this.createTileEntity(state);
+      //stack.getItem().getTileEntityItemStackRenderer().renderByItem(stack);
+      if(tile != null) this.renderByTileEntity(tile, state);
     } else {
       Tessellator tessellator = Tessellator.getInstance();
       BufferBuilder bufferbuilder = tessellator.getBuffer();
@@ -273,19 +361,53 @@ public class SearchSelectionGui extends RightPanel {
     mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
   }
 
+  public void renderByTileEntity(TileEntity tile, IBlockState state) {
+    // Use custom world to set blockstate, used by tileentities for rendering
+    this.world.setBlockState(null, state, 0);
+    World save = TileEntityRendererDispatcher.instance.world;
+    TileEntityRendererDispatcher.instance.world = this.world; // for Shulker box rendering
+
+    if(tile instanceof TileEntityBanner || tile instanceof TileEntityEnderChest || tile instanceof TileEntityBed
+      || tile instanceof TileEntityChest || tile instanceof TileEntityShulkerBox) {
+      TileEntityRendererDispatcher.instance.render(tile, 0d, 0d, 0d, 0f, 1f);
+    } else if(tile instanceof TileEntitySkull) {
+      if (TileEntitySkullRenderer.instance != null) {
+        GlStateManager.pushMatrix();
+        GlStateManager.disableCull();
+        TileEntitySkullRenderer.instance.renderSkull(0f, 0f, 0f, (EnumFacing)(state.getValue(BlockDirectional.FACING)), (((TileEntitySkull) tile).getSkullRotation() * 360) / 16.0F, ((TileEntitySkull)tile).getSkullType(), this.mc.getSession().getProfile(), -1, 0f);
+        GlStateManager.enableCull();
+        GlStateManager.popMatrix();
+      }
+    } else {
+      TileEntitySpecialRenderer<TileEntity> renderer = null;
+      if(tile instanceof TileEntityEndGateway) renderer = TileEntityRendererDispatcher.instance.getRenderer(TileEntityEndPortal.class); // Avoid glitchy gateway beam rendering
+      else renderer = TileEntityRendererDispatcher.instance.getRenderer((Class)tile.getClass());
+      if(renderer != null) renderer.render(tile, 0d, 0d, 0d, 0f, -1, 0f);
+    }
+
+    TileEntityRendererDispatcher.instance.world = save;
+  }
+
+  public TileEntity createTileEntity(IBlockState state) {
+    TileEntity tile = state.getBlock().createTileEntity(this.mc.world, state);
+    if(tile == null) return null;
+    tile.setWorld(this.world);
+    return tile;
+  }
+
   public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     if(mouseButton == 0) {
       for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
         OnOffButton search = this.search.get(i);
         if(search.mousePressed(this.mc, mouseX, mouseY)) {
-          search.onClick(this);
+          search.onClick((GuiScreen) this);
           search.playPressSound(this.mc.getSoundHandler());
           return;
         }
 
         OnOffButton tracer = this.tracers.get(i);
         if(tracer.mousePressed(this.mc, mouseX, mouseY)) {
-          tracer.onClick(this);
+          tracer.onClick((GuiScreen) this);
           tracer.playPressSound(this.mc.getSoundHandler());
           return;
         }
@@ -299,15 +421,14 @@ public class SearchSelectionGui extends RightPanel {
 
   public void mouseReleased(int mouseX, int mouseY, int state) {
     if(state == 0) {
-      this.scroll.mouseReleased(mouseX, mouseY);
-
       for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
         this.colors.get(i).mouseReleased(mouseX, mouseY);
       }
+      super.mouseReleased(mouseX, mouseY, state);
     }
   }
 
-  public void updateScreen() {
+  public void updateScreen() { // every tick
     this.selection.updateCursorCounter();
   }
 

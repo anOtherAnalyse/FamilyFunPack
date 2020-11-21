@@ -9,7 +9,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.IOException;
 
-import family_fun_pack.gui.MainGui;
+import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.modules.Module;
 
@@ -18,7 +18,7 @@ public abstract class RightPanel extends GuiScreen {
 
   protected Module dependence;
 
-  protected MainGui parent;
+  protected GuiScreen parent;
 
   public RightPanel() {
     ScaledResolution scale = new ScaledResolution(Minecraft.getMinecraft());
@@ -27,12 +27,12 @@ public abstract class RightPanel extends GuiScreen {
     this.dependence = null;
   }
 
-  public void setParent(MainGui parent) {
+  public void setParent(GuiScreen parent) {
     this.parent = parent;
   }
 
   public void transition(RightPanel next) {
-    this.parent.setRightPanel(next);
+    FamilyFunPack.getMainGui().setRightPanel(next);
   }
 
   public void dependsOn(Module dependence) {
@@ -41,7 +41,7 @@ public abstract class RightPanel extends GuiScreen {
 
   protected void actionPerformed(GuiButton btn) throws IOException {
     if(btn instanceof ActionButton) {
-      ((ActionButton) btn).onClick(this);
+      ((ActionButton) btn).onClick((GuiScreen)this);
     }
   }
 
