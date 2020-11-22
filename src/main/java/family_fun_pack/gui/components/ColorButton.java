@@ -1,5 +1,6 @@
 package family_fun_pack.gui.components;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.GlStateManager;
@@ -18,19 +19,19 @@ public class ColorButton extends GuiButton {
   private int color;
   private boolean drag;
 
-  private int block_id;
+  private Block block;
   private SearchModule module;
 
-  public ColorButton(int id, int x, int y, int block_id, SearchModule module) {
+  public ColorButton(int id, int x, int y, Block block, SearchModule module) {
     super(id, x, y, 32, 7, null);
     this.color = ColorButton.DEFAULT_COLOR;
-    this.block_id = block_id;
+    this.block = block;
     this.module = module;
     this.drag = false;
   }
 
-  public ColorButton(int x, int y, int block_id, SearchModule module) {
-    this(0, x, y, block_id, module);
+  public ColorButton(int x, int y, Block block, SearchModule module) {
+    this(0, x, y, block, module);
   }
 
   public void setColor(int color) {
@@ -71,7 +72,7 @@ public class ColorButton extends GuiButton {
     int index = (cursor - this.x) * (64 / this.width);
     if(index > 32) index += (64 / this.width) - 1;
     this.color = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-    if(this.module != null) this.module.setSearchColor(this.block_id, this.color);
+    if(this.module != null) this.module.setSearchColor(this.block, this.color);
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {

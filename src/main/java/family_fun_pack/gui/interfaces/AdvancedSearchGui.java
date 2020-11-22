@@ -86,21 +86,29 @@ public class AdvancedSearchGui extends RightPanel {
     label = new GuiLabel(this.fontRenderer, 0, this.x + ((this.x_end - this.x) / 2), y, 100, 16, 0xffffffff);
     label.addLine("Color");
     this.labelList.add(label);
-    this.color = new ColorButton(0, this.x_end - 42, y + 4, 0, null);
+    this.color = new ColorButton(0, this.x_end - 42, y + 4, null, null);
     this.buttonList.add(this.color);
 
     this.add = new GenericButton(0, this.x_end - 26, this.y_end - 17, "Add") {
       public void onClick(GuiScreen parent) {
-        AdvancedSearchGui.this.addToSearch();
+        ((AdvancedSearchGui)parent).addToSearch();
       }
     };
     this.buttonList.add(this.add);
 
-    this.update = new GenericButton(0, this.x_end - 42, this.y_end - 17, "Update");
+    this.update = new GenericButton(0, this.x_end - 42, this.y_end - 17, "Update") {
+      public void onClick(GuiScreen parent) {
+        ((AdvancedSearchGui)parent).updateSearch();
+      }
+    };
     this.update.enabled = false;
     this.buttonList.add(this.update);
 
-    this.remove = new GenericButton(0, this.x + 4, this.y_end - 17, "Remove");
+    this.remove = new GenericButton(0, this.x + 4, this.y_end - 17, "Remove") {
+      public void onClick(GuiScreen parent) {
+        ((AdvancedSearchGui)parent).removeFromSearch();
+      }
+    };
     this.remove.enabled = false;
     this.buttonList.add(this.remove);
   }
@@ -232,7 +240,9 @@ public class AdvancedSearchGui extends RightPanel {
     this.transition((RightPanel) this.parent);
   }
 
-  public void addToSearch() {
+  /* Add, update & remove preset actions */
+
+  private SearchModule.AdvancedSearch getAdvancedSearch() {
     SearchModule.AdvancedSearch search = new SearchModule.AdvancedSearch(this.block);
     boolean isEmpty = true;
 
@@ -275,18 +285,45 @@ public class AdvancedSearchGui extends RightPanel {
       }
     }
 
-    if(isEmpty) return;
+    if(isEmpty) return null;
 
     // Set up tracer & color
     search.property.tracer = this.tracer.getState();
     search.property.color = this.color.getColor();
+
+    return search;
+  }
+
+  public void addToSearch() {
+    SearchModule.AdvancedSearch search = this.getAdvancedSearch();
+    if(search == null) return;
 
     // Add to search
     ((SearchModule) this.dependence).addAdvancedSearch(this.block, search);
 
     // Reset gui
     this.reset();
+
+    // Enable parent gui search btn
+    ((SearchSelectionGui) this.parent).enableSearchBtn(this.block);
   }
+
+  public void updateSearch() {
+    if(this.current_preset > 0) {
+      SearchModule.AdvancedSearch search = this.getAdvancedSearch();
+      if(search == null) return;
+
+      ((SearchModule) this.dependence).updateAdvancedSearch(this.block, this.current_preset - 1, search);
+    }
+  }
+
+  public void removeFromSearch() {
+    ((SearchModule) this.dependence).removeAdvancedSearch(this.block, this.current_preset - 1);
+    this.preset_count -= 1;
+    this.nextPreset(-1);
+  }
+
+  /* Reset gui state */
 
   public void reset() {
     this.color.reset();
@@ -301,6 +338,8 @@ public class AdvancedSearchGui extends RightPanel {
     this.preset_count = ((SearchModule) this.dependence).getAdvancedSearchListSize(this.block);
     this.current_preset = 0;
   }
+
+  /* Switch between presets */
 
   public void nextPreset(int direction) {
     this.current_preset = ((this.current_preset + direction) + (this.preset_count + 1)) % (this.preset_count + 1);
@@ -373,7 +412,7 @@ public class AdvancedSearchGui extends RightPanel {
           if(!isSet[i]) {
             btn.setValue(state.getValue(p).toString());
             isSet[i] = true;
-          } else if(!btn.getValue().equals(state.getValue(p).toString())) {
+          } else if(btn.getIndex() != -1 && !btn.getValue().equals(state.getValue(p).toString())) {
             btn.reset();
           }
           i ++;

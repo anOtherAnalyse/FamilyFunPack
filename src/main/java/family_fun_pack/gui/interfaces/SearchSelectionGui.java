@@ -114,21 +114,20 @@ public class SearchSelectionGui extends RightPanel {
     int chart_width = this.x_end - 6 - this.scroll.width - this.x - 4;
 
     for(int i = 0; i < this.blocks.size(); i ++) {
+      Block block = this.blocks.get(i);
+      boolean search_state = ((SearchModule) this.dependence).getSearchState(block);
 
-      int block_id = Block.getIdFromBlock(this.blocks.get(i));
-      boolean search_state = ((SearchModule) this.dependence).getSearchState(block_id);
-
-      OnOffButton tracer = new OnOffButton(i, 0, 0, new OnOffTracer(block_id, (SearchModule) this.dependence));
+      OnOffButton tracer = new OnOffButton(i, 0, 0, new OnOffTracer(block, (SearchModule) this.dependence));
       tracer.x = ((((int)((float)chart_width * 0.143f)) - tracer.width) / 2) + (int)((float)chart_width * 0.714f) + this.x + 4;
-      tracer.setState(((SearchModule) this.dependence).getTracerState(block_id));
+      tracer.setState(((SearchModule) this.dependence).getTracerState(block));
       if(! search_state) tracer.enabled = false;
 
-      ColorButton color = new ColorButton(0, 0, block_id, (SearchModule) this.dependence);
+      ColorButton color = new ColorButton(0, 0, block, (SearchModule) this.dependence);
       color.x = ((((int)((float)chart_width * 0.143f)) - color.width) / 2) + (int)((float)chart_width * 0.857f) + this.x + 4;
-      color.setColor(((SearchModule) this.dependence).getColor(block_id));
+      color.setColor(((SearchModule) this.dependence).getColor(block));
       if(! search_state) color.enabled = false;
 
-      OnOffButton search = new OnOffButton(i, 0, 0, new OnOffSearch(block_id, (SearchModule) this.dependence, tracer, color));
+      OnOffButton search = new OnOffButton(i, 0, 0, new OnOffSearch(block, (SearchModule) this.dependence, tracer, color));
       search.x = ((((int)((float)chart_width * 0.143f)) - search.width) / 2) + (int)((float)chart_width * 0.571f) + this.x + 4;
       search.setState(search_state);
 
@@ -141,6 +140,11 @@ public class SearchSelectionGui extends RightPanel {
       this.advanced.add(new OpenGuiButton((int)((float)(this.x_end - 6 - this.scroll.width - this.x - 4) * 0.571f) - (int)((float)(this.fontRenderer.getStringWidth("More options")) * 0.6f) + this.x, 0, "More options", AdvancedSearchGui.class, this.dependence, 0.6f));
       this.buttonList.add(this.advanced.get(i));
     }
+  }
+
+  public void enableSearchBtn(Block block) {
+    int index = this.blocks.indexOf(block);
+    this.search.get(index).setState(true);
   }
 
   public Block getCurrentBlock() {
@@ -182,15 +186,26 @@ public class SearchSelectionGui extends RightPanel {
     // search bar
     this.selection.drawTextBox();
 
-    // Draw titles
+    // Vertical borders
     int chart_end = this.x_end - 6 - this.scroll.width;
     int chart_width = chart_end - this.x - 4;
+    int decal_x;
+    Gui.drawRect(this.x + 3, this.y + 16, this.x + 4, this.y + 192, SearchSelectionGui.INNER_BORDER);
+    Gui.drawRect(this.x + 20, this.y + 16, this.x + 21, this.y + 192, SearchSelectionGui.INNER_BORDER);
+    Gui.drawRect(chart_end - 1, this.y + 16, chart_end, this.y + 192, SearchSelectionGui.INNER_BORDER);
+    decal_x = this.x + 4 + (int)((float)chart_width * 0.571f);
+    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
+    decal_x = this.x + 4 + (int)((float)chart_width * 0.714f);
+    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
+    decal_x = this.x + 4 + (int)((float)chart_width * 0.857f);
+    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
+
+    // Draw titles
     GlStateManager.pushMatrix();
     GlStateManager.scale(0.9f, 0.9f, 0.9f);
     String[] labels = {"Search", "Tracer", "Color"};
     int x_total = this.x + 10 + this.selection.width;
     int decal_y = (int)((float)(this.y + 8) / 0.9f);
-    int decal_x;
     for(String i : labels) {
       int width = (int)((float)chart_width * 0.143f);
       int str_width = this.fontRenderer.getStringWidth(i);
@@ -207,15 +222,18 @@ public class SearchSelectionGui extends RightPanel {
     Gui.drawRect(this.x + 4, y - 1, chart_end, y, SearchSelectionGui.INNER_BORDER);
     int i;
     for(i = this.scroll.current_scroll; i < scroll_end; i ++) {
+
+      Block block = this.blocks.get(i);
+
       // Draw block
-      this.displayBlockFlat(this.x + 4, y, this.blocks.get(i));
+      this.displayBlockFlat(this.x + 4, y, block);
 
       // Draw label
       GlStateManager.pushMatrix();
       GlStateManager.scale(0.7f, 0.7f, 0.7f);
       decal_y = (int)((float)y / 0.7f) + 4;
       decal_x = (int)((float)(this.x + 23) / 0.7f);
-      String label = Block.REGISTRY.getNameForObject(this.blocks.get(i)).getResourcePath().replace("_", " ");
+      String label = Block.REGISTRY.getNameForObject(block).getResourcePath().replace("_", " ");
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       this.drawString(this.fontRenderer, label, decal_x, decal_y, 0xffeeeeee);
       GlStateManager.popMatrix();
@@ -226,12 +244,34 @@ public class SearchSelectionGui extends RightPanel {
       search.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
 
       OnOffButton tracer = this.tracers.get(i);
-      tracer.y = y + 4;
-      tracer.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
-
       ColorButton color = this.colors.get(i);
-      color.y = y + 4;
-      color.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
+
+      int preset_count = ((SearchModule) this.dependence).getAdvancedSearchListSize(block);
+      if(preset_count == 0) {
+        tracer.visible = true;
+        tracer.y = y + 4;
+        tracer.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
+
+        color.visible = true;
+        color.y = y + 4;
+        color.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
+      } else {
+        tracer.visible = false;
+        color.visible = false;
+
+        // Draw number of advanced presets
+        decal_x = this.x + 4 + (int)((float)chart_width * 0.857f);
+        Gui.drawRect(decal_x - 1, y, decal_x, y + 16, 0xff000000);
+
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(0.60f, 0.60f, 0.60f);
+
+        if(preset_count == 1) label = "Registered preset: 1";
+        else label = "Registered presets: " + Integer.toString(preset_count);
+        this.drawString(this.fontRenderer, label, (int)((this.x + 4 + (int)((float)chart_width * 0.714f) + (((int)((float)chart_width * 0.286f) - (int)(this.fontRenderer.getStringWidth(label) * 0.60f)) / 2)) / 0.60f), (int)((y + 5) / 0.60f), 0xffffffff);
+
+        GlStateManager.popMatrix();
+      }
 
       // Draw border
       Gui.drawRect(this.x + 4, y + 16, chart_end, y + 17, SearchSelectionGui.INNER_BORDER);
@@ -252,17 +292,6 @@ public class SearchSelectionGui extends RightPanel {
 
     // Buttons
     super.drawScreen(mouseX, mouseY, partialTicks);
-
-    // Vertical borders
-    Gui.drawRect(this.x + 3, this.y + 16, this.x + 4, this.y + 192, SearchSelectionGui.INNER_BORDER);
-    Gui.drawRect(this.x + 20, this.y + 16, this.x + 21, this.y + 192, SearchSelectionGui.INNER_BORDER);
-    Gui.drawRect(chart_end - 1, this.y + 16, chart_end, this.y + 192, SearchSelectionGui.INNER_BORDER);
-    decal_x = this.x + 4 + (int)((float)chart_width * 0.571f);
-    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
-    decal_x = this.x + 4 + (int)((float)chart_width * 0.714f);
-    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
-    decal_x = this.x + 4 + (int)((float)chart_width * 0.857f);
-    Gui.drawRect(decal_x - 1, this.y + 16, decal_x, this.y + 192, SearchSelectionGui.INNER_BORDER);
   }
 
   public boolean hasSpecialStates(Block b) {

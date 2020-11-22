@@ -13,6 +13,8 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
@@ -30,6 +32,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -41,11 +44,18 @@ import io.netty.buffer.ByteBuf;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL32;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.lang.Class;
 import java.lang.IllegalAccessException;
 import java.lang.NoSuchMethodException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Base64;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.Iterator;
@@ -162,39 +172,122 @@ public class SearchModule extends Module implements PacketListener {
    */
 
   public void save(Configuration configuration) {
-    for(Block b : Block.REGISTRY) {
-      int id = Block.getIdFromBlock(b);
-
-      this.search_lock.readLock().lock();
-      SearchOptions opt = this.to_search.get(b);
-      this.search_lock.readLock().unlock();
-
-      if(opt == null) {
-        configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
-      } else {
-        configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
-        configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(opt.default_property.tracer);
-        configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(opt.default_property.color);
-      }
+    for(Block block : Block.REGISTRY) {
+      this.saveBlock(block, configuration);
     }
     super.save(configuration);
   }
 
-  public void load(Configuration configuration) {
-    for(Block b : Block.REGISTRY) {
-      int id = Block.getIdFromBlock(b);
-      boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
-      if(search) {
-        boolean tracer = configuration.get(this.name, "tracer_" + Integer.toString(id), false).getBoolean();
-        int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).getInt();
+  private void saveBlock(Block block, Configuration configuration) {
+    int id = Block.getIdFromBlock(block);
 
-        this.search_lock.writeLock().lock();
-        this.to_search.put(b, new SearchOptions(new Property(tracer, color)));
-        this.search_lock.writeLock().unlock();
+    this.search_lock.readLock().lock();
+    SearchOptions opt = this.to_search.get(block);
+    this.search_lock.readLock().unlock();
+
+    if(opt == null) {
+      configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
+    } else {
+      configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
+      configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(opt.default_property.tracer);
+      configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(opt.default_property.color);
+
+      int length = opt.getAdvancedSearchSize();
+      opt.targets_locks.readLock().lock();
+      configuration.get(this.name, "plength_" + Integer.toString(id), 0).set(length);
+      if(length > 0) {
+        int i = 0;
+        for(AdvancedSearch preset : opt.advanced_targets) {
+          this.savePreset(configuration, preset, block, i);
+          i ++;
+        }
       }
+      opt.targets_locks.readLock().unlock();
+    }
+  }
+
+  public void load(Configuration configuration) {
+    for(Block block : Block.REGISTRY) {
+      this.loadBlock(block, configuration, false);
     }
     super.load(configuration);
   }
+
+  private void loadBlock(Block block, Configuration configuration, boolean force) {
+    int id = Block.getIdFromBlock(block);
+    boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
+    if(search || force) {
+      boolean tracer = configuration.get(this.name, "tracer_" + Integer.toString(id), false).getBoolean();
+      int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).getInt();
+
+      SearchOptions opt = new SearchOptions(new Property(tracer, color));
+
+      int length = configuration.get(this.name, "plength_" + Integer.toString(id), 0).getInt();
+      for(int i = 0; i < length; i ++) {
+        opt.addTarget(this.loadPreset(configuration, block, i));
+      }
+
+      this.search_lock.writeLock().lock();
+      this.to_search.put(block, opt);
+      this.search_lock.writeLock().unlock();
+    }
+  }
+
+  private AdvancedSearch loadPreset(Configuration configuration, Block block, int index) {
+    AdvancedSearch out = new AdvancedSearch(block, false);
+    String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
+
+    // Get Block states
+    int[] states = configuration.get(this.name, "states_" + label, new int[0]).getIntList();
+    for(int i : states) {
+      out.addState(Block.BLOCK_STATE_IDS.getByValue(i));
+    }
+
+    // Get tileentity
+    boolean hasTile = configuration.get(this.name, "hasTile_" + label, false).getBoolean();
+    if(hasTile) {
+      byte[] buf = Base64.getDecoder().decode(configuration.get(this.name, "tile_" + label, "").getString());
+      try {
+        out.tags = CompressedStreamTools.read(new DataInputStream(new ByteArrayInputStream(buf)), new NBTSizeTracker(2097152L));
+      } catch (IOException e) {}
+    }
+
+    // Color & tracer
+    out.property.tracer = configuration.get(this.name, "tracer_" + label, false).getBoolean();
+    out.property.color = configuration.get(this.name, "color_" + label, ColorButton.DEFAULT_COLOR).getInt();
+
+    return out;
+  }
+
+  private void savePreset(Configuration configuration, AdvancedSearch preset, Block block, int index) {
+    String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
+
+    // Save block states
+    int[] states = new int[preset.states.size()];
+    int i = 0;
+    for(IBlockState state : preset.states) {
+      states[i] = Block.BLOCK_STATE_IDS.get(state);
+      i ++;
+    }
+    configuration.get(this.name, "states_" + label, new int[0]).set(states);
+
+    // Set tile entity
+    boolean hasTile = (preset.tags != null);
+    configuration.get(this.name, "hasTile_" + label, false).set(hasTile);
+    if(hasTile) {
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      try {
+        CompressedStreamTools.write(preset.tags, new DataOutputStream(stream));
+      } catch (IOException e) {}
+      configuration.get(this.name, "tile_" + label, "").set(Base64.getEncoder().encodeToString(stream.toByteArray()));
+    }
+
+    // Color & tracer
+    configuration.get(this.name, "tracer_" + label, false).set(preset.property.tracer);
+    configuration.get(this.name, "color_" + label, ColorButton.DEFAULT_COLOR).set(preset.property.color);
+  }
+
+  /* Targets handling */
 
   // Remove targets data from unloaded chunks
   @SubscribeEvent
@@ -402,32 +495,51 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  public void ClearFromTargets(Property property) {
+    this.targets_lock.readLock().lock();
+    Iterator i = this.targets.keySet().iterator();
+    while(i.hasNext()) {
+      BlockPos position = (BlockPos)i.next();
+      if(this.targets.get(position) == property) i.remove();
+    }
+    this.targets_lock.readLock().unlock();
+  }
+
   /*
    * Basic search (per Block) setter / getter
    */
 
-  public void setSearchState(int block_id, boolean state, boolean tracer, int color) {
-    Block block = Block.getBlockById(block_id);
-
-    this.search_lock.writeLock().lock();
+  public void setSearchState(Block block, boolean state) {
     if(state) {
-      this.to_search.put(block, new SearchOptions(new Property(tracer, color)));
-    } else {
-      SearchOptions opt = this.to_search.get(block);
-      if(opt != null) {
-        Property p = opt.default_property;
-        FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).set(p.tracer);
-        FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).set(p.color);
-      }
-      this.to_search.remove(block);
-    }
-    this.search_lock.writeLock().unlock();
+      // Load configuration
+      this.loadBlock(block, FamilyFunPack.getModules().getConfiguration(), true);
 
-    if(this.isEnabled()) this.resetTargets();
+      // Reset targets
+      if(this.isEnabled()) this.resetTargets();
+    } else {
+      // Save configuration
+      this.saveBlock(block, FamilyFunPack.getModules().getConfiguration());
+
+      // Remove from search list
+      this.search_lock.writeLock().lock();
+      SearchOptions opt = this.to_search.remove(block);
+      this.search_lock.writeLock().unlock();
+
+      // Reset targets
+      if(this.isEnabled()) {
+        if(opt.advanced_targets != null) {
+          opt.targets_locks.readLock().lock();
+          for(AdvancedSearch preset : opt.advanced_targets) {
+            this.ClearFromTargets(preset.property);
+          }
+          opt.targets_locks.readLock().unlock();
+        } else this.ClearFromTargets(opt.default_property);
+      }
+    }
+
   }
 
-  public void setTracerState(int block_id, boolean state) {
-    Block block = Block.getBlockById(block_id);
+  public void setTracerState(Block block, boolean state) {
     this.search_lock.readLock().lock();
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
@@ -436,8 +548,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
-  public void setSearchColor(int block_id, int color) {
-    Block block = Block.getBlockById(block_id);
+  public void setSearchColor(Block block, int color) {
     this.search_lock.readLock().lock();
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
@@ -446,30 +557,27 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
-  public boolean getSearchState(int block_id) {
-    Block block = Block.getBlockById(block_id);
+  public boolean getSearchState(Block block) {
     this.search_lock.readLock().lock();
     boolean ret = (this.to_search.get(block) != null);
     this.search_lock.readLock().unlock();
     return ret;
   }
 
-  public boolean getTracerState(int block_id) {
-    Block block = Block.getBlockById(block_id);
+  public boolean getTracerState(Block block) {
     this.search_lock.readLock().lock();
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
     if(opt != null) return opt.default_property.tracer;
-    return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(block_id), false).getBoolean();
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(Block.getIdFromBlock(block)), false).getBoolean();
   }
 
-  public int getColor(int block_id) {
-    Block block = Block.getBlockById(block_id);
+  public int getColor(Block block) {
     this.search_lock.readLock().lock();
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
     if(opt != null) return opt.default_property.color;
-    return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(block_id), ColorButton.DEFAULT_COLOR).getInt();
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(Block.getIdFromBlock(block)), ColorButton.DEFAULT_COLOR).getInt();
   }
 
   /*
@@ -481,16 +589,29 @@ public class SearchModule extends Module implements PacketListener {
      SearchOptions opt = this.to_search.get(block);
      this.search_lock.readLock().unlock();
 
-     if(opt == null) { // TODO: Load settings from file
-       int id = Block.getIdFromBlock(block);
-       opt = new SearchOptions(new Property(this.getTracerState(id), this.getColor(id)));
-       this.search_lock.writeLock().lock();
-       this.to_search.put(block, opt);
-       this.search_lock.writeLock().unlock();
+     if(opt == null) {
+       this.setSearchState(block, true); // Enable & load search data
+
+       this.search_lock.readLock().lock();
+       opt = this.to_search.get(block);
+       this.search_lock.readLock().unlock();
      }
 
      opt.addTarget(params);
-     this.resetTargets();
+     if(this.isEnabled()) this.resetTargets();
+   }
+
+   public void updateAdvancedSearch(Block block, int index, AdvancedSearch new_preset) {
+       this.search_lock.readLock().lock();
+       SearchOptions opt = this.to_search.get(block);
+       this.search_lock.readLock().unlock();
+
+       if(opt != null) {
+         opt.updateTarget(index, new_preset);
+         if(this.isEnabled()) this.resetTargets();
+       } else {
+         this.savePreset(FamilyFunPack.getModules().getConfiguration(), new_preset, block, index);
+       }
    }
 
    public int getAdvancedSearchListSize(Block block) {
@@ -504,9 +625,9 @@ public class SearchModule extends Module implements PacketListener {
        if(opt.advanced_targets != null) size = opt.advanced_targets.size();
        opt.targets_locks.readLock().unlock();
        return size;
-     } // else TODO load from file - read length field
+     }
 
-     return 0;
+     return FamilyFunPack.getModules().getConfiguration().get(this.name, "plength_" + Integer.toString(Block.getIdFromBlock(block)), 0).getInt();
    }
 
    public AdvancedSearch getAdvancedSearch(Block block, int index) {
@@ -520,9 +641,45 @@ public class SearchModule extends Module implements PacketListener {
        if(index >= 0 && index < opt.advanced_targets.size()) out = opt.advanced_targets.get(index);
        opt.targets_locks.readLock().unlock();
        return out;
-     } // else TODO load from file
+     }
 
-     return null;
+     return this.loadPreset(FamilyFunPack.getModules().getConfiguration(), block, index);
+   }
+
+   public void removeAdvancedSearch(Block block, int index) {
+     this.search_lock.readLock().lock();
+     SearchOptions opt = this.to_search.get(block);
+     this.search_lock.readLock().unlock();
+
+     if(opt != null) {
+       opt.targets_locks.writeLock().lock();
+       AdvancedSearch preset = opt.removeTarget(index);
+       opt.targets_locks.writeLock().unlock();
+       if(this.isEnabled()) {
+         this.ClearFromTargets(preset.property);
+       }
+     } else {
+       Configuration config = FamilyFunPack.getModules().getConfiguration();
+       int length = this.getAdvancedSearchListSize(block);
+       int i = index + 1;
+       while(i < length) { // shift presets
+         AdvancedSearch next = this.loadPreset(config, block, i);
+         this.savePreset(config, next, block, i - 1);
+         i ++;
+       }
+
+       // Erase last preset from config
+       ConfigCategory cat = config.getCategory(this.name);
+       String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(i - 1);
+       cat.remove("states_" + label);
+       cat.remove("hasTile_" + label);
+       cat.remove("tile_" + label);
+       cat.remove("tracer_" + label);
+       cat.remove("color_" + label);
+
+       // Update presets list length
+       config.get(this.name, "plength_" + Integer.toString(Block.getIdFromBlock(block)), 0).set(length - 1);
+     }
    }
 
   /*
@@ -602,6 +759,16 @@ public class SearchModule extends Module implements PacketListener {
       this.targets_locks = new ReentrantReadWriteLock();
     }
 
+    public int getAdvancedSearchSize() {
+      int out = 0;
+      this.targets_locks.readLock().lock();
+      if(this.advanced_targets != null) {
+        out = this.advanced_targets.size();
+      }
+      this.targets_locks.readLock().unlock();
+      return out;
+    }
+
     public void addTarget(AdvancedSearch target) {
       this.targets_locks.writeLock().lock();
       if(this.advanced_targets == null) {
@@ -609,6 +776,27 @@ public class SearchModule extends Module implements PacketListener {
       }
       this.advanced_targets.add(target);
       this.targets_locks.writeLock().unlock();
+    }
+
+    public void updateTarget(int index, AdvancedSearch target) {
+      this.targets_locks.writeLock().lock();
+      AdvancedSearch old = this.advanced_targets.get(index);
+      old.states = target.states;
+      old.tags = target.tags;
+      old.property.tracer = target.property.tracer;
+      old.property.color = target.property.color;
+      this.targets_locks.writeLock().unlock();
+    }
+
+    public AdvancedSearch removeTarget(int index) {
+      AdvancedSearch out = null;
+      this.targets_locks.writeLock().lock();
+      if(this.advanced_targets != null) {
+        out = this.advanced_targets.remove(index);
+        if(this.advanced_targets.size() == 0) this.advanced_targets = null;
+      }
+      this.targets_locks.writeLock().unlock();
+      return out;
     }
 
   }
@@ -619,13 +807,19 @@ public class SearchModule extends Module implements PacketListener {
     public NBTTagCompound tags;
     public Property property;
 
-    public AdvancedSearch(Block block) {
+    public AdvancedSearch(Block block, boolean pre_filled) {
       this.states = new HashSet<IBlockState>();
-      for(IBlockState state : block.getBlockState().getValidStates()) {
-        this.states.add(state);
+      if(pre_filled) {
+        for(IBlockState state : block.getBlockState().getValidStates()) {
+          this.states.add(state);
+        }
       }
       this.tags = null;
       this.property = new Property(false, ColorButton.DEFAULT_COLOR);
+    }
+
+    public AdvancedSearch(Block block) {
+      this(block, true);
     }
 
     public void addProperty(IProperty<?> property, Comparable<?> value) {
@@ -636,6 +830,10 @@ public class SearchModule extends Module implements PacketListener {
           iterator.remove();
         }
       }
+    }
+
+    public void addState(IBlockState state) {
+      this.states.add(state);
     }
 
     private NBTTagCompound addTagCompound(String path, NBTTagCompound base) {
