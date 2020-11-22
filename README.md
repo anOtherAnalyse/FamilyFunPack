@@ -14,6 +14,10 @@ Show tools & armour true durability. Used to know the real durability of "unbrea
 Display the real durability in the toolTip showed when hovering an item in the inventory.  
 "Unbreakable" items are displayed in red enchant, to be able to spot it on other players.
 
+##### Advanced Search
+Advanced search module - Search for every block & state in the game. For each search specify which color you want the block to be highlighted and if you want a tracer.  
+You can search for very specific state of a block, for example only for mob spawner spawning pigs, only for grown wheat or even only for red beds facing west.
+
 ##### Silent Close
 Don't tell the server when the client is closing a container - be able to reopen it later when trying to open player inventory. If the server forces the closing you will be warned.
 
@@ -25,9 +29,6 @@ Be invulnerable after going through a portal, but you won't be able to move by y
 
 ##### Pig POV
 Pig point of view -  When using portal invulnerability you can use a pig to travel 1x1 tunnels without taking damage. Use this to lower your point of view and see where you are going.
-
-##### Search
-Improved search module - For every block in the game that you want to search, be able to specify which color you want it to be highlighted and if you want to enable a tracer.
 
 ##### Stalker
 Stalk a player: know when they connect/disconnect/change their gamemode/display name...

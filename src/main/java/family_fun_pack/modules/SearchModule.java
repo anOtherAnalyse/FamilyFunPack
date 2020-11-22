@@ -651,6 +651,9 @@ public class SearchModule extends Module implements PacketListener {
      SearchOptions opt = this.to_search.get(block);
      this.search_lock.readLock().unlock();
 
+     Configuration config = FamilyFunPack.getModules().getConfiguration();
+     int length = this.getAdvancedSearchListSize(block);
+
      if(opt != null) {
        opt.targets_locks.writeLock().lock();
        AdvancedSearch preset = opt.removeTarget(index);
@@ -659,8 +662,6 @@ public class SearchModule extends Module implements PacketListener {
          this.ClearFromTargets(preset.property);
        }
      } else {
-       Configuration config = FamilyFunPack.getModules().getConfiguration();
-       int length = this.getAdvancedSearchListSize(block);
        int i = index + 1;
        while(i < length) { // shift presets
          AdvancedSearch next = this.loadPreset(config, block, i);
@@ -668,18 +669,18 @@ public class SearchModule extends Module implements PacketListener {
          i ++;
        }
 
-       // Erase last preset from config
-       ConfigCategory cat = config.getCategory(this.name);
-       String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(i - 1);
-       cat.remove("states_" + label);
-       cat.remove("hasTile_" + label);
-       cat.remove("tile_" + label);
-       cat.remove("tracer_" + label);
-       cat.remove("color_" + label);
-
        // Update presets list length
        config.get(this.name, "plength_" + Integer.toString(Block.getIdFromBlock(block)), 0).set(length - 1);
      }
+
+     // Erase last preset from config structure
+     ConfigCategory cat = config.getCategory(this.name);
+     String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(length - 1);
+     cat.remove("states_" + label);
+     cat.remove("hasTile_" + label);
+     cat.remove("tile_" + label);
+     cat.remove("tracer_" + label);
+     cat.remove("color_" + label);
    }
 
   /*
