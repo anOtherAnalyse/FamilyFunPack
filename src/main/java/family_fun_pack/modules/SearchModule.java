@@ -114,6 +114,7 @@ public class SearchModule extends Module implements PacketListener {
   private ReadWriteLock targets_lock;
   private Map<BlockPos, Property> targets;
 
+  private ReadWriteLock new_chunks_lock;
   private List<ChunkPos> new_chunks;
 
   private ICamera camera;
@@ -127,6 +128,7 @@ public class SearchModule extends Module implements PacketListener {
     this.targets = new HashMap<BlockPos, Property>();
     this.targets_lock = new ReentrantReadWriteLock();
     this.new_chunks = new ArrayList<ChunkPos>();
+    this.new_chunks_lock = new ReentrantReadWriteLock();
     this.camera = new Frustum();
 
     Class<EntityRenderer> entityRendererClass = EntityRenderer.class;
@@ -164,7 +166,10 @@ public class SearchModule extends Module implements PacketListener {
     this.targets_lock.writeLock().lock();
     this.targets.clear();
     this.targets_lock.writeLock().unlock();
+
+    this.new_chunks_lock.writeLock().lock();
     this.new_chunks.clear();
+    this.new_chunks_lock.writeLock().unlock();
   }
 
   /*
@@ -308,22 +313,28 @@ public class SearchModule extends Module implements PacketListener {
   // Explore new chunks for new targets
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
-    if(this.new_chunks.size() > 0) {
-      Minecraft mc = Minecraft.getMinecraft();
-      if(mc.world == null) return;
-      IChunkProvider provider = mc.world.getChunkProvider();
-      if(provider == null) return;
+    this.new_chunks_lock.readLock().lock();
+    int size = this.new_chunks.size();
+    this.new_chunks_lock.readLock().unlock();
 
-      for(int i = 0; i < this.new_chunks.size(); i ++) {
-        ChunkPos position = this.new_chunks.get(i);
-        Chunk c = provider.getLoadedChunk(position.x, position.z);
-        if(c != null) {
-          this.searchChunk(c);
-          this.new_chunks.remove(i);
-          i --;
-        }
+    if(size == 0) return;
+
+    Minecraft mc = Minecraft.getMinecraft();
+    if(mc.world == null) return;
+    IChunkProvider provider = mc.world.getChunkProvider();
+    if(provider == null) return;
+
+    this.new_chunks_lock.writeLock().lock();
+    Iterator iterator = this.new_chunks.iterator();
+    while(iterator.hasNext()) {
+      ChunkPos position = (ChunkPos) iterator.next();
+      Chunk c = provider.getLoadedChunk(position.x, position.z);
+      if(c != null) {
+        this.searchChunk(c);
+        iterator.remove();
       }
     }
+    this.new_chunks_lock.writeLock().unlock();
   }
 
   /*
@@ -333,7 +344,9 @@ public class SearchModule extends Module implements PacketListener {
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     if(id == 32) {
       SPacketChunkData chunk = (SPacketChunkData) packet;
+      this.new_chunks_lock.writeLock().lock();
       this.new_chunks.add(new ChunkPos(chunk.getChunkX(), chunk.getChunkZ()));
+      this.new_chunks_lock.writeLock().unlock();
     } else if(id == 9) {
       SPacketUpdateTileEntity updt = (SPacketUpdateTileEntity) packet;
 

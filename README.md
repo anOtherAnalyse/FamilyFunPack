@@ -33,6 +33,9 @@ Pig point of view -  When using portal invulnerability you can use a pig to trav
 ##### Stalker
 Stalk a player: know when they connect/disconnect/change their gamemode/display name...
 
+##### Undead
+Be able to walk around as a ghost after your death.
+
 ### Commands
 Few commands, use them in chat (Command module must be enabled):
 ##### Manage stalked players
