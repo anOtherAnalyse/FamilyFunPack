@@ -34,6 +34,10 @@ public class FakeWorld extends World {
     return true;
   }
 
+  public void notifyBlockUpdate(BlockPos pos, IBlockState oldState, IBlockState newState, int flags) { // Don't do anything
+
+  }
+
   public long getTotalWorldTime() {
     return 0l;
   }
