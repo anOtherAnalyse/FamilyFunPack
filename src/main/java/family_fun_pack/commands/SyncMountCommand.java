@@ -4,8 +4,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketVehicleMove;
 import net.minecraft.network.play.server.SPacketMoveVehicle;
+import net.minecraft.network.play.server.SPacketPlayerPosLook;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -29,23 +31,33 @@ public class SyncMountCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
-    Entity ride = new EntityVoid(mc.world, 0);
-    ride.setPosition(mc.player.posX + 1000d, mc.player.posY, mc.player.posZ + 1000d);
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 41);
-    FamilyFunPack.getNetworkHandler().sendPacket(new CPacketVehicleMove(ride));
+    if(mc.player.isRiding()) {
+      Entity ride = new EntityVoid(mc.world, 0);
+      ride.setPosition(mc.player.posX + 1000d, mc.player.posY, mc.player.posZ + 1000d); // Don't use this near world border, or get kicked
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 41);
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketVehicleMove(ride));
+    } else {
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 47);
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayer.Position(mc.player.posX + 1000d, mc.player.posY, mc.player.posZ + 1000d, true));
+    }
     return null;
   }
 
   public void onDisconnect() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41, 47);
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41, 47);
 
-    SPacketMoveVehicle move = (SPacketMoveVehicle) packet;
+    if(id == 41) {
+      SPacketMoveVehicle move = (SPacketMoveVehicle) packet;
+      FamilyFunPack.printMessage(String.format("Vehicle sync -> (%.2f, %.2f, %.2f)", move.getX(), move.getY(), move.getZ()));
+    } else {
+      SPacketPlayerPosLook move = (SPacketPlayerPosLook) packet;
+      FamilyFunPack.printMessage(String.format("Player sync -> (%.2f, %.2f, %.2f)", move.getX(), move.getY(), move.getZ()));
+    }
 
-    FamilyFunPack.printMessage(String.format("Vehicle sync -> (%.2f, %.2f, %.2f)", move.getX(), move.getY(), move.getZ()));
     return packet;
   }
 }

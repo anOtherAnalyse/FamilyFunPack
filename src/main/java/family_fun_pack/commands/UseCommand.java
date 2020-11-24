@@ -22,7 +22,7 @@ public class UseCommand extends Command {
   }
 
   public String usage() {
-    return this.getName() + " ([sneak] <entity_id> | <block_x> <block_y> <block_z>)";
+    return this.getName() + " ([sneak|attack] <entity_id> | <block_x> <block_y> <block_z>)";
   }
 
   public String execute(String[] args) {
@@ -43,14 +43,23 @@ public class UseCommand extends Command {
       try {
         int i = 1;
         boolean sneak = false;
+        boolean attack = false;
         if(args[i].equals("sneak")) {
           sneak = true;
           i += 1;
+        } else if(args[i].equals("attack")) {
+          attack = true;
+          i += 1;
         }
+
         int id = Integer.parseInt(args[i]);
         if(sneak)
           FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id), EnumHand.MAIN_HAND));
+
+        if(attack)
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id)));
+        else FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id), EnumHand.MAIN_HAND));
+
         return "Using entity " + Integer.toString(id);
       } catch(NumberFormatException e) {
         return "Entity id must be an integer";

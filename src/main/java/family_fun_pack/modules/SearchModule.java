@@ -49,7 +49,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.lang.Class;
 import java.lang.IllegalAccessException;
 import java.lang.NoSuchMethodException;

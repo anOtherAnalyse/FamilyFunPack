@@ -3,7 +3,6 @@ package family_fun_pack.gui.interfaces;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
@@ -435,6 +434,9 @@ public class AdvancedSearchGui extends RightPanel {
     if(this.display_tile != null) this.display_tile = ((SearchSelectionGui) this.parent).createTileEntity(this.display_state);
     for(GuiButton i : this.buttonList) {
       if(i instanceof SelectButton) {
+
+        if(((SelectButton)i).getIndex() == -1) continue;
+
         if(i.id == 1) {
           for(int j = 0; j < ((SelectButton)i).getIndex(); j ++) {
             this.display_state = this.display_state.cycleProperty(((SelectButton)i).getProperty());

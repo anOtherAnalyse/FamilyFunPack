@@ -52,7 +52,7 @@ Few commands, use them in chat (Command module must be enabled):
 ```.vclip <blocks_amount>```
 
 ##### Use entity / block
-```.use <entity_id>```  
+```.use [sneak|attack] <entity_id>```  
 ```.use <block_x> <block_y> <block_z>```
 
 ##### get entity id / block position while looking at it
@@ -63,6 +63,21 @@ Few commands, use them in chat (Command module must be enabled):
 
 ##### Disconnect from server
 ```.disconnect```
+
+##### Send a respawn packet to server (use this to respawn while on undead form)
+```.respawn```
+
+##### Get information about your gamemode, the world type, server difficulty ...
+```.info```
+
+##### Spectate something/somebody while beeing in spectator mode
+```.spectate <entity_uuid>```
+
+##### Print in chat all packets received from the server
+```.pckdump <on|off>```
+
+##### Sync player position between client & server
+```.sync```
 
 ##### Open mount inventory
 ```.open```  

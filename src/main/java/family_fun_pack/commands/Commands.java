@@ -25,6 +25,10 @@ public class Commands {
     this.registerCommand(new OpenDonkeyCommand());
     this.registerCommand(new DisconnectCommand());
     this.registerCommand(new SyncMountCommand());
+    this.registerCommand(new PacketDumpCommand());
+    this.registerCommand(new InfoCommand());
+    this.registerCommand(new SpectateCommand());
+    this.registerCommand(new RespawnCommand());
   }
 
   public void registerCommand(Command cmd) {
