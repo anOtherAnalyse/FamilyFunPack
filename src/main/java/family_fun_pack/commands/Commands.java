@@ -29,6 +29,7 @@ public class Commands {
     this.registerCommand(new InfoCommand());
     this.registerCommand(new SpectateCommand());
     this.registerCommand(new RespawnCommand());
+    this.registerCommand(new VoidMountCommand());
   }
 
   public void registerCommand(Command cmd) {
