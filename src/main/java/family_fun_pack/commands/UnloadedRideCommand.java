@@ -243,7 +243,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
             fake.setChested(true); // everything we need
           }
 
-          mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle(), open.getSlotCount()));
+          mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle() + " [" + Integer.toString(entity_id) + "]", open.getSlotCount()));
           mc.player.openContainer.windowId = open.getWindowId();
         } else if(entity instanceof AbstractHorse) {
           AbstractHorse horse = (AbstractHorse) entity;
