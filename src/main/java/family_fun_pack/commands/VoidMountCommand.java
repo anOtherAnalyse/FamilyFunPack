@@ -10,8 +10,11 @@ import net.minecraftforge.fml.relauncher.Side;
 @SideOnly(Side.CLIENT)
 public class VoidMountCommand extends Command {
 
+  private int last_id;
+
   public VoidMountCommand() {
     super("mount");
+    this.last_id = 42;
   }
 
   public String usage() {
@@ -27,6 +30,7 @@ public class VoidMountCommand extends Command {
         if(entity == null) return "You are not riding anything";
         mc.player.dismountRidingEntity();
         mc.world.removeEntityFromWorld(entity.getEntityId());
+        this.last_id = entity.getEntityId();
         return "Removed void mount";
       } else {
         ResourceLocation resource = new ResourceLocation(args[1]);
@@ -34,7 +38,7 @@ public class VoidMountCommand extends Command {
         if(entity == null) return "Invalid entity class";
 
         entity.setPosition(mc.player.posX, mc.player.posY, mc.player.posZ);
-        mc.world.addEntityToWorld(42, entity);
+        mc.world.addEntityToWorld(this.last_id, entity);
         mc.player.startRiding(entity, true);
 
         return "Mounted " + args[1];

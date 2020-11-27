@@ -192,29 +192,35 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           if(! this.success) return packet;
 
-          // Try to ride
-          int start = this.limits[0] + 1;
-          int stop = start + this.max_tries;
-          if(stop > this.limits[1]) stop = this.limits[1];
-
-          if(stop <= start) {
+          if(this.limits[1] - this.limits[0] <= 1) {
             FamilyFunPack.printMessage("Fail, no new entities were loaded");
             return packet;
           }
 
-          FamilyFunPack.printMessage("Entity id from " + Integer.toString(start) + " to " + Integer.toString(stop - 1));
+          FamilyFunPack.printMessage("Entity id from " + Integer.toString(this.limits[0] + 1) + " to " + Integer.toString(this.limits[1] - 1));
 
           if(this.sneak_use) {
             FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
             FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
           }
 
-          for(int i = start; i < stop; i ++) {
-            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, i), EnumHand.MAIN_HAND));
-          }
+          if(this.max_tries < 0) {
+            int start = this.limits[1] - 1;
+            int stop = start - this.max_tries;
+            if(stop < this.limits[0]) stop = this.limits[0];
 
-          // Try to open donkey inventory - Yes you can / could dupe with this command
-          // ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("open").execute(new String[0]);
+            for(int i = start; i > stop; i --) {
+              FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, i), EnumHand.MAIN_HAND));
+            }
+          } else if(this.max_tries > 0) {
+            int start = this.limits[0] + 1;
+            int stop = start + this.max_tries;
+            if(stop > this.limits[1]) stop = this.limits[1];
+
+            for(int i = start; i < stop; i ++) {
+              FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, i), EnumHand.MAIN_HAND));
+            }
+          }
         }
       }
     } else { // SPacketOpenWindow
