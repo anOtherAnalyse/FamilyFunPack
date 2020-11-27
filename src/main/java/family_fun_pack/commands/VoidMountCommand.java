@@ -3,6 +3,11 @@ package family_fun_pack.commands;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.passive.AbstractChestHorse;
+import net.minecraft.entity.passive.AbstractHorse;
+import net.minecraft.entity.passive.EntityLlama;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -18,7 +23,7 @@ public class VoidMountCommand extends Command {
   }
 
   public String usage() {
-    return this.getName() + " <entity_type|null>";
+    return this.getName() + " <entity_type|null> [entity_id]";
   }
 
   public String execute(String[] args) {
@@ -33,12 +38,36 @@ public class VoidMountCommand extends Command {
         this.last_id = entity.getEntityId();
         return "Removed void mount";
       } else {
+
+        int id = this.last_id;
+        if(args.length > 2) {
+          try {
+            id = Integer.parseInt(args[2]);
+          } catch(NumberFormatException e) {
+            return "entity_id should be a number";
+          }
+        }
+
         ResourceLocation resource = new ResourceLocation(args[1]);
         Entity entity = EntityList.createEntityByIDFromName(resource, mc.world);
         if(entity == null) return "Invalid entity class";
 
+        if(entity instanceof AbstractHorse) {
+          ((AbstractHorse) entity).setHorseSaddled(true);
+          ((AbstractHorse) entity).setHorseTamed(true);
+
+          if(entity instanceof AbstractChestHorse) {
+            ((AbstractChestHorse) entity).setChested(true);
+
+            if(entity instanceof EntityLlama) {
+              ((EntityLlama) entity).getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf(3));
+            }
+          }
+        }
+
         entity.setPosition(mc.player.posX, mc.player.posY, mc.player.posZ);
-        mc.world.addEntityToWorld(this.last_id, entity);
+
+        mc.world.addEntityToWorld(id, entity);
         mc.player.startRiding(entity, true);
 
         return "Mounted " + args[1];

@@ -46,6 +46,10 @@ public class InfoCommand extends Command {
     if(reduce_debug) stat += " [reduce debug info]";
     stat += " max players: " + max_players;
 
+    if(mc.player.isRiding()) {
+      stat += ", riding: " + Integer.toString(mc.player.getRidingEntity().getEntityId());
+    }
+
     return stat;
   }
 }

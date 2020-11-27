@@ -206,7 +206,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           if(this.max_tries < 0) {
             int start = this.limits[1] - 1;
-            int stop = start - this.max_tries;
+            int stop = start + this.max_tries;
             if(stop < this.limits[0]) stop = this.limits[0];
 
             for(int i = start; i > stop; i --) {
