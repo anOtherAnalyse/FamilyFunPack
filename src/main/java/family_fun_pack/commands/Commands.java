@@ -30,6 +30,7 @@ public class Commands {
     this.registerCommand(new SpectateCommand());
     this.registerCommand(new RespawnCommand());
     this.registerCommand(new VoidMountCommand());
+    this.registerCommand(new PeekCommand());
   }
 
   public void registerCommand(Command cmd) {

@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.LinkedList;
 
+import org.lwjgl.input.Keyboard;
+
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.GenericButton;
@@ -38,8 +40,14 @@ public class PreviewGui extends RightPanel {
   private InventoryBasic inventory;
   private List<Slot> slots;
 
+  private boolean hasParent;
+
   public PreviewGui(NBTTagList list) {
-    super();
+    this(list, true);
+  }
+
+  public PreviewGui(NBTTagList list, boolean hasParent) {
+    this.hasParent = hasParent;
 
     this.inventory = new InventoryBasic(null, false, 27);
     this.slots = new LinkedList<Slot>();
@@ -56,30 +64,41 @@ public class PreviewGui extends RightPanel {
       }
     }
 
-    this.x = (this.width - MainGui.guiWidth - 12 - PreviewGui.guiWidth) / 2 + MainGui.guiWidth + 12;
-    this.y = (MainGui.guiHeight - PreviewGui.guiHeight) / 2 + 12;
+    if(! this.hasParent) {
+      this.x = (this.width - PreviewGui.guiWidth) / 2;
+      this.y = (this.height - PreviewGui.guiHeight) / 2;
+    } else {
+      this.x = (this.width - MainGui.guiWidth - 12 - PreviewGui.guiWidth) / 2 + MainGui.guiWidth + 12;
+      this.y = (MainGui.guiHeight - PreviewGui.guiHeight) / 2 + 12;
+
+      this.buttonList.add(new GenericButton(0, this.x + 3, this.y + 3, "Back") {
+        public void onClick(GuiScreen parent) {
+          ((PreviewGui) parent).close();
+        }
+      });
+    }
+
     this.x_end = this.x + PreviewGui.guiWidth;
     this.y_end = this.y + PreviewGui.guiHeight;
+
     for(Slot s : this.slots) {
       s.xPos += this.x;
       s.yPos += this.y;
     }
-    this.buttonList.add(new GenericButton(0, this.x + 3, this.y + 3, "Back") {
-      public void onClick(GuiScreen parent) {
-        ((PreviewGui) parent).close();
-      }
-    });
   }
 
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-    // Gui background
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
 
-    // borders
-    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, PreviewGui.INNER_BORDER);
-    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, PreviewGui.INNER_BORDER);
-    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
-    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
+    if(this.hasParent) {
+      // Gui background
+      Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
+
+      // borders
+      Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, PreviewGui.INNER_BORDER);
+      Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, PreviewGui.INNER_BORDER);
+      Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
+      Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, PreviewGui.INNER_BORDER);
+    }
 
     // items background
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -106,6 +125,15 @@ public class PreviewGui extends RightPanel {
         if(! stack.isEmpty()) {
           this.renderToolTip(stack, mouseX, mouseY);
         }
+      }
+    }
+  }
+
+  public void keyTyped(char typedChar, int keyCode) throws IOException {
+    if(keyCode == Keyboard.KEY_ESCAPE) {
+      this.mc.displayGuiScreen(null);
+      if (this.mc.currentScreen == null) {
+        this.mc.setIngameFocus();
       }
     }
   }
