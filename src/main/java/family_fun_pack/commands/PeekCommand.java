@@ -3,9 +3,9 @@ package family_fun_pack.commands;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemShulkerBox;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -21,7 +21,7 @@ public class PeekCommand extends Command {
   private GuiScreen screen;
 
   public PeekCommand() {
-    super("ground-peek");
+    super("stare");
     this.screen = null;
   }
 
@@ -33,13 +33,30 @@ public class PeekCommand extends Command {
     Minecraft mc = Minecraft.getMinecraft();
 
     ItemStack stack = null;
-    for(EntityItem e : mc.world.<EntityItem>getEntitiesWithinAABB(EntityItem.class, mc.player.getEntityBoundingBox().grow(8.0D, 3.0D, 8.0D))) {
-      if(e.getItem() != null && e.getItem().getItem() instanceof ItemShulkerBox) {
-        stack = e.getItem();
-        break;
+    for(Entity entity : mc.world.<Entity>getEntitiesWithinAABB(Entity.class, mc.player.getEntityBoundingBox().grow(12.0D, 4.0D, 12.0D))) {
+
+      if(entity == mc.player) continue;
+
+      // Search through entities metadata
+      for(EntityDataManager.DataEntry<?> entry : entity.getDataManager().getAll()) {
+        if(entry.getValue() instanceof ItemStack && ((ItemStack) entry.getValue()).getItem() instanceof ItemShulkerBox) {
+          stack = (ItemStack) entry.getValue();
+          break;
+        }
       }
+      if(stack != null) break;
+
+      // Search through entity equipment
+      for(ItemStack item : entity.getEquipmentAndArmor()) {
+        if(item.getItem() instanceof ItemShulkerBox) {
+          stack = item;
+          break;
+        }
+      }
+      if(stack != null) break;
     }
-    if(stack == null) return "No shulker item on ground close to you";
+
+    if(stack == null) return "No shulker item close to you";
 
     NBTTagCompound tag = stack.getTagCompound();
     if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {
@@ -51,7 +68,8 @@ public class PeekCommand extends Command {
       }
     }
 
-    return "Shulker is empty, no data";
+    if(tag == null) return "Shulker is empty, no tag";
+    return "Shulker does not contain items, no BlockEntityTag tag, tag is " + tag.toString();
   }
 
   @SubscribeEvent
