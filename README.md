@@ -2,7 +2,7 @@
 
 ### Summary
 
-Minecraft 1.12.2 utility mod for anarchy servers, 2b2t - 9b9t. Family Fun Pack is not a complete anarchy utility mod, but instead offers a few features that are missing or are improved from what offer others utility mods.
+Minecraft 1.12.2 utility mod for anarchy servers, 2b2t - 9b9t. This is not a complete anarchy utility mod, but instead offers a few features that are missing or are improved from what offer others utility mods.
 
 ### Usage
 Use the ```backslash``` key to open the GUI (by default). Change it from Minecraft keybinds options.
@@ -31,10 +31,11 @@ Be invulnerable after going through a portal, but you won't be able to move by y
 Pig point of view -  When using portal invulnerability you can use a pig to travel 1x1 tunnels without taking damage. Use this to lower your point of view and see where you are going.
 
 ##### Stalker
-Stalk a player: know when they connect/disconnect/change their gamemode/display name...
+Stalk a player: know when they connect/disconnect/change their gamemode/display name...  
+Manage it with the ```.stalk``` command.
 
 ##### Undead
-Be able to walk around as a ghost after your death.
+Be able to walk around as a ghost after your death. You won't be able to interact with your environment. Use ```.respawn``` to respawn.
 
 ### Commands
 Few commands, use them in chat (Command module must be enabled):
@@ -83,6 +84,12 @@ Few commands, use them in chat (Command module must be enabled):
 ```.open```  
 Will create a ghost donkey if your mount does not exist client side (server desync).
 
+##### Peek at shulker item on the ground or in the hand of another nearby entity
+```.stare```
+
+##### Display people joining/leaving 2b2t queue (while in queue)
+```.queue <show|hide>```
+
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
 
@@ -91,7 +98,7 @@ How it works (actions performed sequentially):
  - use / break a block from unloaded chunk to load the chunk and its entities.
  - drop one cobblestone on floor
  - After receiving from server the entities ids of the dirt & cobblestone items: try to use every entity id between the dirt id and the cooblestone id (guess the target entity id).
- - If everything worked correctly your action was performed, then the chunk will unload. For example if you tried to mount a horse you can then use the ```.open``` command to open its inventory (dupe ?).
+ - If everything worked correctly your action was performed, then the chunk will unload. For example if you tried to mount a horse you can then use the ```.open``` command to open its inventory.
 
 Set up command: register the block to be used to load the chunk (it has to be a block in the [future] unloaded chunk):  
 ```.ldride reg```

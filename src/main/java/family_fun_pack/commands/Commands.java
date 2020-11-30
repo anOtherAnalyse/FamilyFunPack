@@ -31,6 +31,7 @@ public class Commands {
     this.registerCommand(new RespawnCommand());
     this.registerCommand(new VoidMountCommand());
     this.registerCommand(new PeekCommand());
+    this.registerCommand(new QueueUtilsCommand());
   }
 
   public void registerCommand(Command cmd) {
