@@ -53,6 +53,8 @@ import family_fun_pack.modules.Module;
 import family_fun_pack.modules.SearchModule;
 import family_fun_pack.utils.FakeWorld;
 
+/* Block selection GUI for search module */
+
 @SideOnly(Side.CLIENT)
 public class SearchSelectionGui extends RightPanel {
 
@@ -75,7 +77,7 @@ public class SearchSelectionGui extends RightPanel {
   private List<ColorButton> colors;
   private List<OpenGuiButton> advanced;
 
-  private FakeWorld world;
+  private FakeWorld world; // Used in tileentities rendering methods
 
   public SearchSelectionGui() {
     this.x = MainGui.guiWidth + 16;
@@ -102,6 +104,7 @@ public class SearchSelectionGui extends RightPanel {
     this.world = new FakeWorld(null, this.mc.world.provider);
   }
 
+  // Depends on SearchModule
   public void dependsOn(Module dependence) {
     super.dependsOn(dependence);
 
@@ -140,11 +143,13 @@ public class SearchSelectionGui extends RightPanel {
     }
   }
 
+  // Set to enabled search btn for given block
   public void enableSearchBtn(Block block) {
     int index = this.blocks.indexOf(block);
     this.search.get(index).setState(true);
   }
 
+  // When advanced options clicked, get the Block for which it was asked
   public Block getCurrentBlock() {
     for(int i = 0; i < SearchSelectionGui.maxLabelsDisplayed; i ++) {
       OpenGuiButton btn = this.advanced.get(i);
@@ -156,6 +161,7 @@ public class SearchSelectionGui extends RightPanel {
     return null;
   }
 
+  // Compute search bar input
   private void searchBlocks(String keyword) {
     this.blocks.clear();
     for(Block b : Block.REGISTRY) {
@@ -168,6 +174,7 @@ public class SearchSelectionGui extends RightPanel {
     this.dependsOn(this.dependence);
   }
 
+  // Draw
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     // background
     Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR);
@@ -292,6 +299,7 @@ public class SearchSelectionGui extends RightPanel {
     super.drawScreen(mouseX, mouseY, partialTicks);
   }
 
+  // Does given block have multiple possible states
   public boolean hasSpecialStates(Block b) {
     if(b.getBlockState().getValidStates().size() > 1) return true;
     if(b.hasTileEntity(null)) {
@@ -304,6 +312,7 @@ public class SearchSelectionGui extends RightPanel {
     return false;
   }
 
+  // Display block face at given coords in GUI
   public void displayBlockFlat(int x, int y, Block block) {
     IBlockState state = block.getDefaultState();
     try {
@@ -323,10 +332,12 @@ public class SearchSelectionGui extends RightPanel {
     this.displayBlockFlat(x, y, state);
   }
 
+  // Display block state at given coords in GUI
   public void displayBlockFlat(int x, int y, IBlockState state) {
     this.displayBlockFlat(x, y, state, null);
   }
 
+  // Display block state with tileentity at given coords in GUI
   public void displayBlockFlat(int x, int y, IBlockState state, TileEntity tile) {
     if(state.getBlock() == Blocks.AIR) return;
 
@@ -388,7 +399,8 @@ public class SearchSelectionGui extends RightPanel {
     mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
   }
 
-  public void renderByTileEntity(TileEntity tile, IBlockState state) {
+  // Special render for tileentties
+  private void renderByTileEntity(TileEntity tile, IBlockState state) {
     // Use custom world to set blockstate, used by tileentities for rendering
     this.world.setBlockState(null, state, 0);
     World save = TileEntityRendererDispatcher.instance.world;
@@ -415,6 +427,7 @@ public class SearchSelectionGui extends RightPanel {
     TileEntityRendererDispatcher.instance.world = save;
   }
 
+  // Create tileentity for blockstate, associate it to fake world
   public TileEntity createTileEntity(IBlockState state) {
     TileEntity tile = state.getBlock().createTileEntity(this.mc.world, state);
     if(tile == null) return null;
@@ -422,6 +435,7 @@ public class SearchSelectionGui extends RightPanel {
     return tile;
   }
 
+  // Mouse clicked handling
   public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     if(mouseButton == 0) {
       for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
@@ -446,6 +460,7 @@ public class SearchSelectionGui extends RightPanel {
     }
   }
 
+  // Mouse released handling
   public void mouseReleased(int mouseX, int mouseY, int state) {
     if(state == 0) {
       for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
@@ -455,10 +470,12 @@ public class SearchSelectionGui extends RightPanel {
     }
   }
 
+  // Update search bar every tick (make it blink)
   public void updateScreen() { // every tick
     this.selection.updateCursorCounter();
   }
 
+  // On key typed
   public void keyTyped(char keyChar, int keyCode) throws IOException {
     this.selection.textboxKeyTyped(keyChar, keyCode);
     String keyword = this.selection.getText().trim().toLowerCase();

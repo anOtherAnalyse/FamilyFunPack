@@ -15,6 +15,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.gui.interfaces.PreviewGui;
 
+/* Shulker peek, but for shulker dropped on the floor or hold by other entities */
+
 @SideOnly(Side.CLIENT)
 public class PeekCommand extends Command {
 

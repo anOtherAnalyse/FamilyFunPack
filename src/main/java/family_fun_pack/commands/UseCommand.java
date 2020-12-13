@@ -14,6 +14,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.entities.EntityVoid;
 
+/* Use entity / block */
+
 @SideOnly(Side.CLIENT)
 public class UseCommand extends Command {
 

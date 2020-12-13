@@ -48,7 +48,7 @@ Few commands, use them in chat (Command module must be enabled):
 ```.vanish dismount```  
 ```.vanish remount```  
 
-##### Horizontal / Vertical teleport
+##### Horizontal / Vertical client-side teleport
 ```.hclip <blocks_amount>```  
 ```.vclip <blocks_amount>```
 
@@ -87,8 +87,9 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ##### Peek at shulker item on the ground or in the hand of another nearby entity
 ```.stare```
 
-##### Display people joining/leaving 2b2t queue (while in queue)
-```.queue <show|hide>```
+##### Display people joining/leaving 2b2t queue (while in queue), check if someone is in queue
+```.queue <show|hide>```  
+```.queue <player_name>```
 
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.

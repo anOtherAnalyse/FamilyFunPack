@@ -12,6 +12,9 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+/* Create entity and mount it, only for client side */
+/* For example: use it while riding a llama to replace it by a horse */
+
 @SideOnly(Side.CLIENT)
 public class VoidMountCommand extends Command {
 
@@ -46,6 +49,11 @@ public class VoidMountCommand extends Command {
           } catch(NumberFormatException e) {
             return "entity_id should be a number";
           }
+        }
+
+        if(mc.player.isRiding()) {
+          if(args.length <= 2) id = mc.player.getRidingEntity().getEntityId();
+          mc.player.dismountRidingEntity();
         }
 
         ResourceLocation resource = new ResourceLocation(args[1]);

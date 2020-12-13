@@ -13,12 +13,14 @@ import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.modules.Module;
 
+/* Right panel, special module configuration GUI displayed next to Main GUI */
+
 @SideOnly(Side.CLIENT)
 public abstract class RightPanel extends GuiScreen {
 
-  protected Module dependence;
+  protected Module dependence; // Module dependence
 
-  protected GuiScreen parent;
+  protected GuiScreen parent; // GUI parent that generated this one
 
   public RightPanel() {
     ScaledResolution scale = new ScaledResolution(Minecraft.getMinecraft());

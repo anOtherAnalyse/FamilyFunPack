@@ -17,6 +17,8 @@ import java.lang.InstantiationException;
 import java.io.IOException;
 import java.util.List;
 
+/* Intercept packet sent by server to client */
+
 @SideOnly(Side.CLIENT)
 public class InboundInterceptor extends NettyPacketDecoder {
 

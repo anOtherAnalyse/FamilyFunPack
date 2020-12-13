@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import java.util.UUID;
 
 /* Store real durability inside special NBTTagCompound */
+
 @SideOnly(Side.CLIENT)
 public class SpecialTagCompound extends NBTTagCompound {
 

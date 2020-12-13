@@ -7,8 +7,10 @@ import net.minecraft.client.renderer.entity.RenderPig;
 import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.client.Minecraft;
 
+/* Render pig few inches lower, to be able to see where we are going with pig POV */
+
 @SideOnly(Side.CLIENT)
-public class NoRenderPig extends RenderPig { // Not no render anymore, just render it lower
+public class NoRenderPig extends RenderPig {
 
   private Minecraft mc;
 

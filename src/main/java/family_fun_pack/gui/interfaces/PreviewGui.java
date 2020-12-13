@@ -25,6 +25,8 @@ import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.GenericButton;
 import family_fun_pack.nbt.SpecialTagCompound;
 
+/* Shulker peek GUI */
+
 @SideOnly(Side.CLIENT)
 public class PreviewGui extends RightPanel {
 

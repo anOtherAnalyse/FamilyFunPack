@@ -3,6 +3,8 @@ package family_fun_pack.commands;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+/* A Command */
+
 @SideOnly(Side.CLIENT)
 public abstract class Command {
 
@@ -16,9 +18,8 @@ public abstract class Command {
     return this.name;
   }
 
-  public void onDisconnect() {
-
-  }
+  /* When disconnecting from server */
+  public void onDisconnect() {}
 
   public abstract String usage();
 

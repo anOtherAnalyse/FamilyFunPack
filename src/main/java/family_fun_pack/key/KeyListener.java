@@ -17,6 +17,8 @@ import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.modules.Module;
 
+/* Key listener */
+
 @SideOnly(Side.CLIENT)
 public class KeyListener {
 

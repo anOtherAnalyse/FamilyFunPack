@@ -14,6 +14,8 @@ import io.netty.channel.ChannelHandlerContext;
 import java.lang.Exception;
 import java.io.IOException;
 
+/* Intercept packet sent by client to server */
+
 @SideOnly(Side.CLIENT)
 public class OutboundInterceptor extends NettyPacketEncoder {
 

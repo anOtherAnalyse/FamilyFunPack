@@ -11,6 +11,8 @@ import family_fun_pack.FamilyFunPack;
 import family_fun_pack.commands.Command;
 import family_fun_pack.commands.Commands;
 
+/* Get commands from chat & find associated FFP command */
+
 @SideOnly(Side.CLIENT)
 public class CommandsModule extends Module {
 

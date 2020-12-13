@@ -12,8 +12,14 @@ import java.util.Set;
 import java.util.HashSet;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.gui.MainGuiComponent;
+import family_fun_pack.gui.components.ActionButton;
+import family_fun_pack.gui.components.OpenGuiButton;
+import family_fun_pack.gui.interfaces.PacketsSelectionGui;
 import family_fun_pack.network.NetworkHandler;
 import family_fun_pack.network.PacketListener;
+
+/* Block network packets */
 
 @SideOnly(Side.CLIENT)
 public class PacketInterceptionModule extends Module implements PacketListener {
@@ -45,6 +51,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     FamilyFunPack.getOverlay().removeLabel("Interception: On");
   }
 
+  // reinventing the wheel
   public static int[] convertArray(Integer[] in) {
     int[] out = new int[in.length];
     for(int j = 0; j < in.length; j ++) {
@@ -69,6 +76,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     super.load(configuration);
   }
 
+  // Add packet to be blocked
   public void addIntercept(EnumPacketDirection direction, int id) {
     Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
     selected.add(id);
@@ -77,6 +85,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     }
   }
 
+  // remove packet from beeing blocked
   public void removeIntercept(EnumPacketDirection direction, int id) {
     Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
     selected.remove(id);
@@ -85,12 +94,41 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     }
   }
 
+  // Is packet blocked
   public boolean isFiltered(EnumPacketDirection direction, int id) {
     Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
     return selected.contains(id);
   }
 
+  // Block packet
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     return null;
+  }
+
+  // To be displayed in Main GUI, to access the packets selection GUI
+  private class GuiComponent implements MainGuiComponent {
+
+    private PacketInterceptionModule dependence;
+
+    public GuiComponent(PacketInterceptionModule dependence) {
+      this.dependence = dependence;
+    }
+
+    public String getLabel() {
+      return "which packets ?";
+    }
+
+    public ActionButton getAction() {
+      return new OpenGuiButton(0, 0, "select", PacketsSelectionGui.class, this.dependence);
+    }
+
+    public MainGuiComponent getChild() {
+      return null;
+    }
+  }
+
+  // Bind open packets selection to this module in Main GUI
+  public MainGuiComponent getChild() {
+    return new GuiComponent(this);
   }
 }

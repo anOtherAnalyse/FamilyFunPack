@@ -17,6 +17,8 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Silent close, keep containers open and access them with the inventory key bind */
+
 @SideOnly(Side.CLIENT)
 public class NoCloseModule extends Module implements PacketListener {
 

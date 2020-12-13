@@ -9,6 +9,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.render.NoRenderPig;
 
+/* Lower player height, be able to see when travelling 1 by 1 tunnels on pig */
+
 @SideOnly(Side.CLIENT)
 public class PigPOVModule extends Module {
 

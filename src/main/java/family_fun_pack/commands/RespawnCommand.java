@@ -6,6 +6,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Send a respawn packet */
+
 @SideOnly(Side.CLIENT)
 public class RespawnCommand extends Command {
 

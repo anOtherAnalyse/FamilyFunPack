@@ -12,8 +12,16 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import io.netty.buffer.ByteBuf;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
+
+/* Inspect 2b2t queue, who is in, can not know position */
 
 @SideOnly(Side.CLIENT)
 public class QueueUtilsCommand extends Command implements PacketListener {
@@ -23,7 +31,7 @@ public class QueueUtilsCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName() + " show|hide|teams|<team_name>";
+    return this.getName() + " show|hide|<player>";
   }
 
   public String execute(String[] args) {
@@ -36,23 +44,9 @@ public class QueueUtilsCommand extends Command implements PacketListener {
         case "hide":
           FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 68);
           break;
-        case "teams":
-          {
-            Scoreboard score = mc.world.getScoreboard();
-            for(ScorePlayerTeam team : score.getTeams()) {
-              FamilyFunPack.printMessage(team.getColor() + team.getName() + "[" + team.getDisplayName() + "] " + Integer.toString(team.getMembershipCollection().size()) + " players");
-            }
-          }
-        break;
         default:
-          {
-            Scoreboard score = mc.world.getScoreboard();
-            ScorePlayerTeam team = score.getTeam(args[1]);
-            if(team == null) return "no such team";
-            for(String member : team.getMembershipCollection()) {
-              FamilyFunPack.printMessage(team.getColor() + member);
-            }
-          }
+          if(mc.world.getScoreboard().getPlayersTeam(args[1]) != null) return args[0] + " is in queue";
+          return args[0] + " not in queue";
       }
       return null;
     }
@@ -62,20 +56,14 @@ public class QueueUtilsCommand extends Command implements PacketListener {
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     SPacketTeams teams = (SPacketTeams) packet;
     switch(teams.getAction()) {
-      case 0:
-        FamilyFunPack.printMessage("Team " + teams.getName() + "[" + teams.getDisplayName() + "] created");
-        break;
-      case 1:
-        FamilyFunPack.printMessage("Team " + teams.getName() + " removed");
-        break;
       case 3:
         for(String player : teams.getPlayers()) {
-          FamilyFunPack.printMessage(TextFormatting.GREEN + "Player " + player + " added to team " + teams.getName());
+          FamilyFunPack.printMessage(TextFormatting.GREEN + "Player " + player + " added to queue");
         }
         break;
       case 4:
         for(String player : teams.getPlayers()) {
-          FamilyFunPack.printMessage(TextFormatting.RED + "Player " + player + " removed from team " + teams.getName());
+          FamilyFunPack.printMessage(TextFormatting.RED + "Player " + player + " removed from queue");
         }
         break;
     }

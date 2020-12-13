@@ -15,6 +15,8 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Try to fetch all available commands on server */
+
 @SideOnly(Side.CLIENT)
 public class GetCommand extends Command implements PacketListener {
 

@@ -19,6 +19,8 @@ import java.util.HashSet;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Stalk player, know when they connect & disconnect */
+
 @SideOnly(Side.CLIENT)
 public class StalkModule extends Module implements PacketListener {
 

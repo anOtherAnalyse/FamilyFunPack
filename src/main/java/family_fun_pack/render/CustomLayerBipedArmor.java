@@ -19,6 +19,8 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import family_fun_pack.nbt.SpecialTagCompound;
 
+/* Used to apply red enchant to unbrekable armor pieces */
+
 @SideOnly(Side.CLIENT)
 public class CustomLayerBipedArmor extends LayerBipedArmor {
 

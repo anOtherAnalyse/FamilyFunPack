@@ -7,6 +7,8 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+/* Get entity id / position of entity / block we are staring at */
+
 @SideOnly(Side.CLIENT)
 public class RaytraceCommand extends Command {
 

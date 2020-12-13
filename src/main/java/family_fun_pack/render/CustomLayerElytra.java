@@ -21,6 +21,8 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import family_fun_pack.nbt.SpecialTagCompound;
 
+/* Used to apply red enchant to unbrekable elytras */
+
 @SideOnly(Side.CLIENT)
 public class CustomLayerElytra implements LayerRenderer<EntityLivingBase> {
 

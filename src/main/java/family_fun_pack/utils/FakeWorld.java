@@ -12,7 +12,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraft.block.BlockShulkerBox;
 import net.minecraft.util.EnumFacing;
 
-// Only one blocstate world, used for rendering tileentities in gui
+// Only one blockstate world, used for rendering tileentities in gui
 
 @SideOnly(Side.CLIENT)
 public class FakeWorld extends World {

@@ -9,6 +9,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Get information about player, world, ... */
+
 @SideOnly(Side.CLIENT)
 public class InfoCommand extends Command {
 

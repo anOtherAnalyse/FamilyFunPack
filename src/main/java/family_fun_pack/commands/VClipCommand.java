@@ -5,6 +5,8 @@ import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+/* Vertical client-side teleport */
+
 @SideOnly(Side.CLIENT)
 public class VClipCommand extends Command {
 

@@ -28,20 +28,27 @@ import family_fun_pack.gui.components.OnOffButton;
 import family_fun_pack.gui.components.SelectButton;
 import family_fun_pack.modules.SearchModule;
 
+/* BlockStates selection for advanced search */
+
 @SideOnly(Side.CLIENT)
 public class AdvancedSearchGui extends RightPanel {
 
   private static final int guiWidth = 168;
   private static final int guiHeight = 200;
 
+  // Interface dimensions
   private int x, y, x_end, y_end;
 
+  // Currently displayed states
   private IBlockState display_state;
   private Block block;
   private TileEntity display_tile;
+
+  // Presets management
   private int preset_count;
   private int current_preset;
 
+  // Interface buttons
   private OnOffButton tracer;
   private ColorButton color;
 
@@ -112,6 +119,7 @@ public class AdvancedSearchGui extends RightPanel {
     this.buttonList.add(this.remove);
   }
 
+  // When parent interface is linked (SearchSelectionGui)
   public void setParent(GuiScreen parent) {
     super.setParent(parent);
     this.block = ((SearchSelectionGui)this.parent).getCurrentBlock();
@@ -135,6 +143,7 @@ public class AdvancedSearchGui extends RightPanel {
     this.preset_count = ((SearchModule) this.dependence).getAdvancedSearchListSize(this.block);
   }
 
+  // Add labels in GUI for selecting wanted values in NBT fields
   private int computeTileEntity(NBTTagCompound tag, int y, List<String> path) {
     for(String key : tag.getKeySet()) {
       switch(tag.getTagId(key)) {
@@ -175,11 +184,13 @@ public class AdvancedSearchGui extends RightPanel {
     return y;
   }
 
+  // Cycle value of given property of the current displayed state
   public void cycleProperty(IProperty<?> property) {
     this.display_state = this.display_state.cycleProperty(property);
     if(this.display_tile != null) this.display_tile.updateContainingBlockInfo();
   }
 
+  // Set tag of currently displayed tileentity
   public void setTag(String[] path, Object value) {
     if(this.display_tile != null) {
       NBTTagCompound base = this.display_tile.getUpdateTag();
@@ -201,6 +212,7 @@ public class AdvancedSearchGui extends RightPanel {
     }
   }
 
+  // Draw
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     // background
     Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR);
@@ -235,6 +247,7 @@ public class AdvancedSearchGui extends RightPanel {
     super.drawScreen(mouseX, mouseY, partialTicks);
   }
 
+  // Close GUI
   public void close() {
     this.transition((RightPanel) this.parent);
   }

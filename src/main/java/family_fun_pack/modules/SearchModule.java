@@ -67,13 +67,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.gui.MainGuiComponent;
+import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.ColorButton;
+import family_fun_pack.gui.components.OpenGuiButton;
+import family_fun_pack.gui.interfaces.SearchSelectionGui;
 import family_fun_pack.network.PacketListener;
+
+/* Block searching module */
 
 @SideOnly(Side.CLIENT)
 public class SearchModule extends Module implements PacketListener {
 
-  // Thanks SalHack for the code
+  // Draw tracer
+  // Credits to SalHack for the code
   public static void drawLine3D(float x, float y, float z, float x1, float y1, float z1, float thickness, int hex) {
     float red = (hex >> 16 & 0xFF) / 255.0F;
     float green = (hex >> 8 & 0xFF) / 255.0F;
@@ -107,12 +114,15 @@ public class SearchModule extends Module implements PacketListener {
     GlStateManager.popMatrix();
   }
 
+  /* Map of Blocks to be searched */
   private ReadWriteLock search_lock;
   private Map<Block, SearchOptions> to_search;
 
+  /* List of blocks that have been selected for highlighting */
   private ReadWriteLock targets_lock;
   private Map<BlockPos, Property> targets;
 
+  /* New chunks to be search for targets */
   private ReadWriteLock new_chunks_lock;
   private List<ChunkPos> new_chunks;
 
@@ -175,6 +185,7 @@ public class SearchModule extends Module implements PacketListener {
    * Configurations save & load
    */
 
+   // save all configurations
   public void save(Configuration configuration) {
     for(Block block : Block.REGISTRY) {
       this.saveBlock(block, configuration);
@@ -182,6 +193,7 @@ public class SearchModule extends Module implements PacketListener {
     super.save(configuration);
   }
 
+  // save configuration for one block
   private void saveBlock(Block block, Configuration configuration) {
     int id = Block.getIdFromBlock(block);
 
@@ -210,6 +222,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // load all configurations
   public void load(Configuration configuration) {
     for(Block block : Block.REGISTRY) {
       this.loadBlock(block, configuration, false);
@@ -217,6 +230,7 @@ public class SearchModule extends Module implements PacketListener {
     super.load(configuration);
   }
 
+  // load configuration for one block
   private void loadBlock(Block block, Configuration configuration, boolean force) {
     int id = Block.getIdFromBlock(block);
     boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
@@ -237,6 +251,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // load given preset configuration, for given block
   private AdvancedSearch loadPreset(Configuration configuration, Block block, int index) {
     AdvancedSearch out = new AdvancedSearch(block, false);
     String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
@@ -263,6 +278,7 @@ public class SearchModule extends Module implements PacketListener {
     return out;
   }
 
+  // save given preset configuration, for given block
   private void savePreset(Configuration configuration, AdvancedSearch preset, Block block, int index) {
     String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
 
@@ -291,9 +307,11 @@ public class SearchModule extends Module implements PacketListener {
     configuration.get(this.name, "color_" + label, ColorButton.DEFAULT_COLOR).set(preset.property.color);
   }
 
-  /* Targets handling */
+  /*
+  * Targets management
+  */
 
-  // Remove targets data from unloaded chunks
+  // Remove targets located on unload chunks
   @SubscribeEvent
   public void onUnLoad(ChunkEvent.Unload event) {
     int x = event.getChunk().x, z = event.getChunk().z;
@@ -341,12 +359,12 @@ public class SearchModule extends Module implements PacketListener {
    */
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-    if(id == 32) {
+    if(id == 32) { // New chunk
       SPacketChunkData chunk = (SPacketChunkData) packet;
       this.new_chunks_lock.writeLock().lock();
       this.new_chunks.add(new ChunkPos(chunk.getChunkX(), chunk.getChunkZ()));
       this.new_chunks_lock.writeLock().unlock();
-    } else if(id == 9) {
+    } else if(id == 9) { // New tile entity
       SPacketUpdateTileEntity updt = (SPacketUpdateTileEntity) packet;
 
       Property p = this.isTargeted(Minecraft.getMinecraft().world.getBlockState(updt.getPos()), updt.getPos(), updt.getNbtCompound());
@@ -356,7 +374,7 @@ public class SearchModule extends Module implements PacketListener {
       else this.targets.remove(updt.getPos());
       this.targets_lock.writeLock().unlock();
 
-    } else if(id == 11) {
+    } else if(id == 11) { // New Block
       SPacketBlockChange change = (SPacketBlockChange) packet;
 
       Property p = this.isTargeted(change.getBlockState(), change.getBlockPosition(), null);
@@ -366,7 +384,7 @@ public class SearchModule extends Module implements PacketListener {
         this.targets.put(change.getBlockPosition(), p);
       } else this.targets.remove(change.getBlockPosition());
       this.targets_lock.writeLock().unlock();
-    } else {
+    } else { // New Blocks
       SPacketMultiBlockChange change = (SPacketMultiBlockChange) packet;
       for(SPacketMultiBlockChange.BlockUpdateData up : change.getChangedBlocks()) {
 
@@ -382,7 +400,7 @@ public class SearchModule extends Module implements PacketListener {
   }
 
   /*
-   * Render function
+   * Render function, highlight targets with right color + Draw tracers
   */
 
   @SubscribeEvent
@@ -425,7 +443,7 @@ public class SearchModule extends Module implements PacketListener {
           float green = ((float)(p.color & 255)) / 255f;
 
           RenderGlobal.drawBoundingBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.65f);
-          RenderGlobal.renderFilledBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.5f);
+          RenderGlobal.renderFilledBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ, red, blue, green, 0.25f);
       }
     }
     this.targets_lock.readLock().unlock();
@@ -466,6 +484,7 @@ public class SearchModule extends Module implements PacketListener {
    * Global Search functions, used to reset targets data for all loaded chunks in our field of view
   */
 
+  // Clear all targets, renew targets for every chunks in render distance
   public void resetTargets() {
     Minecraft mc = Minecraft.getMinecraft();
     if(mc.world == null) return;
@@ -485,6 +504,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // Search a chunk for targets
   private void searchChunk(Chunk chunk) {
     int m = -1;
     for(ExtendedBlockStorage storage : chunk.getBlockStorageArray()) {
@@ -507,6 +527,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // Remove targets that were registered with given property
   public void ClearFromTargets(Property property) {
     this.targets_lock.readLock().lock();
     Iterator i = this.targets.keySet().iterator();
@@ -740,6 +761,7 @@ public class SearchModule extends Module implements PacketListener {
   * Sub-Classes used in data structures
   */
 
+  // A highlight property (color + tracer enabled ?)
   public static class Property {
     public boolean tracer;
     public int color;
@@ -750,6 +772,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // A target to be highlighted, located at position
   private static class Target {
     public Property property;
     public BlockPos position;
@@ -760,6 +783,7 @@ public class SearchModule extends Module implements PacketListener {
     }
   }
 
+  // Search options for a block: default search property and eventually presets overwrite
   private static class SearchOptions {
 
     public Property default_property;
@@ -814,6 +838,7 @@ public class SearchModule extends Module implements PacketListener {
 
   }
 
+  // Advanced search preset: which block states to search for, which tileentity tags, which property to apply
   public static class AdvancedSearch {
 
     public Set<IBlockState> states;
@@ -884,4 +909,35 @@ public class SearchModule extends Module implements PacketListener {
       base.setString(path[path.length - 1], value);
     }
   }
+
+  /*
+   * Link with search selection GUI
+   */
+
+   // To be displayed in Main GUI, to access the search selection GUI
+   private class GuiComponent implements MainGuiComponent {
+
+     private SearchModule dependence;
+
+     public GuiComponent(SearchModule dependence) {
+       this.dependence = dependence;
+     }
+
+     public String getLabel() {
+       return "Search selection";
+     }
+
+     public ActionButton getAction() {
+       return new OpenGuiButton(0, 0, "open", SearchSelectionGui.class, this.dependence);
+     }
+
+     public MainGuiComponent getChild() {
+       return null;
+     }
+   }
+
+   // Search selection GUI is child of this module in Main GUI
+   public MainGuiComponent getChild() {
+     return new GuiComponent(this);
+   }
 }

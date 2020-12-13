@@ -10,6 +10,8 @@ import family_fun_pack.FamilyFunPack;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.StalkModule;
 
+/* Manage stalked players list */
+
 @SideOnly(Side.CLIENT)
 public class StalkCommand extends Command {
 

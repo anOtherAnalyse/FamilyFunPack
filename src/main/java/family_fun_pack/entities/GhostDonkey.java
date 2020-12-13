@@ -9,6 +9,10 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.render.RenderGhostDonkey;
 
+/* Ghost donkey, will appear when using .open command while mounting an entity that does not exist client-side
+ * For example after mounting an entity from unloaded chunk, and then using .open to open its inventory
+*/
+
 @SideOnly(Side.CLIENT)
 public class GhostDonkey extends EntityDonkey {
 

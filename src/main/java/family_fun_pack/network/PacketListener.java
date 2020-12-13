@@ -7,6 +7,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import io.netty.buffer.ByteBuf;
 
+/* A class listening for network packets, register a listener on NetworkHandler */
+
 @SideOnly(Side.CLIENT)
 public interface PacketListener {
 

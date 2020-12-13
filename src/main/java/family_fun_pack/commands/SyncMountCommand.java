@@ -18,6 +18,8 @@ import family_fun_pack.entities.EntityVoid;
 import family_fun_pack.entities.GhostDonkey;
 import family_fun_pack.network.PacketListener;
 
+/* Sync our position with server */
+
 @SideOnly(Side.CLIENT)
 public class SyncMountCommand extends Command implements PacketListener {
 

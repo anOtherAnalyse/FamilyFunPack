@@ -6,6 +6,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+/* Horizontal client-side teleport */
+
 @SideOnly(Side.CLIENT)
 public class HClipCommand extends Command {
 

@@ -44,6 +44,8 @@ import family_fun_pack.render.CustomLayerBipedArmor;
 import family_fun_pack.render.CustomLayerElytra;
 import family_fun_pack.render.CustomRenderItem;
 
+/* Display unbreakable items in red enchant, show real durability in toolTip */
+
 @SideOnly(Side.CLIENT)
 public class TrueDurabilityModule extends Module implements PacketListener {
 

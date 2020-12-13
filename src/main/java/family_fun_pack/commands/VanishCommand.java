@@ -15,6 +15,8 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Entity desync */
+
 @SideOnly(Side.CLIENT)
 public class VanishCommand extends Command implements PacketListener {
 

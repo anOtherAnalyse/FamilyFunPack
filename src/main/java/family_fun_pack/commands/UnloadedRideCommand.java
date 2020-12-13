@@ -42,14 +42,7 @@ import family_fun_pack.network.PacketListener;
 import family_fun_pack.modules.CommandsModule;
 
 
-// Packets order on item throw (all done when receiving client packet) :
-// CPacketClickWindow
-
-// SPacketSpawnObject(this.trackedEntity, 2, 1) - creates entity item
-// SPacketEntityMetadata - contains ItemStack info
-
-// SPacketConfirmTransaction
-// SPacketSetSlot
+/* Mount / use entity from unloaded chunk */
 
 @SideOnly(Side.CLIENT)
 public class UnloadedRideCommand extends Command implements PacketListener {
@@ -99,22 +92,39 @@ public class UnloadedRideCommand extends Command implements PacketListener {
       if(args[1].equals("get")) {
         return String.format("Registered block: (%d, %d, %d)", this.target.getX(), this.target.getY(), this.target.getZ());
       } else if(args[1].equals("reg")) {
-        RayTraceResult target_ray = mc.objectMouseOver;
-        if(target_ray != null) {
-          if(target_ray.typeOfHit == RayTraceResult.Type.BLOCK) {
-            this.target = target_ray.getBlockPos();
-
-            // save in configuration file
-            Configuration configuration = FamilyFunPack.getModules().getConfiguration();
-            configuration.get(this.getName(), "target_x", 0d).set(this.target.getX());
-            configuration.get(this.getName(), "target_y", 0d).set(this.target.getY());
-            configuration.get(this.getName(), "target_z", 0d).set(this.target.getZ());
-            configuration.save();
-
-            return String.format("Registering block: (%d, %d, %d)", this.target.getX(), this.target.getY(), this.target.getZ());
+        if(args.length > 3) {
+          int offset;
+          try {
+            offset = Integer.parseInt(args[3]);
+          } catch(NumberFormatException e) {
+            return "This is not an integer";
           }
+          switch(args[2]) {
+            case "x": this.target = this.target.add(offset, 0, 0); break;
+            case "y": this.target = this.target.add(0, offset, 0); break;
+            case "z": this.target = this.target.add(0, 0, offset); break;
+            default:
+              return "x, z or y ?";
+          }
+          return String.format("Move block to: (%d, %d, %d), [%s + (%d)]", this.target.getX(), this.target.getY(), this.target.getZ(), args[2], offset);
+        } else {
+          RayTraceResult target_ray = mc.objectMouseOver;
+          if(target_ray != null) {
+            if(target_ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+              this.target = target_ray.getBlockPos();
+
+              // save in configuration file
+              Configuration configuration = FamilyFunPack.getModules().getConfiguration();
+              configuration.get(this.getName(), "target_x", 0d).set(this.target.getX());
+              configuration.get(this.getName(), "target_y", 0d).set(this.target.getY());
+              configuration.get(this.getName(), "target_z", 0d).set(this.target.getZ());
+              configuration.save();
+
+              return String.format("Registering block: (%d, %d, %d)", this.target.getX(), this.target.getY(), this.target.getZ());
+            }
+          }
+          return "You need to look at a block";
         }
-        return "You need to look at a block";
       } else if(args[1].equals("exe")) {
 
         this.max_tries = UnloadedRideCommand.MAX_TRIES;

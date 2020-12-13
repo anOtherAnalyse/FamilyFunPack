@@ -21,6 +21,8 @@ import family_fun_pack.gui.components.actions.OnOffInterception;
 import family_fun_pack.modules.PacketInterceptionModule;
 import family_fun_pack.modules.Module;
 
+/* GUI for selecting packets to be canceled */
+
 @SideOnly(Side.CLIENT)
 public class PacketsSelectionGui extends RightPanel {
 

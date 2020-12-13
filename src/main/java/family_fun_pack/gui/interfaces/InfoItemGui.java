@@ -18,9 +18,14 @@ import java.util.List;
 import java.util.ArrayList;
 
 import family_fun_pack.gui.MainGui;
+import family_fun_pack.gui.MainGuiComponent;
+import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.GenericButton;
+import family_fun_pack.gui.components.OpenGuiButton;
 import family_fun_pack.gui.components.ScrollBar;
 import family_fun_pack.nbt.SpecialTagCompound;
+
+/* Get information about items in our inventory (tags, preview shulker ...) */
 
 @SideOnly(Side.CLIENT)
 public class InfoItemGui extends RightPanel {
@@ -89,8 +94,6 @@ public class InfoItemGui extends RightPanel {
     info_y_end = this.y_end - 1;
     Gui.drawRect(info_x, info_y, info_x_end, info_y + 1, MainGui.BORDER_COLOR);
     Gui.drawRect(info_x, info_y, info_x + 1, info_y_end, MainGui.BORDER_COLOR);
-    //Gui.drawRect(info_x_end - 1, info_y, info_x_end, info_y_end, 0xffbbbbbb);
-    //Gui.drawRect(info_x, info_y_end - 1, info_x_end, info_y_end, 0xffbbbbbb);
 
     // Draw preview open button
     if(this.previewOpen != null) this.previewOpen.drawButton(this.mc, mouseX, mouseY, partialTicks);
@@ -143,7 +146,6 @@ public class InfoItemGui extends RightPanel {
             GlStateManager.enableLighting();
           }
         } else {
-          // this.drawRect(x, y, x + 16, y + 16, -2130706433);
           GlStateManager.enableDepth();
           this.itemRender.renderItemAndEffectIntoGUI(this.mc.player, stack, x, y);
           this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, stack, x, y, null);
@@ -216,6 +218,27 @@ public class InfoItemGui extends RightPanel {
     if(state == 0) {
       this.scroll.mouseReleased(mouseX, mouseY);
     }
+  }
+
+  // To be displayed in Main GUI, to access the GUI
+  private static class GuiComponent implements MainGuiComponent {
+
+    public String getLabel() {
+      return "Info items";
+    }
+
+    public ActionButton getAction() {
+      return new OpenGuiButton(0, 0, "view", InfoItemGui.class, null);
+    }
+
+    public MainGuiComponent getChild() {
+      return null;
+    }
+  }
+
+  // Get Main Gui component to open GUI
+  public static MainGuiComponent getMainGuiComponent() {
+    return new GuiComponent();
   }
 
 }

@@ -17,6 +17,8 @@ import java.lang.Class;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Dump received packets in chat */
+
 @SideOnly(Side.CLIENT)
 public class PacketDumpCommand extends Command implements PacketListener {
 

@@ -14,6 +14,9 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Don't show game over interface after dying, use .respawn to respawn
+ * In vanilla you can still interact with the environment while beeing dead */
+
 @SideOnly(Side.CLIENT)
 public class UndeadModule extends Module {
 

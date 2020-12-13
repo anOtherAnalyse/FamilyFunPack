@@ -23,6 +23,8 @@ import java.lang.IllegalAccessException;
 
 import family_fun_pack.nbt.SpecialTagCompound;
 
+/* Used to apply red enchant to unbrekable items */
+
 @SideOnly(Side.CLIENT)
 public class CustomRenderItem extends RenderItem {
 

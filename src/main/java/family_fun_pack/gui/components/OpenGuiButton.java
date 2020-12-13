@@ -16,6 +16,8 @@ import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.interfaces.RightPanel;
 import family_fun_pack.modules.Module;
 
+/* Button used to open a GUI */
+
 @SideOnly(Side.CLIENT)
 public class OpenGuiButton extends ActionButton {
 
@@ -26,9 +28,9 @@ public class OpenGuiButton extends ActionButton {
 
   private FontRenderer fontRenderer;
   private boolean clicked;
-  private Class<? extends RightPanel> panel;
-  private Module dependsOn;
-  private float scale;
+  private Class<? extends RightPanel> panel; // GUI to be opened
+  private Module dependsOn; // GUI dependence
+  private float scale; // Button scale
 
   public OpenGuiButton(int id, int x, int y, String text, Class<? extends RightPanel> panel, Module dependsOn, float scale) {
     super(id, x, y, 0, 0, text);
@@ -109,10 +111,6 @@ public class OpenGuiButton extends ActionButton {
     MainGui main = FamilyFunPack.getMainGui();
     this.clicked = !this.clicked;
     if(this.clicked) {
-      if(parent == (GuiScreen)main) {
-        main.resetOpenBtn();
-        this.clicked = true;
-      }
       RightPanel panel = null;
       try {
         panel = this.panel.newInstance();

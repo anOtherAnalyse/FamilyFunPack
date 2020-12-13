@@ -5,6 +5,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Disconnect from server, close the socket */
+
 @SideOnly(Side.CLIENT)
 public class DisconnectCommand extends Command {
 

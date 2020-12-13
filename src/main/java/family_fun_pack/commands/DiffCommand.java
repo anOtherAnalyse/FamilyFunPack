@@ -14,6 +14,8 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
+/* Get vanished players (not shown in player list, available in chat auto-completion) */
+
 @SideOnly(Side.CLIENT)
 public class DiffCommand extends Command implements PacketListener {
 

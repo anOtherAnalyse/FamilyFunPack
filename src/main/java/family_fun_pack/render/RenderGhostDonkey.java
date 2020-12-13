@@ -9,6 +9,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Render ghost donkey with its special (shitty) skin */
+
 @SideOnly(Side.CLIENT)
 public class RenderGhostDonkey extends RenderAbstractHorse {
 

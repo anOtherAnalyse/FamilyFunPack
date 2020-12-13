@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.Modules;
-import family_fun_pack.modules.interfaces.InterfaceModule;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OpenGuiButton;
 import family_fun_pack.gui.interfaces.RightPanel;
+import family_fun_pack.gui.interfaces.InfoItemGui;
 
 @SideOnly(Side.CLIENT)
 public class MainGui extends GuiScreen {
@@ -35,26 +35,26 @@ public class MainGui extends GuiScreen {
 
   private int exitKey;
 
+  // List of lines in the GUI (label + button)
   private List<MainGuiComponent> lines;
 
-  private RightPanel right_panel;
+  private RightPanel right_panel; // GUI right panel
+  private int current_button; // Current clicked button index
 
-  public MainGui(Modules modules, List<InterfaceModule> interfaces) {
+  public MainGui(Modules modules) {
     this.lines = new ArrayList<MainGuiComponent>();
     for(Module i : modules.getModules()) {
       this.lines.add((MainGuiComponent) i);
-      for(int j = 0; j < interfaces.size(); j ++) {
-        if(interfaces.get(j).dependsOn() == i) {
-          this.lines.add((MainGuiComponent) interfaces.remove(j));
-          j--;
-        }
-      }
+      MainGuiComponent child = i.getChild();
+      if(child != null) this.lines.add(child);
     }
-    for(InterfaceModule i : interfaces) {
-      this.lines.add((MainGuiComponent) i);
-    }
+
+    // Add interfaces not bind to any modules
+    this.lines.add(InfoItemGui.getMainGuiComponent());
+
     this.right_panel = null;
     this.exitKey = -1;
+    this.current_button = -1;
   }
 
   public void setExitKey(int exitKey) {
@@ -87,13 +87,12 @@ public class MainGui extends GuiScreen {
 
       // Button
       GuiButton button = (GuiButton)line.getAction();
+      button.id = i;
       button.x = this.x_end - 6 - button.width;
       button.y = y + 2;
       this.buttonList.add(button);
 
-      if(button instanceof OpenGuiButton && this.right_panel != null && ((OpenGuiButton) button).getPanel() == this.right_panel.getClass()) {
-        ((OpenGuiButton)button).setClicked();
-      }
+      if(this.right_panel != null && i == this.current_button) ((OpenGuiButton)button).setClicked();
 
       int height = button.height > this.fontRenderer.FONT_HEIGHT ? button.height + 4 : this.fontRenderer.FONT_HEIGHT + 4;
       y += height;
@@ -103,11 +102,22 @@ public class MainGui extends GuiScreen {
   }
 
   public void onGuiClosed() {
-    FamilyFunPack.getModules().save();
+    FamilyFunPack.getModules().save(); // Save configuration on GUI closed
   }
 
   protected void actionPerformed(GuiButton button) throws IOException {
     if(button instanceof ActionButton) {
+
+      if(button instanceof OpenGuiButton) { // set all other OpenGuiButton to disable
+        for(GuiButton b : this.buttonList) {
+          if(b instanceof OpenGuiButton && b != button) {
+            ((OpenGuiButton)b).resetState();
+          }
+        }
+
+        this.current_button = button.id;
+      }
+
       ActionButton action = (ActionButton) button;
       action.onClick((GuiScreen) this);
     }
@@ -115,14 +125,7 @@ public class MainGui extends GuiScreen {
 
   public void setRightPanel(RightPanel panel) {
     this.right_panel = panel;
-  }
-
-  public void resetOpenBtn() {
-    for(GuiButton b : this.buttonList) {
-      if(b instanceof OpenGuiButton) {
-        ((OpenGuiButton)b).resetState();
-      }
-    }
+    if(panel == null) this.current_button = -1;
   }
 
   protected void keyTyped(char typedChar, int keyCode) throws IOException {
@@ -177,5 +180,6 @@ public class MainGui extends GuiScreen {
 
   public void reset() {
     this.right_panel = null;
+    this.current_button = -1;
   }
 }

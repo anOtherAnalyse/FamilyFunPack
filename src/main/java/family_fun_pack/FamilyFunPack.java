@@ -21,7 +21,6 @@ import family_fun_pack.gui.overlay.OverlayGui;
 import family_fun_pack.key.KeyListener;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.Modules;
-import family_fun_pack.modules.interfaces.*;
 import family_fun_pack.network.NetworkHandler;
 
 @Mod(modid = FamilyFunPack.MODID, name = FamilyFunPack.NAME, version = FamilyFunPack.VERSION)
@@ -40,26 +39,32 @@ public class FamilyFunPack
 
     private File confFile;
 
+    /* Get NetworkHandler, for registering packets listeners */
     public static NetworkHandler getNetworkHandler() {
       return FamilyFunPack.networkHandler;
     }
 
+    /* Get all Modules */
     public static Modules getModules() {
       return FamilyFunPack.modules;
     }
 
+    /* Overlay GUI */
     public static OverlayGui getOverlay() {
       return FamilyFunPack.overlay;
     }
 
+    /* Main GUI */
     public static MainGui getMainGui() {
       return FamilyFunPack.mainGui;
     }
 
+    // TODO: DELETE
     public static void addModuleKey(int key, Module module) {
       FamilyFunPack.keyListener.addModuleKey(key, module);
     }
 
+    /* Print message in chat */
     public static void printMessage(String msg) {
       Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(TextFormatting.BLUE + "[FFP] " + TextFormatting.RESET + msg));
     }
@@ -92,14 +97,8 @@ public class FamilyFunPack
         // register network
         MinecraftForge.EVENT_BUS.register(FamilyFunPack.networkHandler);
 
-        // Init interfaces modules
-        List<InterfaceModule> interfaces = new LinkedList<InterfaceModule>();
-        interfaces.add(new PacketsSelectionModule().dependsOn(FamilyFunPack.modules.getByName("Packets interception")));
-        interfaces.add(new InfoItemModule());
-        interfaces.add(new SearchSelectionModule().dependsOn(FamilyFunPack.modules.getByName("Search")));
-
-        // Init interface
-        FamilyFunPack.mainGui = new MainGui(FamilyFunPack.modules, interfaces);
+        // Init Main GUI
+        FamilyFunPack.mainGui = new MainGui(FamilyFunPack.modules);
         FamilyFunPack.keyListener.setGui(FamilyFunPack.mainGui);
 
         // Register key listener

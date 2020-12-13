@@ -22,6 +22,8 @@ import family_fun_pack.network.PacketListener;
 
 import family_fun_pack.modules.CommandsModule;
 
+/* Open donkey inventory, usefull when there is a desync and the client is not aware of the mount */
+
 @SideOnly(Side.CLIENT)
 public class OpenDonkeyCommand extends Command implements PacketListener {
 

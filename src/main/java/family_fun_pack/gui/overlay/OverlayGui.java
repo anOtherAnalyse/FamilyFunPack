@@ -13,6 +13,8 @@ import java.util.HashSet;
 
 import family_fun_pack.gui.MainGui;
 
+/* In game overlay, just labels of current states */
+
 @SideOnly(Side.CLIENT)
 public class OverlayGui extends Gui {
 

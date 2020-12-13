@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Send a spectate packet */
+
 @SideOnly(Side.CLIENT)
 public class SpectateCommand extends Command {
 

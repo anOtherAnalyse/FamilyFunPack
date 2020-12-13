@@ -23,6 +23,8 @@ import java.util.List;
 
 import family_fun_pack.FamilyFunPack;
 
+/* Handles network listeners */
+
 @SideOnly(Side.CLIENT)
 public class NetworkHandler {
 

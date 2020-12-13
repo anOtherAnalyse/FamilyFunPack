@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/* Commands record */
+
 @SideOnly(Side.CLIENT)
 public class Commands {
   private Map<String, Command> commands;
