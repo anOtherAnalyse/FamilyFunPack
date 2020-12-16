@@ -67,7 +67,8 @@ public class NetworkHandler {
     }
 
     if(listeners != null) {
-      int buff_start = buf.readerIndex();
+      int buff_start = 0;
+      if(buf != null) buff_start = buf.readerIndex();
 
       lock.readLock().lock();
       int size = listeners.size(); // Get starting size, we assume that a listener can unregister itself & only itself
@@ -78,7 +79,7 @@ public class NetworkHandler {
         PacketListener l = listeners.get(i - (size - listeners.size()));
         lock.readLock().unlock();
 
-        buf.readerIndex(buff_start);
+        if(buf != null) buf.readerIndex(buff_start);
         if((packet = l.packetReceived(direction, id, packet, buf)) == null) return null;
       }
     }
