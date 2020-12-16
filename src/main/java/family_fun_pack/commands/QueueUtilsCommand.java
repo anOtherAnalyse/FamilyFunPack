@@ -36,7 +36,6 @@ public class QueueUtilsCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
     if(args.length > 1) {
-      Minecraft mc = Minecraft.getMinecraft();
       switch(args[1]) {
         case "show":
           FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 68);
@@ -45,8 +44,12 @@ public class QueueUtilsCommand extends Command implements PacketListener {
           FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 68);
           break;
         default:
-          if(mc.world.getScoreboard().getPlayersTeam(args[1]) != null) return args[0] + " is in queue";
-          return args[0] + " not in queue";
+          {
+            ScorePlayerTeam queue = this.getQueueTeam();
+            if(queue == null) return "No queue";
+            if(queue.getMembershipCollection().contains(args[1])) return args[1] + " is in queue";
+            return args[1] + " not in queue";
+          }
       }
       return null;
     }
@@ -55,18 +58,28 @@ public class QueueUtilsCommand extends Command implements PacketListener {
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     SPacketTeams teams = (SPacketTeams) packet;
-    switch(teams.getAction()) {
-      case 3:
-        for(String player : teams.getPlayers()) {
-          FamilyFunPack.printMessage(TextFormatting.GREEN + "Player " + player + " added to queue");
-        }
-        break;
-      case 4:
-        for(String player : teams.getPlayers()) {
-          FamilyFunPack.printMessage(TextFormatting.RED + "Player " + player + " removed from queue");
-        }
-        break;
+    if(teams.getName().startsWith("collideRule_")) {
+      switch(teams.getAction()) {
+        case 3:
+          for(String player : teams.getPlayers()) {
+            FamilyFunPack.printMessage(TextFormatting.GREEN + "Player " + player + " added to queue");
+          }
+          break;
+        case 4:
+          for(String player : teams.getPlayers()) {
+            FamilyFunPack.printMessage(TextFormatting.RED + "Player " + player + " removed from queue");
+          }
+          break;
+      }
     }
     return packet;
+  }
+
+  private ScorePlayerTeam getQueueTeam() {
+    Scoreboard board = Minecraft.getMinecraft().world.getScoreboard();
+    for(ScorePlayerTeam t : board.getTeams()) {
+      if(t.getName().startsWith("collideRule_")) return t;
+    }
+    return null;
   }
 }

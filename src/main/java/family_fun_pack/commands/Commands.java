@@ -34,6 +34,8 @@ public class Commands {
     this.registerCommand(new VoidMountCommand());
     this.registerCommand(new PeekCommand());
     this.registerCommand(new QueueUtilsCommand());
+    this.registerCommand(new ItemSizeCommand());
+    this.registerCommand(new FillBookCommand());
   }
 
   public void registerCommand(Command cmd) {

@@ -35,8 +35,8 @@ public class OpenGuiButton extends ActionButton {
   public OpenGuiButton(int id, int x, int y, String text, Class<? extends RightPanel> panel, Module dependsOn, float scale) {
     super(id, x, y, 0, 0, text);
     this.fontRenderer = Minecraft.getMinecraft().fontRenderer;
-    this.width = this.fontRenderer.getStringWidth(this.displayString) + 4;
-    this.height = this.fontRenderer.FONT_HEIGHT + 4;
+    this.width = (int)((float)(this.fontRenderer.getStringWidth(this.displayString) + 4) * scale);
+    this.height = (int)((float)(this.fontRenderer.FONT_HEIGHT + 4) * scale);
     this.panel = panel;
     this.dependsOn = dependsOn;
     this.clicked = false;
@@ -78,9 +78,12 @@ public class OpenGuiButton extends ActionButton {
 
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
+      int width = (int)((float)this.width / this.scale);
+      int height = (int)((float)this.height / this.scale);
+
       if(this.scale == 1f) {
-        int x_end = this.x + this.width;
-        int y_end = this.y + this.height;
+        int x_end = this.x + width;
+        int y_end = this.y + height;
 
         this.drawRect(this.x, this.y, x_end, y_end, background);
         this.drawRect(this.x, this.y, x_end, this.y + 1, border);
@@ -91,8 +94,8 @@ public class OpenGuiButton extends ActionButton {
       } else {
         int x = (int)((float)this.x / this.scale);
         int y = (int)((float)this.y / this.scale);
-        int x_end = (int)((float)(this.x) / this.scale) + this.width;
-        int y_end = (int)((float)(this.y) / this.scale) + this.height;
+        int x_end = (int)((float)(this.x) / this.scale) + width;
+        int y_end = (int)((float)(this.y) / this.scale) + height;
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(this.scale, this.scale, this.scale);

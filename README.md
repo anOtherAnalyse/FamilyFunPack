@@ -91,6 +91,12 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ```.queue <show|hide>```  
 ```.queue <player_name>```
 
+##### Fill a book with random characters to make it reach 32Kb in size
+```.fill```
+
+##### Get network size of the currently hold item (in bytes)
+```.size```
+
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
 
