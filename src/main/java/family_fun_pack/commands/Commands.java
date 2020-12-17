@@ -36,6 +36,7 @@ public class Commands {
     this.registerCommand(new QueueUtilsCommand());
     this.registerCommand(new ItemSizeCommand());
     this.registerCommand(new FillBookCommand());
+    this.registerCommand(new EditSignCommand());
   }
 
   public void registerCommand(Command cmd) {

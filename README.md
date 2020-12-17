@@ -97,6 +97,10 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ##### Get network size of the currently hold item (in bytes)
 ```.size```
 
+##### Read / Edit sign
+```.sign``` -> read sign data, possibility to see hidden text  
+```.sign line 1 + line 2``` -> edit sign
+
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.
 
