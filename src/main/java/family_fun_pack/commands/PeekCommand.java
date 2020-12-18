@@ -17,6 +17,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import family_fun_pack.FamilyFunPack;
+import family_fun_pack.commands.ItemSizeCommand;
 import family_fun_pack.gui.interfaces.PreviewGui;
 
 /* Shulker/book peek, but for shulker/book dropped on the floor or hold by other entities */
@@ -40,28 +42,35 @@ public class PeekCommand extends Command {
 
     boolean book = (args.length > 1 && args[1].equals("book")) ? true : false;
 
+    double distance = 0;
     ItemStack stack = null;
     for(Entity entity : mc.world.<Entity>getEntitiesWithinAABB(Entity.class, mc.player.getEntityBoundingBox().grow(12.0D, 4.0D, 12.0D))) {
-
       if(entity == mc.player) continue;
+
+      ItemStack current = null;
 
       // Search through entities metadata
       for(EntityDataManager.DataEntry<?> entry : entity.getDataManager().getAll()) {
         if(entry.getValue() instanceof ItemStack && ((book && (((ItemStack) entry.getValue()).getItem() instanceof ItemWritableBook || ((ItemStack) entry.getValue()).getItem() instanceof ItemWrittenBook)) || (!book && ((ItemStack) entry.getValue()).getItem() instanceof ItemShulkerBox))) {
-          stack = (ItemStack) entry.getValue();
+          current = (ItemStack) entry.getValue();
           break;
         }
       }
-      if(stack != null) break;
 
-      // Search through entity equipment
-      for(ItemStack item : entity.getEquipmentAndArmor()) {
-        if((!book && item.getItem() instanceof ItemShulkerBox) || (book && (item.getItem() instanceof ItemWritableBook || item.getItem() instanceof ItemWrittenBook))) {
-          stack = item;
-          break;
+      if(current == null) { // Search through entity equipment
+        for(ItemStack item : entity.getEquipmentAndArmor()) {
+          if((!book && item.getItem() instanceof ItemShulkerBox) || (book && (item.getItem() instanceof ItemWritableBook || item.getItem() instanceof ItemWrittenBook))) {
+            current = item;
+            break;
+          }
         }
       }
-      if(stack != null) break;
+
+      double sqDist = mc.player.getDistanceSq(entity);
+      if(current != null && (stack == null || sqDist < distance)) {
+        stack = current;
+        distance = sqDist;
+      }
     }
 
     if(stack == null) return "No " + (book ? "book" : "shulker") + " item close to you";
@@ -73,6 +82,10 @@ public class PeekCommand extends Command {
         stack.getTagCompound().setString("title", "Writable book");
         stack.getTagCompound().setString("author", "No author");
       }
+
+      if(! stack.getTagCompound().hasKey("pages", 9)) return "Book has no data";
+
+      FamilyFunPack.printMessage("Book size: " + Integer.toString(ItemSizeCommand.getItemSize(stack)) + " bytes");
 
       this.screen = new GuiScreenBook(mc.player, stack, false);
       MinecraftForge.EVENT_BUS.register(this);
@@ -87,8 +100,7 @@ public class PeekCommand extends Command {
         }
       }
 
-      if(tag == null) return "Shulker is empty, no tag";
-      return "Shulker does not contain items, no BlockEntityTag tag, tag is " + tag.toString();
+      return "Shulker is empty, or the server did not communicate its content";
     }
     return null;
   }

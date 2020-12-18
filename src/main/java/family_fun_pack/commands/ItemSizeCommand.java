@@ -13,6 +13,14 @@ import io.netty.buffer.Unpooled;
 @SideOnly(Side.CLIENT)
 public class ItemSizeCommand extends Command {
 
+  public static int getItemSize(ItemStack stack) {
+    PacketBuffer buff = new PacketBuffer(Unpooled.buffer());
+    buff.writeItemStack(stack);
+    int size = buff.writerIndex();
+    buff.release();
+    return size;
+  }
+
   public ItemSizeCommand() {
     super("size");
   }
@@ -24,10 +32,6 @@ public class ItemSizeCommand extends Command {
   public String execute(String[] args) {
     ItemStack stack = Minecraft.getMinecraft().player.getHeldItemMainhand();
     if(stack.isEmpty()) return "You are not holding any item";
-    PacketBuffer buff = new PacketBuffer(Unpooled.buffer());
-    buff.writeItemStack(stack);
-    int size = buff.writerIndex();
-    buff.release();
-    return "Item weights " + Integer.toString(size) + " bytes";
+    return "Item weights " + Integer.toString(ItemSizeCommand.getItemSize(stack)) + " bytes";
   }
 }

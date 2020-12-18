@@ -84,8 +84,9 @@ Few commands, use them in chat (Command module must be enabled):
 ```.open```  
 Will create a ghost donkey if your mount does not exist client side (server desync).
 
-##### Peek at shulker item on the ground or in the hand of another nearby entity
-```.stare```
+##### Peek at shulker/book dropped on ground or held by another entity
+```.stare```  
+```.stare book```
 
 ##### Display people joining/leaving 2b2t queue (while in queue), check if someone is in queue
 ```.queue <show|hide>```  
