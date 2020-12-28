@@ -13,6 +13,8 @@ import java.util.Map;
 public class Commands {
   private Map<String, Command> commands;
 
+  /* I'm too lazy to develop interfaces so let's add a lot of commands */
+
   public Commands() {
     this.commands = new HashMap<String, Command>();
     this.registerCommand(new DiffCommand());
@@ -37,6 +39,10 @@ public class Commands {
     this.registerCommand(new ItemSizeCommand());
     this.registerCommand(new FillBookCommand());
     this.registerCommand(new EditSignCommand());
+    this.registerCommand(new RollbackCommand());
+    this.registerCommand(new StealCommand());
+    this.registerCommand(new KillDupeCommand());
+    this.registerCommand(new RemoteRideCommand());
   }
 
   public void registerCommand(Command cmd) {

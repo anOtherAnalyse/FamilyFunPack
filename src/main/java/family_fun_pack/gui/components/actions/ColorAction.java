@@ -3,11 +3,11 @@ package family_fun_pack.gui.components.actions;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-/* Action of an OnOff button */
+/* Action of a color button */
 
 @SideOnly(Side.CLIENT)
-public interface OnOffAction {
+public interface ColorAction {
 
-  public void toggle(boolean state);
+  public abstract void setColor(int colot);
 
 }

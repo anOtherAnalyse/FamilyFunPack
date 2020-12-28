@@ -47,6 +47,7 @@ import family_fun_pack.gui.components.ColorButton;
 import family_fun_pack.gui.components.OnOffButton;
 import family_fun_pack.gui.components.OpenGuiButton;
 import family_fun_pack.gui.components.ScrollBar;
+import family_fun_pack.gui.components.actions.ColorSearch;
 import family_fun_pack.gui.components.actions.OnOffSearch;
 import family_fun_pack.gui.components.actions.OnOffTracer;
 import family_fun_pack.modules.Module;
@@ -123,7 +124,7 @@ public class SearchSelectionGui extends RightPanel {
       tracer.setState(((SearchModule) this.dependence).getTracerState(block));
       if(! search_state) tracer.enabled = false;
 
-      ColorButton color = new ColorButton(0, 0, block, (SearchModule) this.dependence);
+      ColorButton color = new ColorButton(0, 0, new ColorSearch((SearchModule) this.dependence, block));
       color.x = ((((int)((float)chart_width * 0.143f)) - color.width) / 2) + (int)((float)chart_width * 0.857f) + this.x + 4;
       color.setColor(((SearchModule) this.dependence).getColor(block));
       if(! search_state) color.enabled = false;

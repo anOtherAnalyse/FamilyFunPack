@@ -92,7 +92,7 @@ public class AdvancedSearchGui extends RightPanel {
     label = new GuiLabel(this.fontRenderer, 0, this.x + ((this.x_end - this.x) / 2), y, 100, 16, 0xffffffff);
     label.addLine("Color");
     this.labelList.add(label);
-    this.color = new ColorButton(0, this.x_end - 42, y + 4, null, null);
+    this.color = new ColorButton(0, this.x_end - 42, y + 4, null);
     this.buttonList.add(this.color);
 
     this.add = new GenericButton(0, this.x_end - 26, this.y_end - 17, "Add") {

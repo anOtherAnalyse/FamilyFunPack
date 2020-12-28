@@ -28,7 +28,7 @@ public class RaytraceCommand extends Command {
         return String.format("Block at (%d, %d, %d)", pos.getX(), pos.getY(), pos.getZ());
       } else if(target_ray.typeOfHit == RayTraceResult.Type.ENTITY) {
         Entity entity = target_ray.entityHit;
-        return String.format("Entity id is %d", entity.getEntityId());
+        return String.format("Entity id is %d%s%s", entity.getEntityId(), (args.length > 1 && args[1].equals("+") ? " [" + entity.getUniqueID().toString() + "]" : ""), (entity.isRiding() ? String.format(" riding %d", entity.getRidingEntity().getEntityId()) : ""));
       }
       return "No target";
     }

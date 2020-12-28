@@ -1,13 +1,12 @@
 package family_fun_pack.gui.components;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import family_fun_pack.modules.SearchModule;
+import family_fun_pack.gui.components.actions.ColorAction;
 
 @SideOnly(Side.CLIENT)
 public class ColorButton extends GuiButton {
@@ -19,19 +18,17 @@ public class ColorButton extends GuiButton {
   private int color;
   private boolean drag;
 
-  private Block block;
-  private SearchModule module;
+  private ColorAction action;
 
-  public ColorButton(int id, int x, int y, Block block, SearchModule module) {
+  public ColorButton(int id, int x, int y, ColorAction action) {
     super(id, x, y, 32, 7, null);
     this.color = ColorButton.DEFAULT_COLOR;
-    this.block = block;
-    this.module = module;
+    this.action = action;
     this.drag = false;
   }
 
-  public ColorButton(int x, int y, Block block, SearchModule module) {
-    this(0, x, y, block, module);
+  public ColorButton(int x, int y, ColorAction action) {
+    this(0, x, y, action);
   }
 
   public void setColor(int color) {
@@ -72,7 +69,7 @@ public class ColorButton extends GuiButton {
     int index = (cursor - this.x) * (64 / this.width);
     if(index > 32) index += (64 / this.width) - 1;
     this.color = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-    if(this.module != null) this.module.setSearchColor(this.block, this.color);
+    if(this.action != null) this.action.setColor(this.color);
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {

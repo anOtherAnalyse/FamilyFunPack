@@ -18,6 +18,21 @@ import net.minecraftforge.fml.relauncher.Side;
 @SideOnly(Side.CLIENT)
 public class VoidMountCommand extends Command {
 
+  public static void setSaddled(Entity entity) {
+    if(entity instanceof AbstractHorse) {
+      ((AbstractHorse) entity).setHorseSaddled(true);
+      ((AbstractHorse) entity).setHorseTamed(true);
+
+      if(entity instanceof AbstractChestHorse) {
+        ((AbstractChestHorse) entity).setChested(true);
+
+        if(entity instanceof EntityLlama) {
+          ((EntityLlama) entity).getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf(3));
+        }
+      }
+    }
+  }
+
   private int last_id;
 
   public VoidMountCommand() {
@@ -60,18 +75,7 @@ public class VoidMountCommand extends Command {
         Entity entity = EntityList.createEntityByIDFromName(resource, mc.world);
         if(entity == null) return "Invalid entity class";
 
-        if(entity instanceof AbstractHorse) {
-          ((AbstractHorse) entity).setHorseSaddled(true);
-          ((AbstractHorse) entity).setHorseTamed(true);
-
-          if(entity instanceof AbstractChestHorse) {
-            ((AbstractChestHorse) entity).setChested(true);
-
-            if(entity instanceof EntityLlama) {
-              ((EntityLlama) entity).getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf(3));
-            }
-          }
-        }
+        VoidMountCommand.setSaddled(entity);
 
         entity.setPosition(mc.player.posX, mc.player.posY, mc.player.posZ);
 
