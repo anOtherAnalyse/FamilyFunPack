@@ -30,6 +30,9 @@ Be invulnerable after going through a portal, but you won't be able to move by y
 ##### Pig POV
 Pig point of view -  When using portal invulnerability you can use a pig to travel 1x1 tunnels without taking damage. Use this to lower your point of view and see where you are going.
 
+##### Trace entities teleporting
+When an entity teleports out of your render distance, prints its new coordinates in chat.
+
 ##### Stalker
 Stalk a player: know when they connect/disconnect/change their gamemode/display name...  
 Manage it with the ```.stalk``` command.
@@ -101,6 +104,13 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ##### Read / Edit sign
 ```.sign``` -> read sign data, possibility to see hidden text  
 ```.sign line 1 + line 2``` -> edit sign
+
+##### Rollback to last teleport position
+```.rollback init``` -> initiate rollback  
+```.rollback``` -> rollback to last teleport
+
+##### Switf steal (steal from container before a tick update)
+```.steal <slot> | <start_slot> <stop_slot>```
 
 ##### Use entity from unloaded chunk
 While standing near an unloaded chunk, be able to load it and use an entity (minecart, horse, ...) in the chunk by guessing its entity id. You still need to be near the entity to use it.

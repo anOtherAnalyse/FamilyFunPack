@@ -29,7 +29,7 @@ public class FamilyFunPack
 {
     public static final String MODID = "family_fun_pack";
     public static final String NAME = "Family Fun Pack";
-    public static final String VERSION = "1.1.2";
+    public static final String VERSION = "1.1.3";
 
     private static NetworkHandler networkHandler;
     private static Modules modules;
