@@ -54,6 +54,11 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
     return false;
   }
 
+  /* Display this module in Gui */
+  public boolean displayInGui() {
+    return true;
+  }
+
   /* Save basic Module state (enable / disabled) */
   public void save_state(Configuration configuration) {
     configuration.get(this.name, "state", false).set(this.isEnabled());

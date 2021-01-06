@@ -33,6 +33,6 @@ public class SpectateCommand extends Command {
       FamilyFunPack.getNetworkHandler().sendPacket(new CPacketSpectate(uuid));
       return "trying to spectate " + uuid.toString();
     }
-    return this.usage();
+    return this.getUsage();
   }
 }

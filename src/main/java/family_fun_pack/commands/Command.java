@@ -23,6 +23,10 @@ public abstract class Command {
 
   public abstract String usage();
 
+  public String getUsage() {
+    return "Usage: " + this.usage();
+  }
+
   // Execute a command
   // First argument is always command name
   public abstract String execute(String[] args);

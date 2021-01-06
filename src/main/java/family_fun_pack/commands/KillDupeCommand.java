@@ -49,7 +49,7 @@ public class KillDupeCommand extends Command implements PacketListener {
       if(this.window_id != -1) {
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.SERVERBOUND, this, 10);
       } else return "First keep entity inventory open";
-    } else return this.usage();
+    } else return this.getUsage();
     return "kdupe ready";
   }
 

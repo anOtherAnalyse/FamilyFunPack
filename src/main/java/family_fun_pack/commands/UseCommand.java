@@ -98,6 +98,6 @@ public class UseCommand extends Command {
         return "Entity id must be an integer";
       }
     }
-    return "Usage: " + this.usage();
+    return this.getUsage();
   }
 }

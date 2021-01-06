@@ -29,6 +29,7 @@ public class Modules {
     this.modules.add(new SearchModule());
     this.modules.add(new NoCloseModule());
     this.modules.add(new StalkModule());
+    this.modules.add(new TraceModule());
     this.modules.add(new TrueDurabilityModule());
     this.modules.add(new UndeadModule());
     this.load();

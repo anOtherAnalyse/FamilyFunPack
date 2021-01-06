@@ -51,7 +51,7 @@ public class PacketDumpCommand extends Command implements PacketListener {
         return "pckdump off";
       }
     }
-    return this.usage();
+    return this.getUsage();
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {

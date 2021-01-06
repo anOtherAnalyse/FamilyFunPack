@@ -85,6 +85,6 @@ public class VoidMountCommand extends Command {
         return "Mounted " + args[1];
       }
     }
-    return this.usage();
+    return this.getUsage();
   }
 }

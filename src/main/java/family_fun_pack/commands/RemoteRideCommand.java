@@ -30,12 +30,15 @@ public class RemoteRideCommand extends Command implements PacketListener {
   private Vec3d local_position;
   private Vec3d start_position;
 
+  private boolean relY;
+
   public RemoteRideCommand() {
     super("remote");
+    this.relY = false;
   }
 
   public String usage() {
-    return this.getName() + " [peek | center]";
+    return this.getName() + " [peek | center | relY]";
   }
 
   public String execute(String[] args) {
@@ -60,7 +63,10 @@ public class RemoteRideCommand extends Command implements PacketListener {
             this.local_position = new Vec3d(this.start_position.x, this.start_position.y, this.start_position.z);
           }
           break;
-        default: return this.usage();
+        case "relY":
+          this.relY = !this.relY;
+          break;
+        default: return this.getUsage();
       }
 
     } else {
@@ -105,7 +111,11 @@ public class RemoteRideCommand extends Command implements PacketListener {
       case 16: // CPacketVehicleMove
         {
           CPacketVehicleMove move = (CPacketVehicleMove) packet;
-          this.remote_position = new Vec3d(this.remote_position.x + (move.getX() - this.local_position.x), move.getY(), this.remote_position.z + (move.getZ() - this.local_position.z));
+          if(! this.relY)
+            this.remote_position = new Vec3d(this.remote_position.x + (move.getX() - this.local_position.x), move.getY(), this.remote_position.z + (move.getZ() - this.local_position.z));
+          else
+            this.remote_position = new Vec3d(this.remote_position.x + (move.getX() - this.local_position.x), this.remote_position.y + (move.getY() - this.local_position.y), this.remote_position.z + (move.getZ() - this.local_position.z));
+
           this.local_position = new Vec3d(move.getX(), move.getY(), move.getZ());
 
           EntityVoid remote = new EntityVoid(mc.world, 0);
@@ -129,5 +139,6 @@ public class RemoteRideCommand extends Command implements PacketListener {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41);
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this, 16);
     MinecraftForge.EVENT_BUS.unregister(this);
+    this.relY = false;
   }
 }

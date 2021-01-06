@@ -53,7 +53,7 @@ public class QueueUtilsCommand extends Command implements PacketListener {
       }
       return null;
     }
-    return this.usage();
+    return this.getUsage();
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {

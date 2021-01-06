@@ -40,7 +40,7 @@ public class RollbackCommand extends Command implements PacketListener {
         this.position = new Vec3d(0d, 0d, 0d);
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 47);
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.SERVERBOUND, this, 0);
-      } else return this.usage();
+      } else return this.getUsage();
     } else if(this.teleport_id != -1) { // rollback
 
       mc.player.setPosition(this.position.x, this.position.y, this.position.z);

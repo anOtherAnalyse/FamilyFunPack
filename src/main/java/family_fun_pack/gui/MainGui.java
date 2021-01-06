@@ -44,9 +44,11 @@ public class MainGui extends GuiScreen {
   public MainGui(Modules modules) {
     this.lines = new ArrayList<MainGuiComponent>();
     for(Module i : modules.getModules()) {
-      this.lines.add((MainGuiComponent) i);
-      MainGuiComponent child = i.getChild();
-      if(child != null) this.lines.add(child);
+      if(i.displayInGui()) {
+        this.lines.add((MainGuiComponent) i);
+        MainGuiComponent child = i.getChild();
+        if(child != null) this.lines.add(child);
+      }
     }
 
     // Add interfaces not bind to any modules

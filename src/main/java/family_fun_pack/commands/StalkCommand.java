@@ -45,6 +45,6 @@ public class StalkCommand extends Command {
         }
       }
     }
-    return this.usage();
+    return this.getUsage();
   }
 }

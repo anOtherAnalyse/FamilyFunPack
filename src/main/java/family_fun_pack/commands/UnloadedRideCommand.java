@@ -170,7 +170,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
         return null;
       }
     }
-    return this.usage();
+    return this.getUsage();
   }
 
   public void onDisconnect() {

@@ -43,6 +43,10 @@ public class CommandsModule extends Module {
     }
   }
 
+  public boolean displayInGui() {
+    return false;
+  }
+
   @SubscribeEvent
   public void onChat(ClientChatEvent event) {
     String message = event.getMessage();
