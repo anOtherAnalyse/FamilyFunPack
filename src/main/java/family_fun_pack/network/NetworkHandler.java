@@ -218,4 +218,8 @@ public class NetworkHandler {
     this.networkManager = null;
   }
 
+  public boolean isConnected() {
+    return this.isConnected;
+  }
+
 }

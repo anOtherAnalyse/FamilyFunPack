@@ -138,4 +138,8 @@ public class StealCommand extends Command implements PacketListener {
     this.next_id = -1;
     this.enabled = false;
   }
+
+  public int getNextId() {
+    return this.next_id;
+  }
 }

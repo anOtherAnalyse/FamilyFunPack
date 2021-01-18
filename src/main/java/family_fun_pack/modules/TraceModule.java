@@ -8,7 +8,11 @@ import net.minecraft.network.play.server.SPacketEntityTeleport;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.ByteBuf;
+
 import java.lang.Math;
 
 import family_fun_pack.FamilyFunPack;
@@ -18,6 +22,8 @@ import family_fun_pack.network.PacketListener;
 
 @SideOnly(Side.CLIENT)
 public class TraceModule extends Module implements PacketListener {
+
+  private static final Logger LOGGER = LogManager.getLogger();
 
   public TraceModule() {
     super("Trace teleports", "Print in chat coords of entity teleporting far away");
@@ -43,7 +49,9 @@ public class TraceModule extends Module implements PacketListener {
 
       double distance = Math.sqrt(Math.pow(mc.player.posX - tp.getX(), 2d) + Math.pow(mc.player.posZ - tp.getZ(), 2d));
 
-      FamilyFunPack.printMessage(String.format("Entity [%s] teleported to [%.2f, %.2f, %.2f], %.2f blocks away", name, tp.getX(), tp.getY(), tp.getZ(), distance));
+      String warn = String.format("Entity [%s] teleported to [%.2f, %.2f, %.2f], %.2f blocks away", name, tp.getX(), tp.getY(), tp.getZ(), distance);
+      FamilyFunPack.printMessage(warn);
+      LOGGER.info("FFP - trace: " + warn);
     }
 
     return packet;

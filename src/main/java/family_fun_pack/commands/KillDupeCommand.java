@@ -5,9 +5,11 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.client.CPacketClickWindow;
 import net.minecraft.network.play.server.SPacketConfirmTransaction;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,6 +17,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.commands.StealCommand;
+import family_fun_pack.modules.CommandsModule;
 import family_fun_pack.modules.NoCloseModule;
 import family_fun_pack.network.PacketListener;
 
@@ -26,13 +30,14 @@ import family_fun_pack.network.PacketListener;
 public class KillDupeCommand extends Command implements PacketListener {
 
   private int window_id, slot;
+  private boolean op;
 
   public KillDupeCommand() {
     super("kdupe");
   }
 
   public String usage() {
-    return this.getName() + " <slot_id>";
+    return this.getName() + " <slot_id> [op]";
   }
 
   public String execute(String[] args) {
@@ -40,15 +45,27 @@ public class KillDupeCommand extends Command implements PacketListener {
       try {
         this.slot = Integer.parseInt(args[1]);
       } catch(NumberFormatException e) {
-        return this.usage();
+        return this.getUsage();
+      }
+
+      this.op = false;
+      if(args.length > 2) {
+        if(args[2].equals("op")) {
+          this.op = true;
+        } else return this.getUsage();
       }
 
       if(!Minecraft.getMinecraft().player.inventory.getStackInSlot(0).isEmpty()) return "Keep your first hotbar slot clear";
 
-      this.window_id = ((NoCloseModule) FamilyFunPack.getModules().getByName("Silent close")).getWindowId();
+      if(this.op) {
+        this.window_id = ((StealCommand)((CommandsModule) FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("steal")).getNextId();
+      } else {
+        this.window_id = ((NoCloseModule) FamilyFunPack.getModules().getByName("Silent close")).getWindowId();
+      }
+
       if(this.window_id != -1) {
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.SERVERBOUND, this, 10);
-      } else return "First keep entity inventory open";
+      } else return (this.op ? "Please open & close one container first" : "First keep entity inventory open");
     } else return this.getUsage();
     return "kdupe ready";
   }
@@ -60,9 +77,20 @@ public class KillDupeCommand extends Command implements PacketListener {
         FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this, 10);
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 17);
 
+        Minecraft mc = Minecraft.getMinecraft();
         CPacketClickWindow get = new CPacketClickWindow(this.window_id, this.slot, 0, ClickType.SWAP, ItemStack.EMPTY, (short) -42);
-        FamilyFunPack.getNetworkHandler().sendPacket(use);
-        FamilyFunPack.getNetworkHandler().sendPacket(get);
+
+        if(this.op) {
+          CPacketEntityAction sneak = new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING);
+          CPacketUseEntity open = new CPacketUseEntity(use.getEntityFromWorld(mc.world), EnumHand.MAIN_HAND);
+          FamilyFunPack.getNetworkHandler().sendPacket(sneak);
+          FamilyFunPack.getNetworkHandler().sendPacket(use);
+          FamilyFunPack.getNetworkHandler().sendPacket(open);
+          FamilyFunPack.getNetworkHandler().sendPacket(get);
+        } else {
+          FamilyFunPack.getNetworkHandler().sendPacket(use);
+          FamilyFunPack.getNetworkHandler().sendPacket(get);
+        }
 
         return null;
       }

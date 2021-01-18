@@ -5,6 +5,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.storage.ISaveHandler;
+import net.minecraft.world.storage.WorldInfo;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -24,6 +26,11 @@ public class FakeWorld extends World {
     this.state = state;
   }
 
+  public FakeWorld(ISaveHandler saveHandler, WorldInfo info, WorldProvider provider) {
+    super(saveHandler, info, provider, null, false);
+    this.state = Blocks.AIR.getDefaultState();
+  }
+
   public IBlockState getBlockState(BlockPos position) {
       if(position.equals(BlockPos.ORIGIN)) return this.state;
       return Blocks.AIR.getDefaultState();
@@ -39,7 +46,8 @@ public class FakeWorld extends World {
   }
 
   public long getTotalWorldTime() {
-    return 0l;
+    if(this.worldInfo == null) return 0l;
+    return super.getTotalWorldTime();
   }
 
   protected IChunkProvider createChunkProvider() {
