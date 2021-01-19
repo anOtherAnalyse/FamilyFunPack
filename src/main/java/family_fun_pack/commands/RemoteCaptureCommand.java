@@ -33,7 +33,7 @@ import family_fun_pack.utils.WorldCapture;
 /* Remote world capture - slow */
 
 @SideOnly(Side.CLIENT)
-public class CaptureWorldCommand extends Command implements PacketListener {
+public class RemoteCaptureCommand extends Command implements PacketListener {
 
   private static final int WINDOWS_SIZE = 9;
   private static final int BURST_SIZE = 3;
@@ -52,7 +52,7 @@ public class CaptureWorldCommand extends Command implements PacketListener {
   private int max_index;
   private int start_index;
 
-  public CaptureWorldCommand() {
+  public RemoteCaptureCommand() {
     super("capture");
     this.window = new HashMap<BlockPos, Long>();
     this.window_lock = new ReentrantReadWriteLock();
@@ -147,11 +147,11 @@ public class CaptureWorldCommand extends Command implements PacketListener {
     for(BlockPos position : this.window.keySet()) {
       long sent_time = this.window.get(position).longValue();
 
-      if(time - sent_time >= CaptureWorldCommand.RE_SEND_TIME) {
+      if(time - sent_time >= RemoteCaptureCommand.RE_SEND_TIME) {
         FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f));
 
         this.window.put(position, time);
-        if(++count >= CaptureWorldCommand.BURST_SIZE) {
+        if(++count >= RemoteCaptureCommand.BURST_SIZE) {
           this.window_lock.writeLock().unlock();
           return;
         }
@@ -185,7 +185,7 @@ public class CaptureWorldCommand extends Command implements PacketListener {
     }
 
     // Send new requests
-    while(count < CaptureWorldCommand.BURST_SIZE && size < CaptureWorldCommand.WINDOWS_SIZE && this.index < this.max_index) {
+    while(count < RemoteCaptureCommand.BURST_SIZE && size < RemoteCaptureCommand.WINDOWS_SIZE && this.index < this.max_index) {
       BlockPos position = this.IndexToCoords(this.index).add(this.current.x << 4, 0, this.current.z << 4);
 
       this.window_lock.writeLock().lock();

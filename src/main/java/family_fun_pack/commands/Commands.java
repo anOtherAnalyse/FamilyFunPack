@@ -44,9 +44,10 @@ public class Commands {
     this.registerCommand(new KillDupeCommand());
     this.registerCommand(new RemoteRideCommand());
     this.registerCommand(new BlockAtCommand());
-    this.registerCommand(new CaptureWorldCommand());
+    this.registerCommand(new RemoteCaptureCommand());
     this.registerCommand(new LoadChunkCommand());
     this.registerCommand(new PopulateCommand());
+    this.registerCommand(new WorldDownloadCommand());
   }
 
   public void registerCommand(Command cmd) {
