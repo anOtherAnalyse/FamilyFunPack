@@ -208,7 +208,7 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
 
     this.current_lock.writeLock().lock();
 
-    if(this.current != null && position.getX() / 16 == this.current.x && position.getZ() / 16 == this.current.z) {
+    if(this.current != null && (position.getX() >> 4) == this.current.x && (position.getZ() >> 4) == this.current.z) {
       this.current.setBlockState(position, change.getBlockState());
 
       this.window_lock.writeLock().lock();

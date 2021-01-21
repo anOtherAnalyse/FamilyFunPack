@@ -39,7 +39,7 @@ public class InboundInterceptor extends NettyPacketDecoder {
       int start_index = in.readerIndex(); // Mark start index
       super.decode(context, in, out); // Computer packet
 
-      if(! this.isPlay) { // don't go fetch the attr every time)
+      if(! this.isPlay) { // don't go fetch the attr every time
         EnumConnectionState state = (EnumConnectionState)(context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get());
         this.isPlay = (state == EnumConnectionState.PLAY);
       }

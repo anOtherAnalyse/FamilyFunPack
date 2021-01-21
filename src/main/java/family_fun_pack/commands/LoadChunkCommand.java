@@ -117,7 +117,7 @@ public class LoadChunkCommand extends Command implements PacketListener {
 
       if(time - sent_time >= LoadChunkCommand.RE_SEND_TIME) {
 
-        int z = position.getZ() / 16;
+        int z = position.getZ() >> 4;
         if(z == this.chunks[this.chunks.length - 1].z) {
           FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.EAST, EnumHand.MAIN_HAND, 0f, 0f, 0f));
         } else {
