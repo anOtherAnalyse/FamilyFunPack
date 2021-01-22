@@ -215,8 +215,7 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
       this.window.remove(position);
       this.window_lock.writeLock().unlock();
 
-      this.current_lock.writeLock().unlock();
-      return null;
+      packet = null;
     }
 
     this.current_lock.writeLock().unlock();
@@ -247,7 +246,9 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   public Chunk getNextChunk() {
     if(this.chunks.size() > 0) {
       ChunkPos next = this.chunks.remove(0);
-      return new Chunk(this.capture.getWorld(), next.x, next.z);
+      Chunk chunk = new Chunk(this.capture.getWorld(), next.x, next.z);
+      this.capture.getWorld().setChunk(chunk);
+      return chunk;
     }
     return null;
   }

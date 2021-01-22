@@ -34,7 +34,7 @@ public class WorldCapture {
   private static final Logger LOGGER = LogManager.getLogger();
 
   private IChunkLoader chunkLoader;
-  private World fakeWorld;
+  private FakeWorld fakeWorld;
   private String name;
 
   public WorldCapture(String saveName, DimensionType dimension, BlockPos spawn) {
@@ -84,7 +84,7 @@ public class WorldCapture {
     this.chunkLoader.flush();
   }
 
-  public World getWorld() {
+  public FakeWorld getWorld() {
     return this.fakeWorld;
   }
 

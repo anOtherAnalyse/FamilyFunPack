@@ -1,9 +1,12 @@
 package family_fun_pack.utils;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
@@ -20,6 +23,7 @@ import net.minecraft.util.EnumFacing;
 public class FakeWorld extends World {
 
   private IBlockState state;
+  private Chunk chunk;
 
   public FakeWorld(IBlockState state, WorldProvider provider) {
     super(null, null, provider, null, false);
@@ -29,6 +33,18 @@ public class FakeWorld extends World {
   public FakeWorld(ISaveHandler saveHandler, WorldInfo info, WorldProvider provider) {
     super(saveHandler, info, provider, null, false);
     this.state = Blocks.AIR.getDefaultState();
+  }
+
+  public void setChunk(Chunk chunk) {
+    this.chunk = chunk;
+  }
+
+  public Chunk getChunk(int chunkX, int chunkZ) {
+    return this.chunk;
+  }
+
+  public Chunk getChunkFromChunkCoords(int chunkX, int chunkZ) { // Runtime name of getChunk (why is this different ?)
+    return this.chunk;
   }
 
   public IBlockState getBlockState(BlockPos position) {
@@ -57,5 +73,9 @@ public class FakeWorld extends World {
   protected boolean isChunkLoaded(int paramInt1, int paramInt2, boolean paramBoolean) {
     return false;
   }
+
+  public void neighborChanged(BlockPos pos, final Block blockIn, BlockPos fromPos) {}
+
+  public void observedNeighborChanged(BlockPos pos, final Block block, BlockPos target) {}
 
 }
