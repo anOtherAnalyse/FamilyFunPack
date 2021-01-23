@@ -55,55 +55,16 @@ public class LoadChunkCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
 
-	    if(args.length > 2) {
+    if(args.length > 1) {
+      int x, z, radius;
 
-	      if(this.chunks != null) return "Chunks are already kept loaded";
-	      
-	      try {
-
-	        int x = Integer.parseInt(args[1]);
-	        int z = Integer.parseInt(args[2]);
-
-	        int radius = 2; // 2 allows the middle chunk to be updated (not lazy)
-	        if(args.length > 3) radius = Integer.parseInt(args[3]);
-
-	        if(radius < 0) return "Invalid radius";
-
-	        this.width = (radius * 2) + 1;
-	        int index = 0;
-	        this.chunks = new ChunkPos[this.width * this.width];
-
-	        for(int i = x - radius; i <= x + radius; i ++) {
-	          for(int j = z - radius; j < z + radius; j ++) {
-	            this.chunks[index] = new ChunkPos(i, j);
-	            index += 1;
-	          }
-	        }
-
-	        for(int i = x - radius; i <= x + radius; i ++) {
-	          this.chunks[index] = new ChunkPos(i, z + radius);
-	          index += 1;
-	        }
-
-	        this.current = 0;
-	        this.window.clear();
-
-	        FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
-	        MinecraftForge.EVENT_BUS.register(this);
-
-	        return String.format("Keeping loaded a square of radius %d around chunk [%d, %d], %d chunks", radius, x, z, this.width * this.width);
-	      } catch(NumberFormatException e) {
-	        return this.getUsage();
-	      }
-	    } else if(args.length > 1 && args[1].equals("off")) {
-	      this.onDisconnect();
+      if(args[1].equals("off")) {
+        this.onDisconnect();
 	      return "Remote chunk loading is off";
-	    }else if(args.length > 1 && args[1].equals("config")) {
-	    	
-	    	if(this.chunks != null) return "Chunks are already kept loaded";
-	    	
-	    	Configuration configuration = FamilyFunPack.getModules().getConfiguration();
-	    	configuration.load();
+      } else if(args[1].equals("config")) {
+
+        Configuration configuration = FamilyFunPack.getModules().getConfiguration();
+	    	configuration.load(); // re-load config to allow changes while playing
 	    	if(!configuration.hasCategory(this.getName())) {
 	           configuration.get(this.getName(), "target_x", 0);
 	           configuration.get(this.getName(), "target_z", 0);
@@ -111,39 +72,54 @@ public class LoadChunkCommand extends Command implements PacketListener {
 	           configuration.save();
 	    	   return "Config for load command was created";
 	    	}
-	    	
-	    	ChunkPos target = new ChunkPos(configuration.get(this.getName(), "target_x", 0).getInt(),configuration.get(this.getName(), "target_z", 0).getInt());
-	        int radius = configuration.get(this.getName(), "radius", 2).getInt();
-	        if(radius < 0) return "Invalid radius";
-	        this.width = (radius * 2) + 1;
-	        int index = 0;
-	        this.chunks = new ChunkPos[this.width * this.width];
 
-	        for(int i = target.x - radius; i <= target.x + radius; i ++) {
-	          for(int j = target.z - radius; j < target.z + radius; j ++) {
-	            this.chunks[index] = new ChunkPos(i, j);
-	            index += 1;
-	          }
-	        }
+        x = configuration.get(this.getName(), "target_x", 0).getInt();
+        z = configuration.get(this.getName(), "target_z", 0).getInt();
+        radius = configuration.get(this.getName(), "radius", 2).getInt();
+      } else if(args.length > 2) {
+        try {
+          x = Integer.parseInt(args[1]);
+	        z = Integer.parseInt(args[2]);
 
-	        for(int i = target.x - radius; i <= target.x + radius; i ++) {
-	          this.chunks[index] = new ChunkPos(i, target.z + radius);
-	          index += 1;
-	        }
+	        if(args.length > 3) radius = Integer.parseInt(args[3]);
+          else radius = 2; // 2 allows the middle chunk to be updated (not lazy)
+        } catch(NumberFormatException e) {
+	        return this.getUsage();
+	      }
+      } else return this.getUsage();
 
-	        
-	        this.current = 0;
-	        this.window.clear();
+      if(radius < 0) return "Invalid radius";
 
-	        FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
-	        MinecraftForge.EVENT_BUS.register(this);
-	        
-	        return String.format("Keeping loaded a square of radius %d around chunk [%d, %d], %d chunks", radius, target.x, target.z, this.width * this.width);
-	    }
+      if(this.chunks != null) return "Chunks are already kept loaded";
 
-	    return this.getUsage();
-	  }
-  
+      this.width = (radius * 2) + 1;
+      int index = 0;
+      this.chunks = new ChunkPos[this.width * this.width];
+
+      for(int i = x - radius; i <= x + radius; i ++) {
+        for(int j = z - radius; j < z + radius; j ++) {
+          this.chunks[index] = new ChunkPos(i, j);
+          index += 1;
+        }
+      }
+
+      for(int i = x - radius; i <= x + radius; i ++) {
+        this.chunks[index] = new ChunkPos(i, z + radius);
+        index += 1;
+      }
+
+      this.current = 0;
+      this.window.clear();
+
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+      MinecraftForge.EVENT_BUS.register(this);
+
+      return String.format("Keeping loaded a square of radius %d around chunk [%d, %d], %d chunks", radius, x, z, this.width * this.width);
+    }
+
+    return this.getUsage();
+	}
+
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
 

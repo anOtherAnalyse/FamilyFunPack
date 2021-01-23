@@ -52,8 +52,6 @@ public class PopulateCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
 
-    if(! FamilyFunPack.getNetworkHandler().isConnected()) return "This only works on servers";
-
     if(this.enabled) {
       return String.format("%d / %d chunks done", this.index, this.wx * this.wz);
     } else if(args.length > 4) {
