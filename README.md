@@ -18,6 +18,9 @@ Display the real durability in the toolTip showed when hovering an item in the i
 Advanced search module - Search for every block & state in the game. For each search specify which color you want the block to be highlighted and if you want a tracer.  
 You can search for very specific state of a block, for example only for mob spawner spawning pigs, only for grown wheat or even only for red beds facing west.
 
+##### Book formatting
+Adds new panel to the book editing gui, to be able to add colors and special formats to book content & title.
+
 ##### Silent Close
 Don't tell the server when the client is closing a container - be able to reopen it later when trying to open player inventory. If the server forces the closing you will be warned.
 
