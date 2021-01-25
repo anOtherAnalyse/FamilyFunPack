@@ -53,12 +53,15 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   private int max_index;
   private int start_index;
 
+  private int label_id;
+
   public RemoteCaptureCommand() {
     super("capture");
     this.window = new HashMap<BlockPos, Long>();
     this.window_lock = new ReentrantReadWriteLock();
     this.chunks = new LinkedList<ChunkPos>();
     this.current_lock = new ReentrantReadWriteLock();
+    this.label_id = -1;
   }
 
   public String usage() {
@@ -82,8 +85,10 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
         return "Capture was aborted";
       }
 
+      String advance = String.format("Chunk [%d, %d] at %d / %d, %d chunks left", this.current.x, this.current.z, this.index, this.max_index, this.chunks.size() + 1);
+
       this.current_lock.readLock().unlock();
-      return String.format("Chunk [%d, %d] at %d / %d, %d chunks left", this.current.x, this.current.z, this.index, this.max_index, this.chunks.size() + 1);
+      return advance;
     }
     this.current_lock.readLock().unlock();
 
@@ -250,6 +255,8 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
       this.window.remove(position);
       this.window_lock.writeLock().unlock();
 
+      this.updateStatusLabel();
+
       packet = null;
     }
 
@@ -276,6 +283,8 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
     this.window.clear();
     this.index = 0;
     this.current = null;
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 
   public Chunk getNextChunk() {
@@ -294,6 +303,15 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
 
   public int coordsToIndex(BlockPos position) {
     return (position.getX() & 15) | ((position.getZ() & 15) << 4) | (position.getY() << 8);
+  }
+
+  private void updateStatusLabel() {
+    int chunks_count = this.capture.getRecordedCount();
+    float counter = (float)(this.index - this.start_index) * 100f / (float)(this.max_index - this.start_index);
+    String label = String.format("Capture [%d/%d], current %.2f%%", chunks_count, chunks_count + this.chunks.size() + 1, counter);
+
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().modifyLabel(this.label_id, label);
+    else this.label_id = FamilyFunPack.getOverlay().addLabel(label);
   }
 
   public static enum Mode {FULL, HALF, SURFACE};

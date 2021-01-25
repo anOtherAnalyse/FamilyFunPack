@@ -8,8 +8,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import family_fun_pack.gui.MainGui;
 
@@ -19,23 +21,27 @@ import family_fun_pack.gui.MainGui;
 public class OverlayGui extends Gui {
 
   private static final int BORDER = 0xff000000;
+  private static int counter = 0;
 
   private FontRenderer fontRenderer;
 
-  private Set<String> labels;
+  private Map<Integer, String> labels;
+  private ReadWriteLock labels_lock;
 
   private int height;
 
   public OverlayGui() {
     this.zLevel = 1;
     this.fontRenderer = Minecraft.getMinecraft().fontRenderer;
-    this.labels = new HashSet<String>();
+    this.labels = new HashMap<Integer, String>();
+    this.labels_lock = new ReentrantReadWriteLock();
     this.height = this.fontRenderer.FONT_HEIGHT + 4;
   }
 
   public void drawOverlay() {
     int y = 4;
-    for(String l : this.labels) {
+    this.labels_lock.readLock().lock();
+    for(String l : this.labels.values()) {
       int width = this.fontRenderer.getStringWidth(l) + 4;
       int x_end = 4 + width;
       int y_end = y + this.height;
@@ -49,6 +55,7 @@ public class OverlayGui extends Gui {
 
       y = y_end + 2;
     }
+    this.labels_lock.readLock().unlock();
   }
 
   @SubscribeEvent
@@ -56,12 +63,26 @@ public class OverlayGui extends Gui {
     this.drawOverlay();
   }
 
-  public void addLabel(String l) {
-    this.labels.add(l);
+  public int addLabel(String label) {
+    OverlayGui.counter++;
+    if(OverlayGui.counter < 0) OverlayGui.counter = 0;
+    int id = OverlayGui.counter;
+    this.labels_lock.writeLock().lock();
+    this.labels.put(id, label);
+    this.labels_lock.writeLock().unlock();
+    return id;
   }
 
-  public void removeLabel(String l) {
-    this.labels.remove(l);
+  public void removeLabel(int id) {
+    this.labels_lock.writeLock().lock();
+    this.labels.remove(id);
+    this.labels_lock.writeLock().unlock();
+  }
+
+  public void modifyLabel(int id, String label) {
+    this.labels_lock.writeLock().lock();
+    this.labels.put(id, label);
+    this.labels_lock.writeLock().unlock();
   }
 
 }

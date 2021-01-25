@@ -43,10 +43,13 @@ public class LoadChunkCommand extends Command implements PacketListener {
   private int width;
   private int current;
 
+  private int label_id;
+
   public LoadChunkCommand() {
     super("load");
     this.window_lock = new ReentrantReadWriteLock();
     this.window = new HashMap<BlockPos, Long>();
+    this.label_id = -1;
   }
 
   public String usage() {
@@ -110,6 +113,8 @@ public class LoadChunkCommand extends Command implements PacketListener {
 
       this.current = 0;
       this.window.clear();
+
+      this.label_id = FamilyFunPack.getOverlay().addLabel("Remote loading: on");
 
       FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
       MinecraftForge.EVENT_BUS.register(this);
@@ -211,5 +216,8 @@ public class LoadChunkCommand extends Command implements PacketListener {
     this.window_lock.writeLock().lock();
     this.window.clear();
     this.window_lock.writeLock().unlock();
+
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 }
