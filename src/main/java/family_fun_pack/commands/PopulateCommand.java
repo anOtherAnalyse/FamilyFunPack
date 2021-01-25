@@ -39,22 +39,27 @@ public class PopulateCommand extends Command implements PacketListener {
 
   private boolean enabled;
 
+  private int label_id;
+
   public PopulateCommand() {
     super("populate");
     this.window = new BlockPos[4];
     this.window_lock = new ReentrantReadWriteLock();
     this.enabled = false;
+    this.label_id = -1;
   }
 
   public String usage() {
-    return this.getName() + " <corner_x> <corner_z> <width_x> <width_z>";
+    return this.getName() + " <corner_x> <corner_z> <width_x> <width_z> | off";
   }
 
   public String execute(String[] args) {
 
-    if(! FamilyFunPack.getNetworkHandler().isConnected()) return "This only works on servers";
-
     if(this.enabled) {
+      if(args.length > 1 && args[1].equals("off")) {
+        this.onDisconnect();
+        return "Population was aborted";
+      }
       return String.format("%d / %d chunks done", this.index, this.wx * this.wz);
     } else if(args.length > 4) {
       try {
@@ -117,6 +122,8 @@ public class PopulateCommand extends Command implements PacketListener {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 11);
     MinecraftForge.EVENT_BUS.unregister(this);
     this.enabled = false;
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 
   public void populateChunk() {
@@ -140,6 +147,8 @@ public class PopulateCommand extends Command implements PacketListener {
       this.sendRequests();
 
       this.index += 1;
+
+      this.updateStatusLabel();
     }
   }
 
@@ -157,5 +166,11 @@ public class PopulateCommand extends Command implements PacketListener {
   private BlockPos indexToBlockPos(int index) {
     if(index >= this.wx * this.wz) return null;
     return new BlockPos((this.x + (index / this.wz)) << 4, 0, (this.z + (index % this.wz)) << 4);
+  }
+
+  private void updateStatusLabel() {
+    String label = String.format("Populating: %.2f%%", (float)(this.index - 1) * 100f / (float)(this.wx * this.wz));
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().modifyLabel(this.label_id, label);
+    else this.label_id = FamilyFunPack.getOverlay().addLabel(label);
   }
 }

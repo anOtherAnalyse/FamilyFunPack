@@ -26,12 +26,14 @@ public class PacketInterceptionModule extends Module implements PacketListener {
 
   private Set<Integer> inbound_block;
   private Set<Integer> outbound_block;
+  private int label_id;
 
   public PacketInterceptionModule() {
     super("Packets interception", "Intercept network packets");
     this.inbound_block = new HashSet<Integer>();
     this.outbound_block = new HashSet<Integer>();
     FamilyFunPack.addModuleKey(0, this);
+    this.label_id = -1;
   }
 
   protected void enable() {
@@ -42,13 +44,14 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     for(Integer i : this.outbound_block) {
       handler.registerListener(EnumPacketDirection.SERVERBOUND, this, i);
     }
-    FamilyFunPack.getOverlay().addLabel("Interception: On");
+    this.label_id = FamilyFunPack.getOverlay().addLabel("Interception: On");
   }
 
   protected void disable() {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this);
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this);
-    FamilyFunPack.getOverlay().removeLabel("Interception: On");
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 
   // reinventing the wheel

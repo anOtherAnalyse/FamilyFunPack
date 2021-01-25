@@ -34,8 +34,10 @@ public class WorldCapture {
   private static final Logger LOGGER = LogManager.getLogger();
 
   private IChunkLoader chunkLoader;
-  private World fakeWorld;
+  private FakeWorld fakeWorld;
   private String name;
+
+  private int count;
 
   public WorldCapture(String saveName, DimensionType dimension, BlockPos spawn) {
     Minecraft mc = Minecraft.getMinecraft();
@@ -69,6 +71,7 @@ public class WorldCapture {
 
     this.chunkLoader = saveHandler.getChunkLoader(provider);
     this.fakeWorld = new FakeWorld(saveHandler, info, provider);
+    this.count = 0;
   }
 
   public void captureChunk(Chunk chunk) {
@@ -82,13 +85,18 @@ public class WorldCapture {
     }
 
     this.chunkLoader.flush();
+    this.count += 1;
   }
 
-  public World getWorld() {
+  public FakeWorld getWorld() {
     return this.fakeWorld;
   }
 
   public String getName() {
     return this.name;
+  }
+
+  public int getRecordedCount() {
+    return this.count;
   }
 }

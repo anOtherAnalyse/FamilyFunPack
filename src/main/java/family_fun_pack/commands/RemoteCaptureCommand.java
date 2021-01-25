@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -52,12 +53,15 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   private int max_index;
   private int start_index;
 
+  private int label_id;
+
   public RemoteCaptureCommand() {
     super("capture");
     this.window = new HashMap<BlockPos, Long>();
     this.window_lock = new ReentrantReadWriteLock();
     this.chunks = new LinkedList<ChunkPos>();
     this.current_lock = new ReentrantReadWriteLock();
+    this.label_id = -1;
   }
 
   public String usage() {
@@ -81,57 +85,93 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
         return "Capture was aborted";
       }
 
+      String advance = String.format("Chunk [%d, %d] at %d / %d, %d chunks left", this.current.x, this.current.z, this.index, this.max_index, this.chunks.size() + 1);
+
       this.current_lock.readLock().unlock();
-      return String.format("Chunk [%d, %d] at %d / %d, %d chunks left", this.current.x, this.current.z, this.index, this.max_index, this.chunks.size() + 1);
+      return advance;
     }
     this.current_lock.readLock().unlock();
 
-    if(args.length > 4) {
+    int x, z, wx, wz;
+    String name;
+    RemoteCaptureCommand.Mode mode = RemoteCaptureCommand.Mode.FULL;
 
-      if(! FamilyFunPack.getNetworkHandler().isConnected()) return "This only works on servers";
+    if(args.length > 1 && args[1].equals("config")) {
+      Configuration configuration = FamilyFunPack.getModules().getConfiguration();
+    	configuration.load(); // re-load config to allow changes while playing
+    	if(!configuration.hasCategory(this.getName())) {
+         configuration.get(this.getName(), "target_x", 0);
+         configuration.get(this.getName(), "target_z", 0);
+         configuration.get(this.getName(), "width_x", 1);
+         configuration.get(this.getName(), "width_z", 1);
+         configuration.get(this.getName(), "name", "example");
+         configuration.get(this.getName(), "mode", "half");
+         configuration.save();
+    	   return "Config for capture command was created";
+    	}
+
+    	x = configuration.get(this.getName(), "target_x", 0).getInt();
+      z = configuration.get(this.getName(), "target_z", 0).getInt();
+      wx = configuration.get(this.getName(), "width_x", 1).getInt();
+      wz = configuration.get(this.getName(), "width_z", 1).getInt();
+      name = configuration.get(this.getName(), "name", "example").getString();
 
       try {
-        int x = Integer.parseInt(args[2]);
-        int z = Integer.parseInt(args[3]);
-        int wx = Integer.parseInt(args[4]);
-        int wz = Integer.parseInt(args[5]);
+        mode = RemoteCaptureCommand.Mode.valueOf(configuration.get(this.getName(), "mode", "half").getString().toUpperCase());
+      } catch (IllegalArgumentException e) {
+        return "Invalid capture mode was specified in configuration";
+      }
 
-        if(wx <= 0 || wx > 12 || wz <= 0 || wz > 12) return "Width too big or invalid";
-
-        this.max_index = 32768;
-        this.start_index = 0;
-        if(args.length > 6) {
-          if(args[6].equals("half")) this.max_index = 16384;
-          else if(args[6].equals("surface")) {
-            this.start_index = 6400;
-            this.max_index = 12800;
-          }
-          else return this.getUsage();
-        }
-
-        this.capture = new WorldCapture(args[1], mc.world.provider.getDimensionType(), new BlockPos(x << 4, 256, z << 4));
-        this.chunks.clear();
-        this.window.clear();
-        this.index = this.start_index;
-
-        for(int i = x; i < x + wx; i ++) {
-          for(int j = z; j < z + wz; j ++) {
-            this.chunks.add(new ChunkPos(i, j));
-          }
-        }
-
-        this.current = this.getNextChunk();
-
-        FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
-        MinecraftForge.EVENT_BUS.register(this);
-
-        return "Starting to capture..";
+    } else if(args.length > 5) {
+      try {
+        name = args[1];
+        x = Integer.parseInt(args[2]);
+        z = Integer.parseInt(args[3]);
+        wx = Integer.parseInt(args[4]);
+        wz = Integer.parseInt(args[5]);
+        if(args.length > 6) mode = RemoteCaptureCommand.Mode.valueOf(args[6].toUpperCase());
       } catch(NumberFormatException e) {
         return this.getUsage();
+      } catch (IllegalArgumentException e) {
+        return this.getUsage();
+      }
+    } else return this.getUsage();
+
+    if(wx <= 0 || wx > 12 || wz <= 0 || wz > 12) return "Width too big or invalid";
+
+    switch(mode) {
+      case FULL:
+        this.max_index = 32768;
+        this.start_index = 0;
+        break;
+      case HALF:
+        this.max_index = 16384;
+        this.start_index = 0;
+        break;
+      case SURFACE:
+        this.max_index = 12800;
+        this.start_index = 6400;
+        break;
+    }
+
+    this.capture = new WorldCapture(name, mc.world.provider.getDimensionType(), new BlockPos(x << 4, 256, z << 4));
+    this.chunks.clear();
+    this.window.clear();
+    this.index = this.start_index;
+
+    for(int i = x; i < x + wx; i ++) {
+      for(int j = z; j < z + wz; j ++) {
+        this.chunks.add(new ChunkPos(i, j));
       }
     }
-    return this.getUsage();
-  }
+
+    this.current = this.getNextChunk();
+
+    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+    MinecraftForge.EVENT_BUS.register(this);
+
+    return "Starting to capture..";
+	 }
 
   // Send request to get blocks states
   @SubscribeEvent
@@ -215,8 +255,9 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
       this.window.remove(position);
       this.window_lock.writeLock().unlock();
 
-      this.current_lock.writeLock().unlock();
-      return null;
+      this.updateStatusLabel();
+
+      packet = null;
     }
 
     this.current_lock.writeLock().unlock();
@@ -242,12 +283,16 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
     this.window.clear();
     this.index = 0;
     this.current = null;
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 
   public Chunk getNextChunk() {
     if(this.chunks.size() > 0) {
       ChunkPos next = this.chunks.remove(0);
-      return new Chunk(this.capture.getWorld(), next.x, next.z);
+      Chunk chunk = new Chunk(this.capture.getWorld(), next.x, next.z);
+      this.capture.getWorld().setChunk(chunk);
+      return chunk;
     }
     return null;
   }
@@ -259,4 +304,15 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   public int coordsToIndex(BlockPos position) {
     return (position.getX() & 15) | ((position.getZ() & 15) << 4) | (position.getY() << 8);
   }
+
+  private void updateStatusLabel() {
+    int chunks_count = this.capture.getRecordedCount();
+    float counter = (float)(this.index - this.start_index) * 100f / (float)(this.max_index - this.start_index);
+    String label = String.format("Capture [%d/%d], current %.2f%%", chunks_count, chunks_count + this.chunks.size() + 1, counter);
+
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().modifyLabel(this.label_id, label);
+    else this.label_id = FamilyFunPack.getOverlay().addLabel(label);
+  }
+
+  public static enum Mode {FULL, HALF, SURFACE};
 }

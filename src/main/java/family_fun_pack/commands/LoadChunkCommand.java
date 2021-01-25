@@ -10,6 +10,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -42,10 +43,13 @@ public class LoadChunkCommand extends Command implements PacketListener {
   private int width;
   private int current;
 
+  private int label_id;
+
   public LoadChunkCommand() {
     super("load");
     this.window_lock = new ReentrantReadWriteLock();
     this.window = new HashMap<BlockPos, Long>();
+    this.label_id = -1;
   }
 
   public String usage() {
@@ -54,55 +58,72 @@ public class LoadChunkCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
 
-    if(args.length > 2) {
+    if(args.length > 1) {
+      int x, z, radius;
+
+      if(args[1].equals("off")) {
+        this.onDisconnect();
+	      return "Remote chunk loading is off";
+      } else if(args[1].equals("config")) {
+
+        Configuration configuration = FamilyFunPack.getModules().getConfiguration();
+	    	configuration.load(); // re-load config to allow changes while playing
+	    	if(!configuration.hasCategory(this.getName())) {
+	           configuration.get(this.getName(), "target_x", 0);
+	           configuration.get(this.getName(), "target_z", 0);
+	           configuration.get(this.getName(), "radius", 2);
+	           configuration.save();
+	    	   return "Config for load command was created";
+	    	}
+
+        x = configuration.get(this.getName(), "target_x", 0).getInt();
+        z = configuration.get(this.getName(), "target_z", 0).getInt();
+        radius = configuration.get(this.getName(), "radius", 2).getInt();
+      } else if(args.length > 2) {
+        try {
+          x = Integer.parseInt(args[1]);
+	        z = Integer.parseInt(args[2]);
+
+	        if(args.length > 3) radius = Integer.parseInt(args[3]);
+          else radius = 2; // 2 allows the middle chunk to be updated (not lazy)
+        } catch(NumberFormatException e) {
+	        return this.getUsage();
+	      }
+      } else return this.getUsage();
+
+      if(radius < 0) return "Invalid radius";
 
       if(this.chunks != null) return "Chunks are already kept loaded";
 
-      if(! FamilyFunPack.getNetworkHandler().isConnected()) return "This only works on servers";
+      this.width = (radius * 2) + 1;
+      int index = 0;
+      this.chunks = new ChunkPos[this.width * this.width];
 
-      try {
-
-        int x = Integer.parseInt(args[1]);
-        int z = Integer.parseInt(args[2]);
-
-        int radius = 2; // 2 allows the middle chunk to be updated (not lazy)
-        if(args.length > 3) radius = Integer.parseInt(args[3]);
-
-        if(radius < 0) return "Invalid radius";
-
-        this.width = (radius * 2) + 1;
-        int index = 0;
-        this.chunks = new ChunkPos[this.width * this.width];
-
-        for(int i = x - radius; i <= x + radius; i ++) {
-          for(int j = z - radius; j < z + radius; j ++) {
-            this.chunks[index] = new ChunkPos(i, j);
-            index += 1;
-          }
-        }
-
-        for(int i = x - radius; i <= x + radius; i ++) {
-          this.chunks[index] = new ChunkPos(i, z + radius);
+      for(int i = x - radius; i <= x + radius; i ++) {
+        for(int j = z - radius; j < z + radius; j ++) {
+          this.chunks[index] = new ChunkPos(i, j);
           index += 1;
         }
-
-        this.current = 0;
-        this.window.clear();
-
-        FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
-        MinecraftForge.EVENT_BUS.register(this);
-
-        return String.format("Keeping loaded a square of radius %d around chunk [%d, %d], %d chunks", radius, x, z, this.width * this.width);
-      } catch(NumberFormatException e) {
-        return this.getUsage();
       }
-    } else if(args.length > 1 && args[1].equals("off")) {
-      this.onDisconnect();
-      return "Remote chunk loading is off";
+
+      for(int i = x - radius; i <= x + radius; i ++) {
+        this.chunks[index] = new ChunkPos(i, z + radius);
+        index += 1;
+      }
+
+      this.current = 0;
+      this.window.clear();
+
+      this.label_id = FamilyFunPack.getOverlay().addLabel("Remote loading: on");
+
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+      MinecraftForge.EVENT_BUS.register(this);
+
+      return String.format("Keeping loaded a square of radius %d around chunk [%d, %d], %d chunks", radius, x, z, this.width * this.width);
     }
 
     return this.getUsage();
-  }
+	}
 
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
@@ -195,5 +216,8 @@ public class LoadChunkCommand extends Command implements PacketListener {
     this.window_lock.writeLock().lock();
     this.window.clear();
     this.window_lock.writeLock().unlock();
+
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
+    this.label_id = -1;
   }
 }
