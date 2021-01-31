@@ -1,12 +1,21 @@
 package family_fun_pack.commands;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockStandingSign;
+import net.minecraft.block.BlockWallSign;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.client.CPacketUpdateSign;
 import net.minecraft.network.play.server.SPacketBlockChange;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
@@ -20,6 +29,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 import java.lang.System;
+import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Map;
@@ -48,6 +58,9 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   private List<ChunkPos> chunks;
   private Chunk current;
   private ReadWriteLock current_lock;
+
+  private boolean getting_signs;
+  private short retry_count;
 
   private int index;
   private int max_index;
@@ -157,6 +170,8 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
     this.capture = new WorldCapture(name, mc.world.provider.getDimensionType(), new BlockPos(x << 4, 256, z << 4));
     this.chunks.clear();
     this.window.clear();
+    this.getting_signs = false;
+    this.retry_count = 2;
     this.index = this.start_index;
 
     for(int i = x; i < x + wx; i ++) {
@@ -167,7 +182,7 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
 
     this.current = this.getNextChunk();
 
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 9, 11);
     MinecraftForge.EVENT_BUS.register(this);
 
     return "Starting to capture..";
@@ -182,86 +197,147 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
     long time = System.currentTimeMillis();
     int count = 0;
 
-    // Re-send request that were not fulfilled by server
-    this.window_lock.writeLock().lock();
-    for(BlockPos position : this.window.keySet()) {
-      long sent_time = this.window.get(position).longValue();
+    if(this.getting_signs) { // Current phase is retrieving sign data
 
-      if(time - sent_time >= RemoteCaptureCommand.RE_SEND_TIME) {
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+      boolean has_sign = false;
 
-        this.window.put(position, time);
-        if(++count >= RemoteCaptureCommand.BURST_SIZE) {
-          this.window_lock.writeLock().unlock();
-          return;
+      this.current_lock.readLock().lock();
+      this.window_lock.writeLock().lock();
+      Iterator iterator = this.window.keySet().iterator();
+      while(iterator.hasNext()) {
+        BlockPos position = (BlockPos) iterator.next();
+        Block block = this.current.getBlockState(position).getBlock();
+        if(block instanceof BlockStandingSign || block instanceof BlockWallSign) {
+          if(time - this.window.get(position).longValue() >= RemoteCaptureCommand.RE_SEND_TIME) {
+            if(this.retry_count > 0) {
+              FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f)); // Be sure that chunk is loaded
+              FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUpdateSign(position, new ITextComponent[] {new TextComponentString(""), new TextComponentString(""), new TextComponentString(""), new TextComponentString("")}));
+              this.window.put(position, time);
+              this.retry_count -= 1;
+            } else {
+              iterator.remove();
+              this.retry_count = 2;
+              continue;
+            }
+          }
+          has_sign = true;
+          break;
         }
       }
-    }
-    this.window_lock.writeLock().unlock();
 
-    this.window_lock.readLock().lock();
-    int size = this.window.size();
-    this.window_lock.readLock().unlock();
+      if(! has_sign) {
+        this.getting_signs = false;
+      }
 
-    // Chunk is full, record it
-    if(size == 0 && this.index >= this.max_index) {
-
-      this.current_lock.writeLock().lock();
-
-      // Record
-      this.capture.captureChunk(this.current);
-
-      // Get next chunk
-      this.current = this.getNextChunk();
-      this.index = this.start_index;
-      if(this.current == null) {
-        FamilyFunPack.printMessage("Capture finished, saved under name: " + this.capture.getName());
-        this.onStop();
-      } else FamilyFunPack.printMessage(String.format("Chunk [%d, %d] captured, %d left", this.current.x, this.current.z, this.chunks.size() + 1));
-
-      this.current_lock.writeLock().unlock();
-
-      return;
-    }
-
-    // Send new requests
-    while(count < RemoteCaptureCommand.BURST_SIZE && size < RemoteCaptureCommand.WINDOWS_SIZE && this.index < this.max_index) {
-      BlockPos position = this.IndexToCoords(this.index).add(this.current.x << 4, 0, this.current.z << 4);
-
+      this.window_lock.writeLock().unlock();
+      this.current_lock.readLock().unlock();
+    } else { // Current phase is retrieving block data
+      // Re-send request that were not fulfilled by server
       this.window_lock.writeLock().lock();
-      this.window.put(position, time);
+      for(BlockPos position : this.window.keySet()) {
+        long sent_time = this.window.get(position).longValue();
+
+        if(time - sent_time >= RemoteCaptureCommand.RE_SEND_TIME) {
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+
+          this.window.put(position, time);
+          if(++count >= RemoteCaptureCommand.BURST_SIZE) {
+            this.window_lock.writeLock().unlock();
+            return;
+          }
+        }
+      }
       this.window_lock.writeLock().unlock();
 
-      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+      this.window_lock.readLock().lock();
+      int size = this.window.size();
+      this.window_lock.readLock().unlock();
 
-      this.index ++;
-      size ++;
-      count ++;
+      // Chunk is full, record it
+      if(size == 0 && this.index >= this.max_index) {
+
+        this.current_lock.writeLock().lock();
+
+        // Record
+        this.capture.captureChunk(this.current);
+
+        // Get next chunk
+        this.current = this.getNextChunk();
+        this.index = this.start_index;
+        if(this.current == null) {
+          FamilyFunPack.printMessage("Capture finished, saved under name: " + this.capture.getName());
+          this.onStop();
+        } else FamilyFunPack.printMessage(String.format("Chunk [%d, %d] captured, %d left", this.current.x, this.current.z, this.chunks.size() + 1));
+
+        this.current_lock.writeLock().unlock();
+
+        return;
+      }
+
+      // Send new requests
+      while(count < RemoteCaptureCommand.BURST_SIZE && size < RemoteCaptureCommand.WINDOWS_SIZE && this.index < this.max_index) {
+        BlockPos position = this.IndexToCoords(this.index).add(this.current.x << 4, 0, this.current.z << 4);
+
+        this.window_lock.writeLock().lock();
+        this.window.put(position, time);
+        this.window_lock.writeLock().unlock();
+
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(position, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+
+        this.index ++;
+        size ++;
+        count ++;
+      }
     }
   }
 
   // Receive blocks states
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-    SPacketBlockChange change = (SPacketBlockChange) packet;
+    if(id == 11) { // SPacketBlockChange
+      SPacketBlockChange change = (SPacketBlockChange) packet;
 
-    BlockPos position = change.getBlockPosition();
+      BlockPos position = change.getBlockPosition();
 
-    this.current_lock.writeLock().lock();
+      this.current_lock.writeLock().lock();
+      if(this.current != null && (position.getX() >> 4) == this.current.x && (position.getZ() >> 4) == this.current.z) {
+        this.current.setBlockState(position, change.getBlockState());
 
-    if(this.current != null && (position.getX() >> 4) == this.current.x && (position.getZ() >> 4) == this.current.z) {
-      this.current.setBlockState(position, change.getBlockState());
+        Block block = change.getBlockState().getBlock();
+        this.window_lock.writeLock().lock();
+        if(block instanceof BlockStandingSign || block instanceof BlockWallSign) {
+          this.getting_signs = true;
+          this.window.put(position, 0l);
+        } else {
+          this.window.remove(position);
+        }
+        this.window_lock.writeLock().unlock();
 
-      this.window_lock.writeLock().lock();
-      this.window.remove(position);
-      this.window_lock.writeLock().unlock();
+        this.updateStatusLabel();
 
-      this.updateStatusLabel();
+        packet = null;
+      }
+      this.current_lock.writeLock().unlock();
+    } else { // SPacketUpdateTileEntity
+      SPacketUpdateTileEntity update = (SPacketUpdateTileEntity) packet;
 
-      packet = null;
+      BlockPos position = update.getPos();
+
+      this.current_lock.writeLock().lock();
+      if(this.current != null && (position.getX() >> 4) == this.current.x && (position.getZ() >> 4) == this.current.z) {
+        if(update.getTileEntityType() == 9) { // TileEntitySign
+          TileEntity tile = this.current.getTileEntity(position, Chunk.EnumCreateEntityType.IMMEDIATE);
+          if(tile instanceof TileEntitySign) {
+            tile.readFromNBT(update.getNbtCompound());
+            this.window_lock.writeLock().lock();
+            this.window.remove(position);
+            this.window_lock.writeLock().unlock();
+            this.retry_count = 2;
+          }
+        }
+        packet = null;
+      }
+      this.current_lock.writeLock().unlock();
     }
-
-    this.current_lock.writeLock().unlock();
-
     return packet;
   }
 
@@ -276,7 +352,7 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
   }
 
   public void onStop() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 9, 11);
     MinecraftForge.EVENT_BUS.unregister(this);
     this.capture = null;
     this.chunks.clear();
