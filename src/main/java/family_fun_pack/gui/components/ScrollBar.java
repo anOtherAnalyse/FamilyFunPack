@@ -37,6 +37,16 @@ public class ScrollBar extends GuiButton {
     this.clicked = false;
   }
 
+  public void maxScrollUpdate(int max_scroll) {
+    this.max_scroll = max_scroll;
+    int old_y = this.y;
+    if(max_scroll == 0) this.y = 0;
+    else this.y = this.min_y + (int)(((float)this.current_scroll / (float)this.max_scroll) * (float)(this.max_y - this.min_y));
+    if(this.clicked) {
+      this.offset_y -= (this.y - old_y);
+    }
+  }
+
   public void scroll(int count) {
     this.current_scroll += count;
     if(this.current_scroll < 0) this.current_scroll = 0;
