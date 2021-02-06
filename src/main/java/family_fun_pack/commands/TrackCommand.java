@@ -18,6 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import io.netty.buffer.ByteBuf;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -32,9 +33,15 @@ import family_fun_pack.network.PacketListener;
 @SideOnly(Side.CLIENT)
 public class TrackCommand extends Command implements PacketListener {
 
+  // Scan mode parameters
   private static final int WINDOW_SIZE = 9;
   private static final int BURST_SIZE = 3;
   private static final long RETRY_TIME = 2000;
+
+  // Track mode parameters
+  private static final long REFRESH_TIME = 500;
+  private static final int SAVED_TRACKED_POSITIONS = 16;
+  private static final int LOGS_MAX_SIZE = 64;
 
   public ChunkPos corner;
   public int width_x, width_z;
@@ -46,37 +53,68 @@ public class TrackCommand extends Command implements PacketListener {
   private int window;
   private ReadWriteLock window_lock;
 
-  public List<ChunkPos> loaded;
+  public LinkedList<ChunkPos> loaded;
   public ReadWriteLock loaded_lock;
 
   public List<String> logs;
   public ReadWriteLock logs_lock;
+
+  private boolean enabled, received, target_lost;
+
+  /* Operating mode */
+  private Mode mode;
+  public Mode effective_mode;
+  private ReadWriteLock mode_lock;
+
+  private ScanParameters save;
 
   public TrackCommand() {
     super("scan");
     this.window_lock = new ReentrantReadWriteLock();
     this.loaded_lock = new ReentrantReadWriteLock();
     this.logs_lock = new ReentrantReadWriteLock();
-    this.corner = null;
+    this.mode_lock = new ReentrantReadWriteLock();
+    this.loaded = new LinkedList<ChunkPos>();
+    this.logs = new LinkedList<String>();
+    this.enabled = false;
   }
 
   public String usage() {
-    return this.getName() + " <center_x> <center_z> <radius>";
+    return this.getName() + " [<center_x> <center_z>] <radius> [mode] | off";
   }
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
 
-    if(this.corner != null) {
+    if(this.enabled) {
+      if(args.length > 1 && args[1].equals("off")) {
+        this.onDisconnect();
+        return "Scan stopped";
+      }
       MinecraftForge.EVENT_BUS.register(new GuiOpener(new RadarInterface(this)));
       return null;
     }
 
-    if(args.length > 3) {
+    if(args.length > 1) {
       try {
-        int x = Integer.parseInt(args[1]); // Chunk pos
-        int z = Integer.parseInt(args[2]);
-        int radius = Integer.parseInt(args[3]); // Radius in block
+        int x, z, radius, i;
+        if(args.length > 3) {
+          x = Integer.parseInt(args[1]); // Chunk pos
+          z = Integer.parseInt(args[2]);
+          radius = Integer.parseInt(args[3]); // Radius in block
+          i = 4;
+        } else {
+          x = (int)mc.player.posX >> 4;
+          z = (int)mc.player.posZ >> 4;
+          radius = Integer.parseInt(args[1]);
+          i = 2;
+        }
+
+        this.mode = Mode.SCAN;
+        if(args.length > i) {
+          this.mode = Mode.valueOf(args[i].toUpperCase());
+        }
+        this.effective_mode = Mode.SCAN;
 
         if(radius <= 0) return "Invalid radius";
 
@@ -92,8 +130,12 @@ public class TrackCommand extends Command implements PacketListener {
 
         this.window = 0;
         this.current = 0;
-        this.loaded = new LinkedList<ChunkPos>();
-        this.logs = new LinkedList<String>();
+        this.loaded.clear();
+        this.logs.clear();
+        this.enabled = true;
+        this.target_lost = false;
+        this.received = true;
+        this.save = null;
 
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
         MinecraftForge.EVENT_BUS.register(this);
@@ -104,7 +146,12 @@ public class TrackCommand extends Command implements PacketListener {
         return null;
       } catch(NumberFormatException e) {
         return this.getUsage();
+      } catch (IllegalArgumentException e) {
+        return this.getUsage();
       }
+    } else if(this.corner != null) { // Scan data exists, display it
+      MinecraftForge.EVENT_BUS.register(new GuiOpener(new RadarInterface(this)));
+      return null;
     }
     return this.getUsage();
   }
@@ -114,79 +161,186 @@ public class TrackCommand extends Command implements PacketListener {
 
     BlockPos position = change.getBlockPosition();
     ChunkPos chunk = new ChunkPos(position.getX() >> 4, position.getZ() >> 4);
-    if(position.getX() == 0 && position.getY() == 250 && position.getZ() == 0) {
-      if(this.current >= this.width_x * this.width_z) this.onStop();
-      this.window_lock.writeLock().lock();
-      this.window = 0;
-      this.window_lock.writeLock().unlock();
-      packet = null;
-    } else if(chunk.x >= this.corner.x && chunk.x < (this.corner.x + (this.width_x * this.render_radius)) && chunk.z >= this.corner.z && chunk.z < (this.corner.z + (this.width_z * this.render_radius))) {
 
-      this.loaded_lock.writeLock().lock();
-      this.loaded.add(chunk);
-      this.loaded_lock.writeLock().unlock();
+    this.mode_lock.writeLock().lock();
+    if(this.effective_mode == Mode.TRACK) { // Track player
 
-      this.logs_lock.writeLock().lock();
-      this.logs.add(String.format("chunk %s[%d, %d]%s loaded", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
-      this.logs_lock.writeLock().unlock();
+      this.loaded_lock.readLock().lock();
+      ChunkPos latest = this.loaded.getLast(); // Latest position
+      this.loaded_lock.readLock().unlock();
 
-      packet = null;
+      if(position.getY() == -63) { // etalon received
+        if(! this.received) { // Go to scan mode
+
+          this.window_lock.writeLock().lock();
+          this.window = 0;
+          this.window_lock.writeLock().unlock();
+
+          this.render_radius = 2;
+
+          this.effective_mode = Mode.TRACK_SCAN;
+          this.current = 0;
+          this.width_x = 17;
+          this.width_z = 17;
+          this.corner = new ChunkPos(latest.x - 16, latest.z - 16);
+        }
+        this.received = true;
+        packet = null;
+      } else if(latest.x == chunk.x && latest.z == chunk.z) {
+        this.received = true;
+        packet = null;
+      }
+    } else { // Area scan
+      if(position.getY() <= -63) {
+        if(position.getY() == -64) { // Don't take into account y = -63 response from request of TRACK mode
+          if(this.current >= this.width_x * this.width_z) {
+            if(this.effective_mode == Mode.TRACK_SCAN) {
+              this.loaded_lock.readLock().lock();
+              ChunkPos latest = this.loaded.getLast(); // Latest position
+              this.loaded_lock.readLock().unlock();
+
+              if(! this.target_lost) {
+                this.addLog(String.format("%sTarget lost around chunk [%d, %d]%s", TextFormatting.RED, latest.x, latest.z, TextFormatting.WHITE));
+                FamilyFunPack.printMessage("Player tracked was lost");
+              }
+
+              this.target_lost = true;
+              this.current = 0;
+            } else this.onStop();
+          }
+          this.window_lock.writeLock().lock();
+          this.window = 0;
+          this.window_lock.writeLock().unlock();
+        } else this.received = true;
+        packet = null;
+      } else if(chunk.x >= this.corner.x && chunk.x < (this.corner.x + (this.width_x * this.render_radius)) && chunk.z >= this.corner.z && chunk.z < (this.corner.z + (this.width_z * this.render_radius))) {
+
+        Minecraft mc = Minecraft.getMinecraft();
+
+        this.loaded_lock.writeLock().lock();
+        if(this.loaded != null) this.loaded.add(chunk);
+        this.loaded_lock.writeLock().unlock();
+
+        if(! this.received) { // Response from request sent in TRACK mode, don't use it
+          this.received = true;
+        } else if(this.mode == Mode.SCAN || (this.effective_mode == Mode.SCAN && (this.inArea(new ChunkPos(0, 0), chunk, 16) || this.inArea(new ChunkPos((int)mc.player.posX >> 4, (int)mc.player.posZ >> 4), chunk, 3)))) {
+
+          this.addLog(String.format("chunk %s[%d, %d]%s loaded", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
+
+        } else { // Avoid spawn & our position
+
+          if(this.effective_mode == Mode.SCAN) { // Prepare transition from scan to track
+            // Save scanning config, to be able to go back to scan later
+            this.save = new ScanParameters(this.corner, this.width_x, this.width_z, this.render_radius, this.current);
+
+            // Save scanned loaded nodes
+            this.loaded_lock.writeLock().lock();
+            this.save.loaded = this.loaded;
+            this.loaded = new LinkedList<ChunkPos>();
+            this.loaded.add(chunk);
+            this.loaded_lock.writeLock().unlock();
+          }
+
+          if(this.target_lost) {
+            this.addLog(String.format("%sTarget is back!%s", TextFormatting.GREEN, TextFormatting.WHITE));
+            this.target_lost = false;
+          }
+
+          this.addLog(String.format("Target at chunk %s[%d, %d]%s", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
+
+          this.loaded_lock.writeLock().lock();
+          if(this.loaded.size() > TrackCommand.SAVED_TRACKED_POSITIONS) {
+            this.loaded.remove(0);
+          }
+          this.loaded_lock.writeLock().unlock();
+
+          this.effective_mode = Mode.TRACK;
+          this.last_sent = 0l;
+        }
+
+        packet = null;
+      }
     }
+    this.mode_lock.writeLock().unlock();
 
     return packet;
   }
 
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
-    int count = 0;
 
-    this.window_lock.writeLock().lock();
+    Minecraft mc = Minecraft.getMinecraft();
+    BlockPos etalon = new BlockPos((int)mc.player.posX, -64, (int)mc.player.posZ);
 
-    // Tiemout
-    if(this.window >= TrackCommand.WINDOW_SIZE && System.currentTimeMillis() - this.last_sent >= TrackCommand.RETRY_TIME) {
-      this.window = 0;
-      this.current -= (TrackCommand.WINDOW_SIZE - 1);
-      this.logs_lock.writeLock().lock();
-      this.logs.add(TextFormatting.YELLOW + "Request timed out");
-      this.logs_lock.writeLock().unlock();
-    }
-
-    // Send requests
-    while(count < TrackCommand.BURST_SIZE && this.window < TrackCommand.WINDOW_SIZE - 1) {
-      BlockPos position = this.getNext();
-      if(position != null) {
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, position, EnumFacing.UP));
-        count ++;
-        this.window ++;
-      } else {
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, new BlockPos(0, 250, 0), EnumFacing.UP));
-        this.last_sent = System.currentTimeMillis();
-        this.window = TrackCommand.WINDOW_SIZE;
-        break;
+    if(this.effective_mode == Mode.TRACK) { // follow a player
+      long time = System.currentTimeMillis();
+      if(time - this.last_sent >= TrackCommand.REFRESH_TIME) {
+        this.last_sent = time;
+        this.loaded_lock.readLock().lock();
+        ChunkPos chunk = this.loaded.getLast();
+        this.loaded_lock.readLock().unlock();
+        this.received = false;
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, new BlockPos(chunk.x << 4, 0, chunk.z << 4), EnumFacing.UP));
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, etalon.add(0, 1, 0), EnumFacing.UP)); // etalon
       }
-    }
+    } else { // Scan an area
+      int count = 0;
 
-    // Send etalon
-    if(count < TrackCommand.BURST_SIZE && this.window == TrackCommand.WINDOW_SIZE - 1) {
-      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, new BlockPos(0, 250, 0), EnumFacing.UP));
-      this.last_sent = System.currentTimeMillis();
-      this.window ++;
+      this.window_lock.writeLock().lock();
+
+      // Tiemout
+      if(this.window >= TrackCommand.WINDOW_SIZE && System.currentTimeMillis() - this.last_sent >= TrackCommand.RETRY_TIME) {
+        this.window = 0;
+        this.current -= (TrackCommand.WINDOW_SIZE - 1);
+        this.addLog(TextFormatting.YELLOW + "Request timed out");
+      }
+
+      // Send requests
+      while(count < TrackCommand.BURST_SIZE && this.window < TrackCommand.WINDOW_SIZE - 1) {
+        BlockPos position = this.getNext();
+        if(position != null) {
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, position, EnumFacing.UP));
+          count ++;
+          this.window ++;
+        } else {
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, etalon, EnumFacing.UP));
+          this.last_sent = System.currentTimeMillis();
+          this.window = TrackCommand.WINDOW_SIZE;
+          break;
+        }
+      }
+
+      // Send etalon
+      if(count < TrackCommand.BURST_SIZE && this.window == TrackCommand.WINDOW_SIZE - 1) {
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, etalon, EnumFacing.UP));
+        this.last_sent = System.currentTimeMillis();
+        this.window ++;
+      }
+      this.window_lock.writeLock().unlock();
     }
-    this.window_lock.writeLock().unlock();
   }
 
   public void onDisconnect() {
     this.onStop();
+    this.loaded_lock.writeLock().lock();
+    this.loaded.clear();
     this.corner = null;
-    this.loaded = null;
-    this.logs = null;
+    this.loaded_lock.writeLock().unlock();
+
+    this.logs_lock.writeLock().lock();
+    this.logs.clear();
+    this.logs_lock.writeLock().unlock();
   }
 
+  // Scan stopped
   public void onStop() {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 11);
     MinecraftForge.EVENT_BUS.unregister(this);
+    this.enabled = false;
+    this.save = null;
   }
 
+  // Next blockPos to request
   private BlockPos getNext() {
     if(this.current < this.width_x * this.width_z) {
       int x = (corner.x + ((this.current % this.width_x) * this.render_radius)) << 4;
@@ -197,12 +351,51 @@ public class TrackCommand extends Command implements PacketListener {
     return null;
   }
 
+  // Get chunk relative position to corner chunk
   public ChunkPos getRelativePos(ChunkPos chunk) {
     int diff_x = chunk.x - this.corner.x + (this.render_radius / 2);
     int diff_z = chunk.z - this.corner.z + (this.render_radius / 2);
     return new ChunkPos(diff_x / this.render_radius, diff_z / this.render_radius);
   }
 
+  // Is a chunk in given area
+  private boolean inArea(ChunkPos center, ChunkPos target, int radius) {
+    int x = center.x - target.x;
+    int z = center.z - target.z;
+    return (x <= radius && x >= -radius && z <= radius && z >= -radius);
+  }
+
+  // Add line to logs
+  private void addLog(String log) {
+    this.logs_lock.writeLock().lock();
+    if(this.logs != null) {
+      this.logs.add(log);
+      if(this.logs.size() > TrackCommand.LOGS_MAX_SIZE) this.logs.remove(0);
+    }
+    this.logs_lock.writeLock().unlock();
+  }
+
+  // Go back to scanning mode
+  public void backToScan() {
+    if(this.effective_mode != Mode.SCAN) {
+      this.mode_lock.writeLock().lock();
+
+      this.window_lock.writeLock().lock();
+      this.window = 0;
+      this.window_lock.writeLock().unlock();
+
+      this.save.loadConfig(this);
+
+      this.effective_mode = Mode.SCAN;
+
+      this.mode_lock.writeLock().unlock();
+    }
+  }
+
+  // Operating mode
+  public static enum Mode {SCAN, TRACK, TRACK_SCAN};
+
+  // Forge event listener used to open radar GUI
   private static class GuiOpener {
 
     private RadarInterface gui;
@@ -217,6 +410,35 @@ public class TrackCommand extends Command implements PacketListener {
         event.setGui(this.gui);
       }
       MinecraftForge.EVENT_BUS.unregister(this);
+    }
+  }
+
+  // Save of a scan config
+  private static class ScanParameters {
+    public ChunkPos corner;
+    public int width_x, width_z;
+    public int render_radius;
+    public int current;
+    public LinkedList<ChunkPos> loaded;
+
+    public ScanParameters(ChunkPos corner, int width_x, int width_z, int render_radius, int current) {
+      this.corner = corner;
+      this.width_x = width_x;
+      this.width_z = width_z;
+      this.render_radius = render_radius;
+      this.current = current;
+    }
+
+    public void loadConfig(TrackCommand parent) {
+      parent.corner = this.corner;
+      parent.width_x = this.width_x;
+      parent.width_z = this.width_z;
+      parent.render_radius = this.render_radius;
+      parent.current = this.current;
+
+      parent.loaded_lock.writeLock().lock();
+      parent.loaded = this.loaded;
+      parent.loaded_lock.writeLock().unlock();
     }
   }
 }

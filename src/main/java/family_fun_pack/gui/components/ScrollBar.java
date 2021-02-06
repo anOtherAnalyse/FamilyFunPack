@@ -30,6 +30,7 @@ public class ScrollBar extends GuiButton {
     this.clicked = false;
   }
 
+  // Set max scroll, reset scroll bar at start
   public void resetMaxScroll(int max_scroll) {
     this.y = this.min_y;
     this.current_scroll = 0;
@@ -37,6 +38,18 @@ public class ScrollBar extends GuiButton {
     this.clicked = false;
   }
 
+  // Set max scroll, set current scroll at max scroll
+  public void resetMaxScrollAndScroll(int max_scroll) {
+    if(this.clicked) {
+      this.maxScrollUpdate(max_scroll);
+    } else {
+      this.y = this.max_y;
+      this.max_scroll = max_scroll;
+      this.current_scroll = max_scroll;
+    }
+  }
+
+  // Set max scroll, keep current scroll position
   public void maxScrollUpdate(int max_scroll) {
     this.max_scroll = max_scroll;
     int old_y = this.y;
