@@ -48,6 +48,7 @@ public class Commands {
     this.registerCommand(new LoadChunkCommand());
     this.registerCommand(new PopulateCommand());
     this.registerCommand(new WorldDownloadCommand());
+    this.registerCommand(new TrackCommand());
   }
 
   public void registerCommand(Command cmd) {
