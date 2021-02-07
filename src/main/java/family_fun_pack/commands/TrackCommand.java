@@ -43,6 +43,9 @@ public class TrackCommand extends Command implements PacketListener {
   private static final int SAVED_TRACKED_POSITIONS = 16;
   private static final int LOGS_MAX_SIZE = 64;
 
+  // Server dependent, have to be odd
+  private static final int PLAYER_RENDER_DISTANCE = 7; // 9b render distance
+
   public ChunkPos corner;
   public int width_x, width_z;
   public int render_radius; // have to be odd
@@ -118,7 +121,7 @@ public class TrackCommand extends Command implements PacketListener {
 
         if(radius <= 0) return "Invalid radius";
 
-        this.render_radius = 7; // Check 1 chunk every 7 chunks (9b render distance)
+        this.render_radius = TrackCommand.PLAYER_RENDER_DISTANCE; // Check 1 chunk every 7 chunks (9b render distance)
 
         int radius_chunk = ((int)Math.ceil((double)radius / 16d)) - (this.render_radius / 2); // radius in chunk, minus the chunks within center render radius
         if(radius_chunk < 0) radius_chunk = 0;
@@ -134,7 +137,6 @@ public class TrackCommand extends Command implements PacketListener {
         this.logs.clear();
         this.enabled = true;
         this.target_lost = false;
-        this.received = true;
         this.save = null;
 
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
@@ -171,7 +173,6 @@ public class TrackCommand extends Command implements PacketListener {
 
       if(position.getY() == -63) { // etalon received
         if(! this.received) { // Go to scan mode
-
           this.window_lock.writeLock().lock();
           this.window = 0;
           this.window_lock.writeLock().unlock();
@@ -184,50 +185,46 @@ public class TrackCommand extends Command implements PacketListener {
           this.width_z = 17;
           this.corner = new ChunkPos(latest.x - 16, latest.z - 16);
         }
-        this.received = true;
         packet = null;
-      } else if(latest.x == chunk.x && latest.z == chunk.z) {
+      } else if(position.getY() == -31 && latest.x == chunk.x && latest.z == chunk.z) {
         this.received = true;
         packet = null;
       }
     } else { // Area scan
-      if(position.getY() <= -63) {
-        if(position.getY() == -64) { // Don't take into account y = -63 response from request of TRACK mode
-          if(this.current >= this.width_x * this.width_z) {
-            if(this.effective_mode == Mode.TRACK_SCAN) {
-              this.loaded_lock.readLock().lock();
-              ChunkPos latest = this.loaded.getLast(); // Latest position
-              this.loaded_lock.readLock().unlock();
+      if(position.getY() == -64) {
+        if(this.current >= this.width_x * this.width_z) {
+          if(this.effective_mode == Mode.TRACK_SCAN) {
+            this.loaded_lock.readLock().lock();
+            ChunkPos latest = this.loaded.getLast(); // Latest position
+            this.loaded_lock.readLock().unlock();
 
-              if(! this.target_lost) {
-                this.addLog(String.format("%sTarget lost around chunk [%d, %d]%s", TextFormatting.RED, latest.x, latest.z, TextFormatting.WHITE));
-                FamilyFunPack.printMessage("Player tracked was lost");
-              }
+            if(! this.target_lost) {
+              this.addLog(String.format("%sTarget lost around chunk [%d, %d]%s", TextFormatting.RED, latest.x, latest.z, TextFormatting.WHITE));
+              FamilyFunPack.printMessage("Player tracked was lost");
+            }
 
-              this.target_lost = true;
-              this.current = 0;
-            } else this.onStop();
-          }
-          this.window_lock.writeLock().lock();
-          this.window = 0;
-          this.window_lock.writeLock().unlock();
-        } else this.received = true;
+            this.target_lost = true;
+            this.current = 0;
+          } else this.onStop();
+        }
+        this.window_lock.writeLock().lock();
+        this.window = 0;
+        this.window_lock.writeLock().unlock();
         packet = null;
-      } else if(chunk.x >= this.corner.x && chunk.x < (this.corner.x + (this.width_x * this.render_radius)) && chunk.z >= this.corner.z && chunk.z < (this.corner.z + (this.width_z * this.render_radius))) {
+      } else if(position.getY() == -32 && chunk.x >= this.corner.x && chunk.x < (this.corner.x + (this.width_x * this.render_radius)) && chunk.z >= this.corner.z && chunk.z < (this.corner.z + (this.width_z * this.render_radius))) {
 
         Minecraft mc = Minecraft.getMinecraft();
+        boolean player_chunk = this.inArea(new ChunkPos((int)mc.player.posX >> 4, (int)mc.player.posZ >> 4), chunk, (TrackCommand.PLAYER_RENDER_DISTANCE / 2)); // Is the chunk inside our render distance
 
         this.loaded_lock.writeLock().lock();
         if(this.loaded != null) this.loaded.add(chunk);
         this.loaded_lock.writeLock().unlock();
 
-        if(! this.received) { // Response from request sent in TRACK mode, don't use it
-          this.received = true;
-        } else if(this.mode == Mode.SCAN || (this.effective_mode == Mode.SCAN && (this.inArea(new ChunkPos(0, 0), chunk, 16) || this.inArea(new ChunkPos((int)mc.player.posX >> 4, (int)mc.player.posZ >> 4), chunk, 3)))) {
+        if(this.mode == Mode.SCAN || (this.effective_mode == Mode.SCAN && (this.inArea(new ChunkPos(0, 0), chunk, 16) || player_chunk))) {
 
           this.addLog(String.format("chunk %s[%d, %d]%s loaded", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
 
-        } else { // Avoid spawn & our position
+        } else if(! player_chunk) { // Avoid our position
 
           if(this.effective_mode == Mode.SCAN) { // Prepare transition from scan to track
             // Save scanning config, to be able to go back to scan later
@@ -280,7 +277,7 @@ public class TrackCommand extends Command implements PacketListener {
         ChunkPos chunk = this.loaded.getLast();
         this.loaded_lock.readLock().unlock();
         this.received = false;
-        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, new BlockPos(chunk.x << 4, 0, chunk.z << 4), EnumFacing.UP));
+        FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, new BlockPos(chunk.x << 4, -31, chunk.z << 4), EnumFacing.UP));
         FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerDigging(CPacketPlayerDigging.Action.STOP_DESTROY_BLOCK, etalon.add(0, 1, 0), EnumFacing.UP)); // etalon
       }
     } else { // Scan an area
@@ -346,7 +343,7 @@ public class TrackCommand extends Command implements PacketListener {
       int x = (corner.x + ((this.current % this.width_x) * this.render_radius)) << 4;
       int z = (corner.z + ((this.current / this.width_x) * this.render_radius)) << 4;
       this.current ++;
-      return new BlockPos(x, 0, z);
+      return new BlockPos(x, -32, z);
     }
     return null;
   }
