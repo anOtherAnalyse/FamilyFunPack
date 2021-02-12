@@ -71,6 +71,8 @@ public class TrackCommand extends Command implements PacketListener {
 
   private ScanParameters save;
 
+  private int label_id;
+
   public TrackCommand() {
     super("scan");
     this.window_lock = new ReentrantReadWriteLock();
@@ -80,6 +82,7 @@ public class TrackCommand extends Command implements PacketListener {
     this.loaded = new LinkedList<ChunkPos>();
     this.logs = new LinkedList<String>();
     this.enabled = false;
+    this.label_id = -1;
   }
 
   public String usage() {
@@ -139,6 +142,8 @@ public class TrackCommand extends Command implements PacketListener {
         this.target_lost = false;
         this.save = null;
 
+        this.label_id = FamilyFunPack.getOverlay().addLabel("Scan: 0%");
+
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -192,6 +197,12 @@ public class TrackCommand extends Command implements PacketListener {
       }
     } else { // Area scan
       if(position.getY() == -64) {
+
+        if(this.effective_mode == Mode.SCAN) {
+          float advancement = (float)this.current * 100f / (float)(this.width_x * this.width_z);
+          FamilyFunPack.getOverlay().modifyLabel(this.label_id, String.format("Scan: %.2f%%", advancement));
+        }
+
         if(this.current >= this.width_x * this.width_z) {
           if(this.effective_mode == Mode.TRACK_SCAN) {
             this.loaded_lock.readLock().lock();
@@ -200,13 +211,14 @@ public class TrackCommand extends Command implements PacketListener {
 
             if(! this.target_lost) {
               this.addLog(String.format("%sTarget lost around chunk [%d, %d]%s", TextFormatting.RED, latest.x, latest.z, TextFormatting.WHITE));
-              FamilyFunPack.printMessage("Player tracked was lost");
+              FamilyFunPack.getOverlay().modifyLabel(this.label_id, String.format("%sTarget lost", TextFormatting.RED));
             }
 
             this.target_lost = true;
             this.current = 0;
           } else this.onStop();
         }
+
         this.window_lock.writeLock().lock();
         this.window = 0;
         this.window_lock.writeLock().unlock();
@@ -243,7 +255,8 @@ public class TrackCommand extends Command implements PacketListener {
             this.target_lost = false;
           }
 
-          this.addLog(String.format("Target at chunk %s[%d, %d]%s", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
+          this.addLog(String.format("Target around chunk %s[%d, %d]%s", TextFormatting.BLUE, chunk.x, chunk.z, TextFormatting.WHITE));
+          FamilyFunPack.getOverlay().modifyLabel(this.label_id, String.format("Target around %s[%d, %d]", TextFormatting.BLUE, chunk.x << 4, chunk.z << 4));
 
           this.loaded_lock.writeLock().lock();
           if(this.loaded.size() > TrackCommand.SAVED_TRACKED_POSITIONS) {
@@ -335,6 +348,7 @@ public class TrackCommand extends Command implements PacketListener {
     MinecraftForge.EVENT_BUS.unregister(this);
     this.enabled = false;
     this.save = null;
+    if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
   }
 
   // Next blockPos to request

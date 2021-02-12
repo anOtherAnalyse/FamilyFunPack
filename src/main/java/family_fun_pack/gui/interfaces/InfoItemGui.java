@@ -112,7 +112,6 @@ public class InfoItemGui extends RightPanel {
       info_x = (int)(((float)this.x + 89f) / scale);
 
       for(int i = this.scroll.current_scroll; i < (this.scroll.current_scroll + InfoItemGui.maxLines) && i < this.tag.size(); i ++) {
-
         info_y = (int)(((float)this.y + 21f + (float)((i - this.scroll.current_scroll) * this.fontRenderer.FONT_HEIGHT)) / scale);
         this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, MainGui.BORDER_COLOR);
       }
