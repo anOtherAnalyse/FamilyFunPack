@@ -102,60 +102,90 @@ public class TrackCommand extends Command implements PacketListener {
     }
 
     if(args.length > 1) {
-      try {
-        int x, z, radius, i;
-        if(args.length > 3) {
-          x = Integer.parseInt(args[1]); // Chunk pos
-          z = Integer.parseInt(args[2]);
-          radius = Integer.parseInt(args[3]); // Radius in block
-          i = 4;
-        } else {
-          x = (int)mc.player.posX >> 4;
-          z = (int)mc.player.posZ >> 4;
-          radius = Integer.parseInt(args[1]);
-          i = 2;
-        }
 
+      int count = 0;
+      int[] integers = new int[4];
+      try {
+        for(int i = 1; i < args.length && i <= 4; i ++) {
+          integers[i - 1] = Integer.parseInt(args[i]);
+          count ++;
+        }
+      } catch(NumberFormatException e) {}
+
+      this.render_radius = TrackCommand.PLAYER_RENDER_DISTANCE; // Check 1 chunk every 7 chunks (9b render distance)
+
+      int rx, rz, cx, cz;
+      switch(count) {
+        case 0: return this.getUsage();
+        case 1: // Square scan centered on player
+          cx = (int)mc.player.posX >> 4;
+          cz = (int)mc.player.posZ >> 4;
+          rx = integers[0];
+          rz = integers[0];
+          break;
+        case 2: // Rectangle scan centered on player
+          cx = (int)mc.player.posX >> 4;
+          cz = (int)mc.player.posZ >> 4;
+          rx = integers[0];
+          rz = integers[1];
+          break;
+        case 3: // Square scan
+          cx = integers[0];
+          cz = integers[1];
+          rx = integers[2];
+          rz = integers[2];
+          break;
+        default: // Rectangle scan
+          cx = integers[0];
+          cz = integers[1];
+          rx = integers[2];
+          rz = integers[3];
+          break;
+      }
+
+      try {
         this.mode = Mode.SCAN;
-        if(args.length > i) {
-          this.mode = Mode.valueOf(args[i].toUpperCase());
+        if(args.length > ++count) {
+          this.mode = Mode.valueOf(args[count].toUpperCase());
         }
         this.effective_mode = Mode.SCAN;
-
-        if(radius <= 0) return "Invalid radius";
-
-        this.render_radius = TrackCommand.PLAYER_RENDER_DISTANCE; // Check 1 chunk every 7 chunks (9b render distance)
-
-        int radius_chunk = ((int)Math.ceil((double)radius / 16d)) - (this.render_radius / 2); // radius in chunk, minus the chunks within center render radius
-        if(radius_chunk < 0) radius_chunk = 0;
-        int effective_radius = (int)Math.ceil((double)radius_chunk / (double) this.render_radius); // radius in terms of areas to check (area of the size of a player render distance)
-
-        this.width_x = (effective_radius * 2) + 1;
-        this.width_z = (effective_radius * 2) + 1;
-        this.corner = new ChunkPos(x - (effective_radius * this.render_radius), z - (effective_radius * this.render_radius));
-
-        this.window = 0;
-        this.current = 0;
-        this.loaded.clear();
-        this.logs.clear();
-        this.enabled = true;
-        this.target_lost = false;
-        this.save = null;
-
-        this.label_id = FamilyFunPack.getOverlay().addLabel("Scan: 0%");
-
-        FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
-        MinecraftForge.EVENT_BUS.register(this);
-
-        // Open gui
-        MinecraftForge.EVENT_BUS.register(new GuiOpener(new RadarInterface(this)));
-
-        return null;
-      } catch(NumberFormatException e) {
-        return this.getUsage();
       } catch (IllegalArgumentException e) {
         return this.getUsage();
       }
+
+      if(rx <= 0 || rz <= 0) return "Invalid radius";
+
+      // Radius in chunks
+      int rcx = (int)Math.ceil((double)rx / 16d) - (this.render_radius / 2);
+      if(rcx < 0) rcx = 0;
+      int rcz = (int)Math.ceil((double)rz / 16d) - (this.render_radius / 2);
+      if(rcz < 0) rcz = 0;
+
+      // Effective radius, in player render distance square
+      int erx = (int)Math.ceil((double)rcx / (double)this.render_radius);
+      int erz = (int)Math.ceil((double)rcz / (double)this.render_radius);
+
+      this.width_x = (erx * 2) + 1;
+      this.width_z = (erz * 2) + 1;
+      this.corner = new ChunkPos(cx - (erx * this.render_radius), cz - (erz * this.render_radius));
+
+      this.window = 0;
+      this.current = 0;
+      this.loaded.clear();
+      this.logs.clear();
+      this.enabled = true;
+      this.target_lost = false;
+      this.save = null;
+
+      this.label_id = FamilyFunPack.getOverlay().addLabel("Scan: 0%");
+
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 11);
+      MinecraftForge.EVENT_BUS.register(this);
+
+      // Open gui
+      MinecraftForge.EVENT_BUS.register(new GuiOpener(new RadarInterface(this)));
+
+      return null;
     } else if(this.corner != null) { // Scan data exists, display it
       MinecraftForge.EVENT_BUS.register(new GuiOpener(new RadarInterface(this)));
       return null;
