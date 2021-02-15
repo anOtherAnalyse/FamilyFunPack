@@ -3,6 +3,7 @@ package family_fun_pack.gui.overlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -21,6 +22,7 @@ import family_fun_pack.gui.MainGui;
 public class OverlayGui extends Gui {
 
   private static final int BORDER = 0xff000000;
+  private static final float OVERLAY_SCALE = 0.7f;
   private static int counter = 0;
 
   private FontRenderer fontRenderer;
@@ -43,15 +45,22 @@ public class OverlayGui extends Gui {
     this.labels_lock.readLock().lock();
     for(String l : this.labels.values()) {
       int width = this.fontRenderer.getStringWidth(l) + 4;
-      int x_end = 4 + width;
-      int y_end = y + this.height;
+      int x1 = (int)(4f / OverlayGui.OVERLAY_SCALE);
+      int y1 = (int)((float)y / OverlayGui.OVERLAY_SCALE);
+      int x_end = (int)(4f / OverlayGui.OVERLAY_SCALE) + width;
+      int y_end = (int)((float)y / OverlayGui.OVERLAY_SCALE) + this.height;
 
-      this.drawRect(4, y, x_end, y_end, MainGui.BACKGROUND_COLOR);
-      this.drawRect(4, y, x_end, y + 1, OverlayGui.BORDER);
-      this.drawRect(4, y, 5, y_end, OverlayGui.BORDER);
-      this.drawRect(4, y_end - 1, x_end, y_end, OverlayGui.BORDER);
-      this.drawRect(x_end - 1, y, x_end, y_end, OverlayGui.BORDER);
-      this.drawString(this.fontRenderer, l, 6, y + 2, 0xffffffff);
+      GlStateManager.pushMatrix();
+      GlStateManager.scale(OverlayGui.OVERLAY_SCALE, OverlayGui.OVERLAY_SCALE, OverlayGui.OVERLAY_SCALE);
+
+      this.drawRect(x1, y1, x_end, y_end, MainGui.BACKGROUND_COLOR);
+      this.drawRect(x1, y1, x_end, y1 + 1, OverlayGui.BORDER);
+      this.drawRect(x1, y1, x1 + 1, y_end, OverlayGui.BORDER);
+      this.drawRect(x1, y_end - 1, x_end, y_end, OverlayGui.BORDER);
+      this.drawRect(x_end - 1, y1, x_end, y_end, OverlayGui.BORDER);
+      this.drawString(this.fontRenderer, l, x1 + 2, y1 + 2, 0xffffffff);
+
+      GlStateManager.popMatrix();
 
       y = y_end + 2;
     }
