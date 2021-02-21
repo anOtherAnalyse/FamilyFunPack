@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketConfirmTeleport;
+import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -45,6 +46,7 @@ public class RollbackCommand extends Command implements PacketListener {
 
       mc.player.setPosition(this.position.x, this.position.y, this.position.z);
       FamilyFunPack.getNetworkHandler().sendPacket(new CPacketConfirmTeleport(this.teleport_id));
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true)); // Update player chunk map
 
       this.onDisconnect();
 

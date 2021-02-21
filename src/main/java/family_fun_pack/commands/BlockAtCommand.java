@@ -38,6 +38,7 @@ public class BlockAtCommand extends Command implements PacketListener {
   private int chg_count;
   private boolean enabled;
   private Random random;
+  private int burst;
 
   public BlockAtCommand() {
     super("at");
@@ -46,7 +47,7 @@ public class BlockAtCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName() + " <x> <y> <z> | kill";
+    return this.getName() + " <x> <y> <z>";
   }
 
   public String execute(String[] args) {
@@ -57,7 +58,7 @@ public class BlockAtCommand extends Command implements PacketListener {
         int y = Integer.parseInt(args[2]);
         int z = Integer.parseInt(args[3]);
 
-        if(this.enabled) return "Stop kill mode first";
+        if(this.enabled) return "Stop hammering mode first";
         if(mc.player.getDistanceSq((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D) < 64.0D) return "You should be able to see the block from here";
 
         this.chg_count = 0;
@@ -67,16 +68,25 @@ public class BlockAtCommand extends Command implements PacketListener {
       } catch(NumberFormatException e) {
         return this.getUsage();
       }
-    } else if(args.length > 1 && args[1].equals("kill")) {
+    } else if(args.length > 1 && args[1].equals("ham")) {
       this.enabled = !this.enabled;
 
       if(this.enabled) {
+
+        if(args.length > 2) {
+          try {
+            this.burst = Integer.parseInt(args[2]);
+          } catch(NumberFormatException e) {
+            return this.getUsage();
+          }
+        } else this.burst = 1;
+
         MinecraftForge.EVENT_BUS.register(this);
       } else {
         MinecraftForge.EVENT_BUS.unregister(this);
       }
 
-      return "Killing mode: " + (this.enabled ? "enabled" : "disabled");
+      return "Hammering mode: " + (this.enabled ? String.format("enabled, burst: %d", this.burst) : "disabled");
     } else return this.getUsage();
     return null;
   }
@@ -116,7 +126,9 @@ public class BlockAtCommand extends Command implements PacketListener {
 
   @SubscribeEvent
   public void onTick(TickEvent.ClientTickEvent event) {
-    FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(new BlockPos(this.random.nextInt(30000000), this.random.nextInt(256), this.random.nextInt(30000000)), EnumFacing.SOUTH, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+    for(int i = 0; i < this.burst; i ++) {
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(new BlockPos(this.random.nextInt(30000000), 42, this.random.nextInt(30000000)), EnumFacing.SOUTH, EnumHand.MAIN_HAND, 0f, 0f, 0f));
+    }
   }
 
   public void onDisconnect() {
