@@ -189,6 +189,7 @@ public class InfoItemGui extends RightPanel {
           if(next_line.length() > 0) this.tag.add(next_line.toString());
 
           if(this.tag.size() > this.maxLines) this.scroll.resetMaxScroll(this.tag.size() - this.maxLines);
+          else this.scroll.resetMaxScroll(0);
 
           // If shulker tag, had option to preview shulker content
           if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {

@@ -46,9 +46,12 @@ Be able to walk around as a ghost after your death. You won't be able to interac
 ### Commands
 Few commands, use them in chat (Command module must be enabled):
 ##### Manage stalked players
-```.stalk add <player_name>```  
-```.stalk list```  
-```.stalk del <player_name>```
+```.stalk <player_name>```  
+Will toggle stalking on that player
+
+##### Ignore players
+```.ignore <player_name>```  
+Client-side version of /ignore, more persistent than 9b current implementation..
 
 ##### Entity desync
 ```.vanish dismount```  

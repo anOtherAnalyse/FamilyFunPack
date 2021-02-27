@@ -49,6 +49,7 @@ public class Commands {
     this.registerCommand(new PopulateCommand());
     this.registerCommand(new WorldDownloadCommand());
     this.registerCommand(new TrackCommand());
+    this.registerCommand(new IgnoreCommand());
   }
 
   public void registerCommand(Command cmd) {

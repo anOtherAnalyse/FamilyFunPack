@@ -5,15 +5,15 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.modules.Module;
-import family_fun_pack.modules.StalkModule;
+import family_fun_pack.modules.IgnoreModule;
 
-/* Manage stalked players list */
+/* Manage ignored players list */
 
 @SideOnly(Side.CLIENT)
-public class StalkCommand extends Command {
+public class IgnoreCommand extends Command {
 
-  public StalkCommand() {
-    super("stalk");
+  public IgnoreCommand() {
+    super("ignore");
   }
 
   public String usage() {
@@ -22,7 +22,7 @@ public class StalkCommand extends Command {
 
   public String execute(String[] args) {
     if(args.length > 1) {
-      StalkModule module = (StalkModule) FamilyFunPack.getModules().getByName("Stalk players");
+      IgnoreModule module = (IgnoreModule) FamilyFunPack.getModules().getByName("Ignore players");
       module.togglePlayer(args[1]);
       return null;
     }
