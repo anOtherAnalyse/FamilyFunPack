@@ -22,27 +22,18 @@ public class StalkCommand extends Command {
   }
 
   public String usage() {
-    return this.getName() + " (add|del|list) [player_name]";
+    return this.getName() + " (add|del) [player_name]";
   }
 
   public String execute(String[] args) {
-    if(args.length > 1) {
+    if(args.length > 2) {
       StalkModule module = (StalkModule) FamilyFunPack.getModules().getByName("Stalk players");
-      if(args[1].equals("list")) {
-        for(String name : module.getPlayers()) {
-          FamilyFunPack.printMessage("> " + name);
-        }
+      if(args[1].equals("add") || args[1].equals("+")) {
+        module.addPlayer(args[2]);
         return null;
-      } else if(args.length > 2) {
-        if(args[1].equals("add")) {
-          module.addPlayer(args[2]);
-          module.save(FamilyFunPack.getModules().getConfiguration());
-          return "Player " + args[2] + " added to stalking list";
-        } else if(args[1].equals("del")) {
-          module.delPlayer(args[2]);
-          module.save(FamilyFunPack.getModules().getConfiguration());
-          return "Player " + args[2] + " removed from stalking list";
-        }
+      } else if(args[1].equals("del") || args[1].equals("-")) {
+        module.delPlayer(args[2]);
+        return null;
       }
     }
     return this.getUsage();
