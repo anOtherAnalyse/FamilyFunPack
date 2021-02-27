@@ -40,18 +40,18 @@ When an entity teleports out of your render distance, prints its new coordinates
 Stalk a player: know when they connect/disconnect/change their gamemode/display name...  
 Manage it with the ```.stalk``` command.
 
-##### Items information
-Interface showing information about items in your inventory (stack tags & damage count)
-
 ##### Undead
 Be able to walk around as a ghost after your death. You won't be able to interact with your environment. Use ```.respawn``` to respawn.
 
 ### Commands
 Few commands, use them in chat (Command module must be enabled):
 ##### Manage stalked players
-```.stalk add <player_name>```  
-```.stalk list```  
-```.stalk del <player_name>```
+```.stalk <player_name>```  
+Will toggle stalking on that player
+
+##### Ignore players
+```.ignore <player_name>```  
+Client-side version of /ignore, more persistent than 9b current implementation..
 
 ##### Entity desync
 ```.vanish dismount```  
@@ -115,7 +115,7 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ```.rollback init``` -> initiate rollback  
 ```.rollback``` -> rollback to last teleport
 
-##### Swift steal (steal from container before a tick update)
+##### Switf steal (steal from container before a tick update)
 ```.steal <slot> | <start_slot> <stop_slot>```
 
 ##### Use entity from unloaded chunk

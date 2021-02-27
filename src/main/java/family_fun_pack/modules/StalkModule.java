@@ -1,101 +1,84 @@
 package family_fun_pack.modules;
 
+import com.mojang.authlib.GameProfile;
+
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketChat;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import io.netty.buffer.ByteBuf;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.UUID;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
 
 /* Stalk player, know when they connect, disconnect, speak in chat.. */
-// Next update: register players by UUID, not names
 
 @SideOnly(Side.CLIENT)
-public class StalkModule extends Module implements PacketListener {
+public class StalkModule extends AbstractPlayersRegister implements PacketListener {
 
-  private static final TextFormatting ANNOUNCE_COLOR = TextFormatting.LIGHT_PURPLE;
-
-  private Set<String> players;
-
-  private Pattern chat_pattern;
+  private static final TextFormatting ANNOUNCE_COLOR = TextFormatting.DARK_PURPLE;
 
   public StalkModule() {
-    super("Stalk players", "See when given players connect/disconnect/speak");
-    this.players = new HashSet<String>();
-    this.chat_pattern = Pattern.compile("^<([^>]+)>.*$");
+    super("Stalk players", "See when given players connect/disconnect/speak", "stalk");
   }
 
   protected void enable() {
     FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 15, 46);
 
-    INetHandler inet_hanlder = FamilyFunPack.getNetworkHandler().getNetHandler();
-    if(inet_hanlder != null && inet_hanlder instanceof NetHandlerPlayClient) {
-      NetHandlerPlayClient handler = (NetHandlerPlayClient) inet_hanlder;
-
+    NetHandlerPlayClient handler = AbstractPlayersRegister.getNetHandler();
+    if(handler != null) {
       for(NetworkPlayerInfo info : handler.getPlayerInfoMap()) {
-        if(this.players.contains(info.getGameProfile().getName().toLowerCase())) {
+        this.uuids_lock.readLock().lock();
+        if(this.uuids.contains(info.getGameProfile().getId())) {
           FamilyFunPack.printMessage(StalkModule.ANNOUNCE_COLOR + "Player " + info.getGameProfile().getName() + " is connected [" + info.getGameType().getName() + "]");
         }
+        this.uuids_lock.readLock().unlock();
       }
-
     }
-
   }
 
   protected void disable() {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 15, 46);
   }
 
-  public void addPlayer(String player) {
-    this.players.add(player.toLowerCase());
-  }
-
-  public void delPlayer(String player) {
-    this.players.remove(player.toLowerCase());
-  }
-
-  public Set<String> getPlayers() {
-    return this.players;
-  }
-
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
+
     if(id == 46) { // SPacketPlayerListItem
       SPacketPlayerListItem list = (SPacketPlayerListItem) packet;
 
       if(list.getAction() == SPacketPlayerListItem.Action.UPDATE_LATENCY) return packet;
 
-      NetHandlerPlayClient hanlder = (NetHandlerPlayClient) FamilyFunPack.getNetworkHandler().getNetHandler();
+      NetHandlerPlayClient handler = AbstractPlayersRegister.getNetHandler();
 
       for(SPacketPlayerListItem.AddPlayerData entry : list.getEntries()) {
 
+        UUID uuid = entry.getProfile().getId();
         String name = entry.getProfile().getName();
         if(name == null) {
-          NetworkPlayerInfo info = hanlder.getPlayerInfo(entry.getProfile().getId());
-          if(info == null) continue;
-          name = info.getGameProfile().getName();
+          NetworkPlayerInfo info = handler.getPlayerInfo(entry.getProfile().getId());
+          if(info == null) name = uuid.toString();
+          else name = info.getGameProfile().getName();
         }
 
-        if(this.players.contains(name.toLowerCase())) {
+        this.uuids_lock.readLock().lock();
+        boolean flag = this.uuids.contains(uuid);
+        this.uuids_lock.readLock().unlock();
+
+        if(flag) {
           switch(list.getAction()) {
             case ADD_PLAYER:
               {
                 String verb = null;
-                if(hanlder.getPlayerInfoMap().isEmpty()) {
+                if(handler.getPlayerInfoMap().isEmpty()) {
                   verb = " is connected";
                 } else verb = " joined";
                 if(entry.getDisplayName() == null)
@@ -121,33 +104,20 @@ public class StalkModule extends Module implements PacketListener {
       }
     } else { // SPacketChat
       SPacketChat chat = (SPacketChat) packet;
-      String message = chat.getChatComponent().getFormattedText();
-      Matcher match = this.chat_pattern.matcher(message);
-      if(match.matches()) {
-        String name = match.group(1).replaceAll("§[0-9a-z]", "").toLowerCase();
-        if(this.players.contains(name)) {
-          chat.getChatComponent().getStyle().setColor(StalkModule.ANNOUNCE_COLOR);
+
+      GameProfile sender = AbstractPlayersRegister.getSender(chat.getChatComponent());
+      if(sender != null) {
+        this.uuids_lock.readLock().lock();
+        boolean flag = this.uuids.contains(sender.getId());
+        this.uuids_lock.readLock().unlock();
+
+        if(flag) {
+          TextComponentString nmsg = new TextComponentString(chat.getChatComponent().getFormattedText().replace(String.format("<%s>", sender.getName()), String.format("%s<%s>%s", StalkModule.ANNOUNCE_COLOR, sender.getName(), TextFormatting.RESET)));
+          packet = new SPacketChat(nmsg, chat.getType());
         }
       }
     }
 
     return packet;
-  }
-
-  public void save(Configuration configuration) {
-    super.save(configuration);
-    String[] array = new String[this.players.size()];
-    int i = 0;
-    for(String s : this.players) {
-      array[i] = s;
-      i ++;
-    }
-    configuration.get(this.name, "players", new String[0]).set(array);
-  }
-
-  public void load(Configuration configuration) {
-    String[] array = configuration.get(this.name, "players", new String[0]).getStringList();
-    for(String i : array) this.players.add(i);
-    super.load(configuration);
   }
 }

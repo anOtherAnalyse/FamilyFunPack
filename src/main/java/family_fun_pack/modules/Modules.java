@@ -24,6 +24,7 @@ public class Modules {
     this.modules = new ArrayList<Module>();
     this.modules.add(new BookFormatModule());
     this.modules.add(new CommandsModule());
+    this.modules.add(new IgnoreModule());
     this.modules.add(new PacketInterceptionModule());
     this.modules.add(new PigPOVModule());
     this.modules.add(new PortalInvulnerabilityModule());
