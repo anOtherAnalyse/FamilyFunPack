@@ -224,6 +224,10 @@ public class InfoItemGui extends RightPanel {
     }
   }
 
+  public void mouseWheel(int wheel) {
+    this.scroll.scroll(wheel);
+  }
+
   // To be displayed in Main GUI, to access the GUI
   private static class GuiComponent implements MainGuiComponent {
 

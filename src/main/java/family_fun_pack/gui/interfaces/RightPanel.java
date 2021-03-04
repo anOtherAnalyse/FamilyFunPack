@@ -55,6 +55,9 @@ public abstract class RightPanel extends GuiScreen {
     super.mouseReleased(mouseX, mouseY, state);
   }
 
+  public void mouseWheel(int wheel) {
+  }
+
   public void keyTyped(char keyChar, int keyCode) throws IOException {
   }
 

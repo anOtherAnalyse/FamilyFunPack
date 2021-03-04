@@ -8,7 +8,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
+import java.lang.Math;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -159,6 +161,17 @@ public class MainGui extends GuiScreen {
   public boolean doesGuiPauseGame() {
 	    return true;
 	}
+
+  /* Handle mouse input (click, release, scoll) */
+  public void handleMouseInput() throws IOException {
+    int wheel = Mouse.getEventDWheel();
+    if(wheel != 0) {
+      int x = Mouse.getEventX() * this.width / this.mc.displayWidth;
+      if(this.right_panel != null && x > this.x_end) {
+        this.right_panel.mouseWheel(-1 * (Math.abs(wheel) / wheel));
+      }
+    } else super.handleMouseInput();
+  }
 
   protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
     super.mouseClicked(mouseX, mouseY, mouseButton);
