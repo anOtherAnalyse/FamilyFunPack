@@ -74,4 +74,8 @@ public class NoCloseModule extends Module implements PacketListener {
     if(this.last_gui != null) return this.last_gui.inventorySlots.windowId;
     return -1;
   }
+
+  public GuiScreen getOpenedContainer() {
+    return this.last_gui;
+  }
 }

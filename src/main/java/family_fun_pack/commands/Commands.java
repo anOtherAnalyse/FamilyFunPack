@@ -50,6 +50,7 @@ public class Commands {
     this.registerCommand(new WorldDownloadCommand());
     this.registerCommand(new TrackCommand());
     this.registerCommand(new IgnoreCommand());
+    this.registerCommand(new ReOpenCommand());
   }
 
   public void registerCommand(Command cmd) {

@@ -65,8 +65,8 @@ public class StalkModule extends AbstractPlayersRegister implements PacketListen
         String name = entry.getProfile().getName();
         if(name == null) {
           NetworkPlayerInfo info = handler.getPlayerInfo(entry.getProfile().getId());
-          if(info == null) name = uuid.toString();
-          else name = info.getGameProfile().getName();
+          if(info == null) continue;
+          name = info.getGameProfile().getName();
         }
 
         this.uuids_lock.readLock().lock();

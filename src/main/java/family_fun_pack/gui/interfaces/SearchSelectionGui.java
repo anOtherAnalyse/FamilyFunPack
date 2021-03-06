@@ -471,6 +471,10 @@ public class SearchSelectionGui extends RightPanel {
     }
   }
 
+  public void mouseWheel(int wheel) {
+    this.scroll.scroll(wheel);
+  }
+
   // Update search bar every tick (make it blink)
   public void updateScreen() { // every tick
     this.selection.updateCursorCounter();

@@ -124,6 +124,10 @@ public class PacketsSelectionGui extends RightPanel {
     }
   }
 
+  public void mouseWheel(int wheel) {
+    this.scroll.scroll(wheel);
+  }
+
   public void switchDirection() {
     if(this.direction == EnumPacketDirection.SERVERBOUND) this.direction = EnumPacketDirection.CLIENTBOUND;
     else this.direction = EnumPacketDirection.SERVERBOUND;

@@ -13,27 +13,19 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import java.util.Map;
-import java.util.HashMap;
-
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.entities.EntityVoid;
 
 /* Use entity / block */
 
-/* .use [sneak|attack] <entity_id>
- * .use +1 -> register entity you are looking as number 1
- * .use [sneak|attack] #1 -> use entity registered as number 1
- * .use <block_x> <block_y> <block_z> */
+/* .use [sneak|attack] [entity_id]
+ * .use [<block_x> <block_y> <block_z>] */
 
 @SideOnly(Side.CLIENT)
 public class UseCommand extends Command {
 
-  private Map<Integer, Integer> records;
-
   public UseCommand() {
     super("use");
-    this.records = new HashMap<Integer, Integer>();
   }
 
   public String usage() {
@@ -42,62 +34,83 @@ public class UseCommand extends Command {
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
-    if(args.length > 3) {
-      try {
-        int x = Integer.parseInt(args[1]);
-        int y = Integer.parseInt(args[2]);
-        int z = Integer.parseInt(args[3]);
-        Vec3d look = mc.player.getLookVec();
-        CPacketPlayerTryUseItemOnBlock packet = new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z);
-        FamilyFunPack.getNetworkHandler().sendPacket(packet);
-        return "Using block (" + Integer.toString(x) + ", " + Integer.toString(y) + ", " + Integer.toString(z) + ")";
-      } catch(NumberFormatException e) {
-        return "Please specify integer coords";
-      }
-    } else if(args.length > 1) {
-      try {
-        int i = 1;
-        boolean sneak = false;
-        boolean attack = false;
-        if(args[i].equals("sneak")) {
-          sneak = true;
-          i += 1;
-        } else if(args[i].equals("attack")) {
-          attack = true;
-          i += 1;
-        }
 
-        int id = 0;
-        if(args[i].charAt(0) == '+' || args[i].charAt(0) == '#') {
-          id = Integer.parseInt(args[i].substring(1));
-        } else id = Integer.parseInt(args[i]);
+    int x = 0, y = 0, z = 0, cursor = 1;
+    boolean sneak = false, attack = false;
+    Mode mode = null;
 
-        if(args[i].charAt(0) == '+') {
-          RayTraceResult target_ray = mc.objectMouseOver;
-          if(target_ray != null && target_ray.typeOfHit == RayTraceResult.Type.ENTITY) {
-            Entity entity = target_ray.entityHit;
-            this.records.put(id, entity.getEntityId());
-            return "Entity " + Integer.toString(entity.getEntityId()) + " recorded as #" + Integer.toString(id);
-          }
-          return "Look at an entity";
-        } else if(args[i].charAt(0) == '#') {
-          Integer r = this.records.get(id);
-          if(r == null) return "No such record";
-          id = r.intValue();
-        }
-
-        if(sneak)
-          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
-
-        if(attack)
-          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id)));
-        else FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, id), EnumHand.MAIN_HAND));
-
-        return "Using entity " + Integer.toString(id);
-      } catch(NumberFormatException e) {
-        return "Entity id must be an integer";
-      }
+    /* Parse arguments */
+    while(cursor < args.length) {
+      if(args[cursor].equals("sneak")) {
+        sneak = true;
+        cursor += 1;
+      } else if(args[cursor].equals("attack")) {
+        attack = true;
+        cursor += 1;
+      } else break;
     }
-    return this.getUsage();
+
+    if(args.length - cursor >= 3) { // Block position
+      try {
+        x = Integer.parseInt(args[cursor++]);
+        y = Integer.parseInt(args[cursor++]);
+        z = Integer.parseInt(args[cursor]);
+      } catch(NumberFormatException e) {
+        return this.getUsage();
+      }
+      mode = Mode.BLOCK;
+    } else if(args.length - cursor >= 1) { // Entity id
+      try {
+        x = Integer.parseInt(args[cursor]);
+      } catch(NumberFormatException e) {
+        return this.getUsage();
+      }
+      mode = Mode.ENTITY;
+    } else { // Raytrace
+      RayTraceResult target_ray = mc.objectMouseOver;
+      if(target_ray == null) return "No target";
+
+      if(target_ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+        BlockPos pos = target_ray.getBlockPos();
+        x = pos.getX();
+        y = pos.getY();
+        z = pos.getZ();
+        mode = Mode.BLOCK;
+      } else if(target_ray.typeOfHit == RayTraceResult.Type.ENTITY) {
+        x = target_ray.entityHit.getEntityId();
+        mode = Mode.ENTITY;
+      } else return "No target";
+    }
+
+    /* Execute command */
+
+    String ret = null;
+
+    if(sneak)
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
+
+    switch(mode) {
+      case BLOCK:
+        {
+          Vec3d look = mc.player.getLookVec();
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayerTryUseItemOnBlock(new BlockPos(x, y, z), EnumFacing.UP, EnumHand.MAIN_HAND, (float)look.x, (float)look.y, (float)look.z));
+          ret = String.format("Using block (%d, %d, %d)", x, y, z);
+        }
+        break;
+      case ENTITY:
+        {
+          if(attack) FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, x)));
+          else FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, x), EnumHand.MAIN_HAND));
+          ret = String.format("Using entity [%d]", x);
+        }
+        break;
+    }
+
+    if(sneak) // Stop sneaking, so we don't dismount on next update
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.STOP_SNEAKING));
+
+    return ret;
   }
+
+  public static enum Mode {BLOCK, ENTITY};
 }

@@ -1,5 +1,6 @@
 package family_fun_pack.modules;
 
+import net.minecraft.network.EnumConnectionState;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraftforge.common.config.Configuration;
@@ -26,12 +27,16 @@ public class PacketInterceptionModule extends Module implements PacketListener {
 
   private Set<Integer> inbound_block;
   private Set<Integer> outbound_block;
+
+  private Set<Packet> exceptions;
+
   private int label_id;
 
   public PacketInterceptionModule() {
     super("Packets interception", "Intercept network packets");
     this.inbound_block = new HashSet<Integer>();
     this.outbound_block = new HashSet<Integer>();
+    this.exceptions = new HashSet<Packet>();
     FamilyFunPack.addModuleKey(0, this);
     this.label_id = -1;
   }
@@ -103,9 +108,29 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     return selected.contains(id);
   }
 
+  /* Exception to pass the filter */
+  public void addException(EnumPacketDirection direction, Packet<?> exception) {
+    if(this.isEnabled()) {
+      try {
+        int id = EnumConnectionState.getById(0).getPacketId(direction, exception).intValue();
+
+        if(this.isFiltered(direction, id)) {
+          this.exceptions.add(exception);
+        }
+      } catch(Exception e) {}
+    }
+  }
+
   // Block packet
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
+    if(this.exceptions.remove(packet)) {
+      return packet;
+    }
     return null;
+  }
+
+  public void onDisconnect() {
+    this.exceptions.clear();
   }
 
   // To be displayed in Main GUI, to access the packets selection GUI

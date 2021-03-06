@@ -22,7 +22,7 @@ You can search for very specific state of a block, for example only for mob spaw
 Adds new panel to the book editing gui, to be able to add colors and special formats to book content & title.
 
 ##### Silent Close
-Don't tell the server when the client is closing a container - be able to reopen it later when trying to open player inventory. If the server forces the closing you will be warned.
+Don't tell the server when the client is closing a container - be able to reopen it later when trying to open player inventory (or by using ```.reopen```).
 
 ##### Packets Canceling
 All in title, prevent client from sending/receiving specified network packets.
@@ -112,8 +112,7 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ```.sign line 1 + line 2``` -> edit sign
 
 ##### Rollback to last teleport position
-```.rollback init``` -> initiate rollback  
-```.rollback``` -> rollback to last teleport
+```.rollback``` -> First use is initialization, second performs the rollback
 
 ##### Switf steal (steal from container before a tick update)
 ```.steal <slot> | <start_slot> <stop_slot>```
