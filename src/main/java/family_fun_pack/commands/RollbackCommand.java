@@ -6,8 +6,10 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketConfirmTeleport;
 import net.minecraft.network.play.client.CPacketPlayer;
+import net.minecraft.network.play.client.CPacketPlayerTryUseItem;
 import net.minecraft.network.play.client.CPacketVehicleMove;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -34,7 +36,7 @@ public class RollbackCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName() + " [simple | double]";
+    return this.getName() + " [simple | double | tmp]";
   }
 
   public String execute(String[] args) {
@@ -55,16 +57,11 @@ public class RollbackCommand extends Command implements PacketListener {
         }
       }
 
-      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByName("Packets interception");
       Packet<?>[] to_send = new Packet<?>[3];
 
-      // Set player position to rollback position
-      mc.player.setPosition(this.position.x, this.position.y, this.position.z);
-      to_send[0] = new CPacketConfirmTeleport(this.teleport_id); // Set position server-side
-      to_send[1] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true); // Refresh player chunk map
-
       if(mode == Mode.SIMPLE) {
-        to_send[2] = null;
+        to_send[0] = new CPacketConfirmTeleport(this.teleport_id); // Set position server-side
+        to_send[1] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true); // Refresh player chunk map
       } else {
         Entity ride = mc.player.getRidingEntity();
         if(ride == null) return "You are not riding anything";
@@ -72,20 +69,32 @@ public class RollbackCommand extends Command implements PacketListener {
         EntityVoid evoid = new EntityVoid(mc.world, 0);
         evoid.setPosition(ride.posX, ride.posY - 0.3d, ride.posZ);
 
-        to_send[2] = new CPacketVehicleMove(evoid);
-        intercept.addException(EnumPacketDirection.SERVERBOUND, to_send[2]);
-      }
-
-      intercept.addException(EnumPacketDirection.SERVERBOUND, to_send[1]); // Make it work with packet canceler
-
-      // Send everything in a row
-      for(int i = 0; i < 3; i ++) {
-        if(to_send[i] != null) {
-          FamilyFunPack.getNetworkHandler().sendPacket(to_send[i]);
+        if(mode == Mode.DOUBLE) {
+          to_send[0] = new CPacketConfirmTeleport(this.teleport_id);
+          to_send[1] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true);
+        } else { // Tmp rollback
+          to_send[0] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true);
+          to_send[1] = new CPacketPlayerTryUseItem(EnumHand.OFF_HAND); // 9b player chunk map refresh
         }
+
+        to_send[2] = new CPacketVehicleMove(evoid);
       }
 
-      this.onDisconnect();
+      /* Add exceptions to packet canceler */
+      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByName("Packets interception");
+      for(int i = 0; i < to_send.length && to_send[i] != null; i ++) {
+        intercept.addException(EnumPacketDirection.SERVERBOUND, to_send[i]);
+      }
+
+      // Set player position to rollback position (client-side)
+      mc.player.setPosition(this.position.x, this.position.y, this.position.z);
+
+      // Send everything in a row, hope it gets computed within the same tick
+      for(int i = 0; i < to_send.length && to_send[i] != null; i ++) {
+        FamilyFunPack.getNetworkHandler().sendPacket(to_send[i]);
+      }
+
+      if(mode != Mode.TMP) this.onDisconnect();
 
       return String.format("Rollback to (%.2f, %.2f, %.2f)", this.position.x, this.position.y, this.position.z);
     }
@@ -122,5 +131,5 @@ public class RollbackCommand extends Command implements PacketListener {
     this.teleport_id = -1;
   }
 
-  private static enum Mode {SIMPLE, DOUBLE};
+  private static enum Mode {SIMPLE, DOUBLE, TMP};
 }
