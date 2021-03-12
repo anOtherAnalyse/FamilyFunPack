@@ -43,8 +43,8 @@ public class NearestStrongholdCommand extends Command {
     generation.generate(fake, 0, 0, null);
 
     BlockPos nearest = null;
-    if(mc.player.dimension == 0) generation.getNearestStructurePos(fake, mc.player.getPosition(), false);
-    else generation.getNearestStructurePos(fake, new BlockPos((int)mc.player.posX * 8, 70, (int)mc.player.posZ * 8), false);
+    if(mc.player.dimension == 0) nearest = generation.getNearestStructurePos(fake, mc.player.getPosition(), false);
+    else nearest = generation.getNearestStructurePos(fake, new BlockPos((int)mc.player.posX * 8, 70, (int)mc.player.posZ * 8), false);
 
     return String.format("Nearest stronghold around (%d, %d) overworld", nearest.getX(), nearest.getZ());
   }
