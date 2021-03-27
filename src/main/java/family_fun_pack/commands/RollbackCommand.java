@@ -62,6 +62,9 @@ public class RollbackCommand extends Command implements PacketListener {
       if(mode == Mode.SIMPLE) {
         to_send[0] = new CPacketConfirmTeleport(this.teleport_id); // Set position server-side
         to_send[1] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true); // Refresh player chunk map
+      } else if(mode == Mode.YEET) {
+        to_send[0] = new CPacketConfirmTeleport(this.teleport_id);
+        to_send[1] = new CPacketPlayerTryUseItem(EnumHand.MAIN_HAND); // fishing rod yeet
       } else {
         Entity ride = mc.player.getRidingEntity();
         if(ride == null) return "You are not riding anything";
@@ -131,5 +134,5 @@ public class RollbackCommand extends Command implements PacketListener {
     this.teleport_id = -1;
   }
 
-  private static enum Mode {SIMPLE, DOUBLE, TMP};
+  private static enum Mode {SIMPLE, DOUBLE, TMP, YEET};
 }
