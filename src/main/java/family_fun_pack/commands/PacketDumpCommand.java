@@ -46,8 +46,16 @@ public class PacketDumpCommand extends Command implements PacketListener {
           FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, i);
         }
         return "pckdump on";
+      } else if(args[1].equals("client")) {
+        this.last_id = -1;
+        this.last_packet = null;
+        for(int i = 0; i < 33; i ++) {
+          FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.SERVERBOUND, this, i);
+        }
+        return "pckcltdump on";
       } else {
         FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this);
+        FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this);
         return "pckdump off";
       }
     }

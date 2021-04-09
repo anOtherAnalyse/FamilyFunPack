@@ -50,17 +50,23 @@ public class CommandsModule extends Module {
   @SubscribeEvent
   public void onChat(ClientChatEvent event) {
     String message = event.getMessage();
-    if(message.startsWith(CommandsModule.ESCAPE_CHARACTER)) {
-      String[] args = message.substring(1).split("[ ]+");
-      if(args.length <= 0) return;
-      Command cmd = this.commands.getCommand(args[0]);
-      if(cmd != null) {
-        String ret = cmd.execute(args);
-        if(ret != null) FamilyFunPack.printMessage(ret);
-        event.setCanceled(true);
-        Minecraft.getMinecraft().ingameGUI.getChatGUI().addToSentMessages(message);
-      }
+    if(message.startsWith(CommandsModule.ESCAPE_CHARACTER) && this.handleCommand(message.substring(1))) {
+      event.setCanceled(true);
+      Minecraft.getMinecraft().ingameGUI.getChatGUI().addToSentMessages(message);
     }
+  }
+
+  public boolean handleCommand(String command) {
+    String[] args = command.split("[ ]+");
+    if(args.length <= 0) return false;
+
+    Command cmd = this.commands.getCommand(args[0]);
+    if(cmd == null) return false;
+
+    String ret = cmd.execute(args);
+    if(ret != null) FamilyFunPack.printMessage(ret);
+
+    return true;
   }
 
   public boolean defaultState() {

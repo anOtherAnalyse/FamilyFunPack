@@ -69,6 +69,8 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   private boolean sneak_use;
   private BlockPos target;
 
+  private int window_count;
+
   public UnloadedRideCommand() {
     super("ldride");
     this.limits = new int[2];
@@ -152,6 +154,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
         FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 0, 17);
 
         this.success = true;
+        this.window_count = 0;
 
         // Drop first item
         FamilyFunPack.getNetworkHandler().sendPacket(new CPacketClickWindow(0, this.slots[0], 0, ClickType.THROW, ItemStack.EMPTY, (short)0));
@@ -211,7 +214,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           if(this.sneak_use) {
             FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
-            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(new EntityVoid(mc.world, mc.player.getEntityId()), CPacketEntityAction.Action.START_SNEAKING));
+            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
           }
 
           if(this.max_tries < 0) {
@@ -236,7 +239,6 @@ public class UnloadedRideCommand extends Command implements PacketListener {
     } else { // SPacketOpenWindow
       SPacketOpenWindow open = (SPacketOpenWindow) packet;
 
-      // Unregister in any case, don't keep listening
       FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 19);
 
       if("EntityHorse".equals(open.getGuiId())) {
@@ -249,26 +251,26 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
           AbstractChestHorse fake = null;
 
-          if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama ?
+          if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama
             fake = new EntityLlama(mc.world);
             fake.setChested(true);
             fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
           } else { // donkey ?
             fake = new EntityDonkey(mc.world);
             fake.setHorseSaddled(true);
-            fake.setChested(true); // everything we need
+            fake.setChested(true);
           }
 
-          mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle().appendText(" [" + Integer.toString(entity_id) + "]"), open.getSlotCount()));
-          mc.player.openContainer.windowId = open.getWindowId();
-        } else if(entity instanceof AbstractHorse) {
-          AbstractHorse horse = (AbstractHorse) entity;
+          fake.setPosition(0, 256, 0);
+          mc.world.addEntityToWorld(-2, fake);
 
-          mc.player.openGuiHorseInventory(horse, new ContainerHorseChest(open.getWindowTitle(), open.getSlotCount()));
-          mc.player.openContainer.windowId = open.getWindowId();
-        } else FamilyFunPack.printMessage(TextFormatting.DARK_RED + "Error:" + TextFormatting.RESET + " Server gave us the inventory of an entity which is not an AbstractHorse");
+          // again
+          FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
+          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, entity_id), EnumHand.MAIN_HAND));
 
-        return null;
+          return new SPacketOpenWindow(open.getWindowId(), open.getGuiId(), open.getWindowTitle().appendText(String.format(" [%d] - #%d", entity_id, this.window_count++)), open.getSlotCount(), -2);
+        }
       }
     }
     return packet;

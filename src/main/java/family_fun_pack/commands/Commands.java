@@ -51,6 +51,7 @@ public class Commands {
     this.registerCommand(new TrackCommand());
     this.registerCommand(new IgnoreCommand());
     this.registerCommand(new ReOpenCommand());
+    this.registerCommand(new NearestStrongholdCommand());
   }
 
   public void registerCommand(Command cmd) {

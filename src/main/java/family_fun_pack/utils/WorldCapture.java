@@ -48,24 +48,27 @@ public class WorldCapture {
     saves_folder.mkdirs();
 
     AnvilSaveHandler saveHandler = new AnvilSaveHandler(saves_folder, saveName, false, DataFixesManager.createFixer());
+
+    WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211l, GameType.CREATIVE, true, false, WorldType.DEFAULT), saveName); // 9b seed
+    info.setAllowCommands(true);
+    info.setDifficulty(EnumDifficulty.PEACEFUL);
+    info.setServerInitialized(true);
+
     WorldProvider provider = null;
     switch(dimension) {
       case OVERWORLD:
         provider = new WorldProviderSurface();
+        info.setSpawn(spawn);
         break;
       case NETHER:
         provider = new WorldProviderHell();
+        provider.setDimension(-1);
         break;
       case THE_END:
         provider = new WorldProviderEnd();
+        provider.setDimension(1);
         break;
     }
-
-    WorldInfo info = new WorldInfo(new WorldSettings(42l, GameType.CREATIVE, false, false, WorldType.FLAT), saveName);
-    info.setSpawn(spawn);
-    info.setAllowCommands(true);
-    info.setDifficulty(EnumDifficulty.PEACEFUL);
-    info.setServerInitialized(true);
 
     saveHandler.saveWorldInfoWithPlayer(info, null);
 
