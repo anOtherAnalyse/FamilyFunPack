@@ -34,7 +34,6 @@ public class Modules {
     this.modules.add(new TraceModule());
     this.modules.add(new TrueDurabilityModule());
     this.modules.add(new UndeadModule());
-    this.modules.add(new EntityFlyModule());
     this.load();
   }
 
