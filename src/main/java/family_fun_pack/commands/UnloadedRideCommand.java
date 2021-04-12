@@ -1,6 +1,7 @@
 package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.inventory.GuiScreenHorseInventory;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.AbstractChestHorse;
 import net.minecraft.entity.passive.AbstractHorse;
@@ -19,7 +20,6 @@ import net.minecraft.network.play.server.SPacketConfirmTransaction;
 import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.ContainerHorseChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -249,27 +249,31 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
         if(entity == null) { // desync between client & server
 
-          AbstractChestHorse fake = null;
+          if(this.success || (mc.currentScreen != null && mc.currentScreen instanceof GuiScreenHorseInventory)) {
+            this.success = false; // re-use boolean to track the fact we already opened the gui once
 
-          if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama
-            fake = new EntityLlama(mc.world);
-            fake.setChested(true);
-            fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
-          } else { // donkey ?
-            fake = new EntityDonkey(mc.world);
-            fake.setHorseSaddled(true);
-            fake.setChested(true);
-          }
+            AbstractChestHorse fake = null;
 
-          fake.setPosition(0, 256, 0);
-          mc.world.addEntityToWorld(-2, fake);
+            if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama
+              fake = new EntityLlama(mc.world);
+              fake.setChested(true);
+              fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
+            } else { // donkey ?
+              fake = new EntityDonkey(mc.world);
+              fake.setHorseSaddled(true);
+              fake.setChested(true);
+            }
 
-          // again
-          FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
-          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
-          FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, entity_id), EnumHand.MAIN_HAND));
+            fake.setPosition(0, 1024, 0);
+            mc.world.addEntityToWorld(-2, fake);
 
-          return new SPacketOpenWindow(open.getWindowId(), open.getGuiId(), open.getWindowTitle().appendText(String.format(" [%d] - #%d", entity_id, this.window_count++)), open.getSlotCount(), -2);
+            // again
+            FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
+            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
+            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, entity_id), EnumHand.MAIN_HAND));
+
+            return new SPacketOpenWindow(open.getWindowId(), open.getGuiId(), open.getWindowTitle().appendText(String.format(" [%d] - #%d", entity_id, this.window_count++)), open.getSlotCount(), -2);
+          } else return null;
         }
       }
     }

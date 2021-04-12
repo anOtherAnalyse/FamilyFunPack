@@ -63,6 +63,21 @@ public class RollbackCommand extends Command implements PacketListener {
         to_send[0] = new CPacketConfirmTeleport(this.teleport_id); // Set position server-side
         to_send[1] = new CPacketPlayer.Rotation(mc.player.rotationYaw, mc.player.rotationPitch, true); // Refresh player chunk map
       } else if(mode == Mode.YEET) {
+
+        if(mc.player.fishEntity != null) {
+          Entity fish = mc.player.fishEntity.caughtEntity;
+
+          if(fish != null && fish == mc.player.getRidingEntity()) {
+            double d0 = this.position.x - mc.player.fishEntity.posX;
+            double d1 = this.position.y - mc.player.fishEntity.posY;
+            double d2 = this.position.z - mc.player.fishEntity.posZ;
+
+            fish.motionX += d0 * 0.1D;
+            fish.motionY += d1 * 0.1D;
+            fish.motionZ += d2 * 0.1D;
+          }
+        }
+
         to_send[0] = new CPacketConfirmTeleport(this.teleport_id);
         to_send[1] = new CPacketPlayerTryUseItem(EnumHand.MAIN_HAND); // fishing rod yeet
       } else {
