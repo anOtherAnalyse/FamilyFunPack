@@ -23,6 +23,7 @@ import family_fun_pack.network.PacketListener;
 public class InfoCommand extends Command implements PacketListener {
 
   private String[] plugins;
+  private boolean rcv_plugins;
 
   public InfoCommand() {
     super("info");
@@ -35,13 +36,19 @@ public class InfoCommand extends Command implements PacketListener {
   }
 
   public String execute(String[] args) {
-    if(args.length > 1) {
-      if(args[1].equals("plugins")) {
-        if(this.plugins != null && this.plugins.length > 0) {
-          return "Plugins: " + String.join(", ", this.plugins);
-        } else return "No plugins";
+    if(args.length > 1) { // Plugins listening for custom messages
+
+      if(args[1].startsWith("plugin")) {
+
+        if(! this.rcv_plugins) return "No info received about listening plugins";
+
+        if(this.plugins == null || this.plugins.length == 0) return "No listening plugins";
+
+        return "Listening plugins: [" + String.join(", ", this.plugins) + "]";
+
       } else return this.getUsage();
-    } else {
+
+    } else { // Get basic info
       Minecraft mc = Minecraft.getMinecraft();
       EntityPlayerSP player = mc.player;
       WorldInfo info = mc.world.getWorldInfo();
@@ -79,11 +86,13 @@ public class InfoCommand extends Command implements PacketListener {
     SPacketCustomPayload custom = (SPacketCustomPayload) packet;
     if(custom.getChannelName().equals("REGISTER")) {
 
-      FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 24);
+      // FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 24);
 
       PacketBuffer buff = custom.getBufferData();
       byte[] data = new byte[buff.readableBytes()];
       buff.readBytes(data);
+
+      this.rcv_plugins = true;
       this.plugins = (new String(data, StandardCharsets.UTF_8)).split("\0");
     }
     return packet;
@@ -91,6 +100,7 @@ public class InfoCommand extends Command implements PacketListener {
 
   public void onDisconnect() {
     this.plugins = null;
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 24);
+    this.rcv_plugins = false;
+    // FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 24);
   }
 }
