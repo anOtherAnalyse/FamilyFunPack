@@ -13,8 +13,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.File;
-import java.util.List;
-import java.util.LinkedList;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.overlay.OverlayGui;

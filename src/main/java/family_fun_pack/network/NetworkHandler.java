@@ -4,6 +4,7 @@ import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
+import net.minecraft.network.NettyVarint21FrameEncoder;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.util.text.TextComponentString;
@@ -201,6 +202,13 @@ public class NetworkHandler {
         if(old != null && old instanceof NettyPacketEncoder) {
           OutboundInterceptor spoof = new OutboundInterceptor(this, EnumPacketDirection.SERVERBOUND);
           pipeline.replace("encoder", "encoder", spoof);
+        }
+
+        // Install special frame encoder
+        old = pipeline.get("prepender");
+        if(old != null && old instanceof NettyVarint21FrameEncoder) {
+          OutboundFrameEncoder spoof = new OutboundFrameEncoder();
+          pipeline.replace("prepender", "prepender", spoof);
         }
 
         // Record NetworkManager
