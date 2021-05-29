@@ -7,8 +7,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
-import java.io.IOException;
-
 @SideOnly(Side.CLIENT)
 public class OutboundFrameEncoder extends NettyVarint21FrameEncoder {
   protected void encode(ChannelHandlerContext context, ByteBuf in, ByteBuf out) throws Exception {

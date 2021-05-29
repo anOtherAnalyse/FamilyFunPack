@@ -2,15 +2,18 @@ package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiScreenHorseInventory;
+import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.AbstractChestHorse;
-import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.passive.EntityDonkey;
 import net.minecraft.entity.passive.EntityLlama;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.PacketThreadUtil;
+import net.minecraft.network.ThreadQuickExitException;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.network.play.client.CPacketClickWindow;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
@@ -20,6 +23,7 @@ import net.minecraft.network.play.server.SPacketConfirmTransaction;
 import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketSpawnObject;
 import net.minecraft.inventory.ClickType;
+import net.minecraft.inventory.ContainerHorseChest;
 import net.minecraft.inventory.Slot;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -29,7 +33,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -39,7 +42,6 @@ import io.netty.buffer.ByteBuf;
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.entities.EntityVoid;
 import family_fun_pack.network.PacketListener;
-import family_fun_pack.modules.CommandsModule;
 
 
 /* Mount / use entity from unloaded chunk */
@@ -244,39 +246,66 @@ public class UnloadedRideCommand extends Command implements PacketListener {
       if("EntityHorse".equals(open.getGuiId())) {
         Minecraft mc = Minecraft.getMinecraft();
 
-        int entity_id = open.getEntityId();
-        Entity entity = mc.world.getEntityByID(entity_id);
+        Entity entity = mc.world.getEntityByID(open.getEntityId());
 
         if(entity == null) { // desync between client & server
 
           if(this.success || (mc.currentScreen != null && mc.currentScreen instanceof GuiScreenHorseInventory)) {
             this.success = false; // re-use boolean to track the fact we already opened the gui once
 
-            AbstractChestHorse fake = null;
-
-            if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama
-              fake = new EntityLlama(mc.world);
-              fake.setChested(true);
-              fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
-            } else { // donkey ?
-              fake = new EntityDonkey(mc.world);
-              fake.setHorseSaddled(true);
-              fake.setChested(true);
+            OpenWindowHandler handler = new OpenWindowHandler(this, this.window_count ++);
+            try {
+              PacketThreadUtil.<INetHandlerPlayClient>checkThreadAndEnqueue(open, handler, mc);
+            } catch (ThreadQuickExitException except) {
+              return null;
             }
 
-            fake.setPosition(0, 1024, 0);
-            mc.world.addEntityToWorld(-2, fake);
+            handler.handleOpenWindow(open);
+          }
 
-            // again
-            FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
-            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
-            FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, entity_id), EnumHand.MAIN_HAND));
-
-            return new SPacketOpenWindow(open.getWindowId(), open.getGuiId(), open.getWindowTitle().appendText(String.format(" [%d] - #%d", entity_id, this.window_count++)), open.getSlotCount(), -2);
-          } else return null;
+          return null;
         }
       }
     }
     return packet;
+  }
+
+  private static class OpenWindowHandler extends NetHandlerPlayClient {
+
+    private UnloadedRideCommand parent;
+    private int counter;
+
+    public OpenWindowHandler(UnloadedRideCommand parent, int counter) {
+      super(Minecraft.getMinecraft(), null, null, null);
+      this.parent = parent;
+      this.counter = counter;
+    }
+
+    public void handleOpenWindow(SPacketOpenWindow open) {
+      Minecraft mc = Minecraft.getMinecraft();
+      int entity_id = open.getEntityId();
+
+      AbstractChestHorse fake = null;
+
+      if(open.getSlotCount() > 2 && open.getSlotCount() < 17) { // llama
+        fake = new EntityLlama(mc.world);
+        fake.setChested(true);
+        fake.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf((open.getSlotCount() - 2) / 3));
+      } else { // donkey ?
+        fake = new EntityDonkey(mc.world);
+        fake.setHorseSaddled(true);
+        fake.setChested(true);
+      }
+
+      fake.setEntityId(entity_id);
+
+      mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle().appendText(String.format(" [%d] - #%d", entity_id, this.counter)), open.getSlotCount()));
+      mc.player.openContainer.windowId = open.getWindowId();
+
+      // again
+      FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this.parent, 19);
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketEntityAction(mc.player, CPacketEntityAction.Action.START_SNEAKING));
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketUseEntity(new EntityVoid(mc.world, entity_id), EnumHand.MAIN_HAND));
+    }
   }
 }
