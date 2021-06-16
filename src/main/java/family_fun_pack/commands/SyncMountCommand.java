@@ -33,14 +33,29 @@ public class SyncMountCommand extends Command implements PacketListener {
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
+
+    double x = mc.player.posX + 1000d;
+    double y = mc.player.posY;
+    double z = mc.player.posZ + 1000d;
+
+    if(args.length > 3) {
+      try {
+        x = (double) Integer.parseInt(args[1]);
+        y = (double) Integer.parseInt(args[2]);
+        z = (double) Integer.parseInt(args[3]);
+      } catch(NumberFormatException e) {
+        return this.getUsage();
+      }
+    }
+
     if(mc.player.isRiding()) {
       Entity ride = new EntityVoid(mc.world, 0);
-      ride.setPosition(mc.player.posX + 1000d, mc.player.posY, mc.player.posZ + 1000d); // Don't use this near world border, or get kicked
+      ride.setPosition(x, y, z); // Don't use this near world border, or get kicked
       FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 41);
       FamilyFunPack.getNetworkHandler().sendPacket(new CPacketVehicleMove(ride));
     } else {
       FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 47);
-      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayer.Position(mc.player.posX + 1000d, mc.player.posY, mc.player.posZ + 1000d, true));
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketPlayer.Position(x, y, z, true));
     }
     return null;
   }

@@ -32,28 +32,41 @@ public class FillBookCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName();
+    return this.getName() + " [sign]";
   }
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
+
+    boolean sign = (args.length > 1 && args[1].equals("sign"));
+
     if(mc.player.getHeldItemMainhand().getItem() == Items.WRITABLE_BOOK) {
       ItemStack stack = mc.player.getHeldItemMainhand().copy();
       NBTTagCompound tag = new NBTTagCompound();
-      NBTTagList pages = new NBTTagList();
 
+      // Pages
+      NBTTagList pages = new NBTTagList();
       for(int i = 0; i < 50; i ++) {
         StringBuilder build = new StringBuilder(String.format("§cFILLED_BOOK_LINE_%d_§r", (i+1)));
         for(int j = 0; j < 34; j ++) build.append("§§§§§§§§§");
         pages.appendTag(new NBTTagString(build.toString()));
       }
       tag.setTag("pages", pages);
+
+      if(sign) {
+        // Title
+        tag.setString("title", "32kb book");
+        tag.setString("author", "unused");
+      }
+
       stack.setTagCompound(tag);
 
       PacketBuffer data = new PacketBuffer(Unpooled.buffer());
       data.writeItemStack(stack);
+
       FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 22);
-      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketCustomPayload("MC|BEdit", data));
+
+      FamilyFunPack.getNetworkHandler().sendPacket(new CPacketCustomPayload(sign ? "MC|BSign" : "MC|BEdit", data));
       return Integer.toString(data.writerIndex()) + " bytes written to book";
     }
     return "Please hold a writable book";
@@ -61,7 +74,7 @@ public class FillBookCommand extends Command implements PacketListener {
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     SPacketSetSlot setSlot = (SPacketSetSlot) packet;
-    if(setSlot.getStack().getItem() == Items.WRITABLE_BOOK) {
+    if(setSlot.getStack().getItem() == Items.WRITABLE_BOOK || setSlot.getStack().getItem() == Items.WRITTEN_BOOK) {
       FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 22);
       PacketBuffer buff = new PacketBuffer(in);
       buff.readerIndex(buff.readerIndex() + 4);
