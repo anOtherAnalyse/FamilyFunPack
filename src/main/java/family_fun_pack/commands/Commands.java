@@ -52,6 +52,7 @@ public class Commands {
     this.registerCommand(new IgnoreCommand());
     this.registerCommand(new ReOpenCommand());
     this.registerCommand(new NearestStrongholdCommand());
+    this.registerCommand(new RollbackDupeCommand());
   }
 
   public void registerCommand(Command cmd) {
