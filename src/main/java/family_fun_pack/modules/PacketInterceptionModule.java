@@ -1,118 +1,88 @@
 package family_fun_pack.modules;
 
-import net.minecraft.network.EnumConnectionState;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.Packet;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.PacketDirection;
+import net.minecraft.network.ProtocolType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import io.netty.buffer.ByteBuf;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.HashSet;
 
 import family_fun_pack.FamilyFunPack;
+import family_fun_pack.key.KeyManager;
 import family_fun_pack.gui.MainGuiComponent;
-import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OpenGuiButton;
-import family_fun_pack.gui.interfaces.PacketsSelectionGui;
+import family_fun_pack.gui.interfaces.PacketsInterceptionGui;
 import family_fun_pack.network.NetworkHandler;
 import family_fun_pack.network.PacketListener;
 
-/* Block network packets */
+/* Cancel network packets */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class PacketInterceptionModule extends Module implements PacketListener {
 
-  private Set<Integer> inbound_block;
-  private Set<Integer> outbound_block;
-
-  private Set<Packet> exceptions;
+  private Set<IPacket> exceptions;
 
   private int label_id;
 
   public PacketInterceptionModule() {
-    super("Packets interception", "Intercept network packets");
-    this.inbound_block = new HashSet<Integer>();
-    this.outbound_block = new HashSet<Integer>();
-    this.exceptions = new HashSet<Packet>();
-    FamilyFunPack.addModuleKey(0, this);
+    super("packetCancel", "Packets interception");
+    this.exceptions = new HashSet<IPacket>();
+    KeyManager.registerKey("Packet canceller", -1, this);
     this.label_id = -1;
+  }
+
+  private Collection<Integer> getCanceledPackets(PacketDirection direction) {
+    return this.<Collection<Integer>>getOrElse(direction.toString(), new ArrayList<Integer>());
   }
 
   protected void enable() {
     NetworkHandler handler = FamilyFunPack.getNetworkHandler();
-    for(Integer i : this.inbound_block) {
-      handler.registerListener(EnumPacketDirection.CLIENTBOUND, this, i);
+    for(Integer i : this.getCanceledPackets(PacketDirection.CLIENTBOUND)) {
+      handler.registerListener(PacketDirection.CLIENTBOUND, this, i);
     }
-    for(Integer i : this.outbound_block) {
-      handler.registerListener(EnumPacketDirection.SERVERBOUND, this, i);
+    for(Integer i : this.getCanceledPackets(PacketDirection.SERVERBOUND)) {
+      handler.registerListener(PacketDirection.SERVERBOUND, this, i);
     }
-    this.label_id = FamilyFunPack.getOverlay().addLabel("Interception: On");
+    this.label_id = FamilyFunPack.getOverlay().addLabel("Packet canceller: On");
   }
 
   protected void disable() {
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this);
-    FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this);
+    FamilyFunPack.getNetworkHandler().unregisterListener(PacketDirection.CLIENTBOUND, this);
+    FamilyFunPack.getNetworkHandler().unregisterListener(PacketDirection.SERVERBOUND, this);
     if(this.label_id >= 0) FamilyFunPack.getOverlay().removeLabel(this.label_id);
     this.label_id = -1;
   }
 
-  // reinventing the wheel
-  public static int[] convertArray(Integer[] in) {
-    int[] out = new int[in.length];
-    for(int j = 0; j < in.length; j ++) {
-      out[j] = in[j];
-    }
-    return out;
-  }
-
-  public void save(Configuration configuration) {
-    configuration.get(this.getLabel(), "inbound_filter", new int[0]).set(PacketInterceptionModule.convertArray(this.inbound_block.toArray(new Integer[0])));
-    configuration.get(this.getLabel(), "outbound_filter", new int[0]).set(PacketInterceptionModule.convertArray(this.outbound_block.toArray(new Integer[0])));
-    super.save(configuration);
-  }
-
-  public void load(Configuration configuration) {
-    for(int id : configuration.get(this.getLabel(), "inbound_filter", new int[0]).getIntList()) {
-      this.inbound_block.add(id);
-    }
-    for(int id : configuration.get(this.getLabel(), "outbound_filter", new int[0]).getIntList()) {
-      this.outbound_block.add(id);
-    }
-    super.load(configuration);
-  }
-
   // Add packet to be blocked
-  public void addIntercept(EnumPacketDirection direction, int id) {
-    Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
-    selected.add(id);
-    if(this.isEnabled()) {
-      FamilyFunPack.getNetworkHandler().registerListener(direction, this, id);
-    }
+  public void addIntercept(PacketDirection direction, int id) {
+    this.getCanceledPackets(direction).add(id);
+    if(this.isEnabled()) FamilyFunPack.getNetworkHandler().registerListener(direction, this, id);
   }
 
   // remove packet from beeing blocked
-  public void removeIntercept(EnumPacketDirection direction, int id) {
-    Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
-    selected.remove(id);
-    if(this.isEnabled()) {
-      FamilyFunPack.getNetworkHandler().unregisterListener(direction, this, id);
-    }
+  public void removeIntercept(PacketDirection direction, int id) {
+    this.getCanceledPackets(direction).remove(id);
+    if(this.isEnabled()) FamilyFunPack.getNetworkHandler().unregisterListener(direction, this, id);
   }
 
   // Is packet blocked
-  public boolean isFiltered(EnumPacketDirection direction, int id) {
-    Set<Integer> selected = (direction == EnumPacketDirection.CLIENTBOUND ? this.inbound_block : this.outbound_block);
-    return selected.contains(id);
+  public boolean isFiltered(PacketDirection direction, int id) {
+    return this.getCanceledPackets(direction).contains(id);
   }
 
   /* Exception to pass the filter */
-  public void addException(EnumPacketDirection direction, Packet<?> exception) {
+  public void addException(PacketDirection direction, IPacket<?> exception) {
     if(this.isEnabled()) {
       try {
-        int id = EnumConnectionState.getById(0).getPacketId(direction, exception).intValue();
+        int id = ProtocolType.PLAY.getPacketId(direction, exception).intValue();
 
         if(this.isFiltered(direction, id)) {
           this.exceptions.add(exception);
@@ -122,10 +92,8 @@ public class PacketInterceptionModule extends Module implements PacketListener {
   }
 
   // Block packet
-  public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-    if(this.exceptions.remove(packet)) {
-      return packet;
-    }
+  public IPacket<?> packetReceived(PacketDirection direction, int id, IPacket<?> packet, ByteBuf in) {
+    if(this.exceptions.remove(packet)) return packet;
     return null;
   }
 
@@ -134,7 +102,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
   }
 
   // To be displayed in Main GUI, to access the packets selection GUI
-  private class GuiComponent implements MainGuiComponent {
+  private class GuiComponent implements MainGuiComponent, Button.IPressable {
 
     private PacketInterceptionModule dependence;
 
@@ -146,12 +114,20 @@ public class PacketInterceptionModule extends Module implements PacketListener {
       return "which packets ?";
     }
 
-    public ActionButton getAction() {
-      return new OpenGuiButton(0, 0, "select", PacketsSelectionGui.class, this.dependence);
+    public Widget getAction() {
+      return new OpenGuiButton(0, 0, "select", this);
     }
 
     public MainGuiComponent getChild() {
       return null;
+    }
+
+    public void onPress(Button btn) {
+      if(((OpenGuiButton) btn).isClicked()) {
+        FamilyFunPack.getMainGui().setRightPanel(new PacketsInterceptionGui(this.dependence), ((OpenGuiButton) btn).getId());
+      } else {
+        FamilyFunPack.getMainGui().removeRightPanel();
+      }
     }
   }
 

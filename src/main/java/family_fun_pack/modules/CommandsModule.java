@@ -3,25 +3,25 @@ package family_fun_pack.modules;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.commands.Command;
 import family_fun_pack.commands.Commands;
 
-/* Get commands from chat & find associated FFP command */
+/* Handles FFP commands */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class CommandsModule extends Module {
 
-  private static String ESCAPE_CHARACTER = ".";
+  private static final String ESCAPE_CHARACTER = ".";
 
   private Commands commands;
 
   public CommandsModule() {
-    super("FFP Commands", "Enable Family Fun Pack commands");
+    super("commands", "FFP Commands");
     this.commands = new Commands();
   }
 
@@ -43,16 +43,12 @@ public class CommandsModule extends Module {
     }
   }
 
-  public boolean displayInGui() {
-    return false;
-  }
-
   @SubscribeEvent
   public void onChat(ClientChatEvent event) {
     String message = event.getMessage();
     if(message.startsWith(CommandsModule.ESCAPE_CHARACTER) && this.handleCommand(message.substring(1))) {
       event.setCanceled(true);
-      Minecraft.getMinecraft().ingameGUI.getChatGUI().addToSentMessages(message);
+      Minecraft.getInstance().gui.getChat().addRecentChat(message);
     }
   }
 
@@ -67,6 +63,10 @@ public class CommandsModule extends Module {
     if(ret != null) FamilyFunPack.printMessage(ret);
 
     return true;
+  }
+
+  public boolean displayInGui() {
+    return false;
   }
 
   public boolean defaultState() {

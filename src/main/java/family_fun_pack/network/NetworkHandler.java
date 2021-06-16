@@ -1,17 +1,20 @@
 package family_fun_pack.network;
 
-import net.minecraft.network.EnumPacketDirection;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
+import net.minecraft.network.PacketDirection;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.NettyPacketDecoder;
 import net.minecraft.network.NettyPacketEncoder;
 import net.minecraft.network.NettyVarint21FrameEncoder;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.network.IPacket;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggedInEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggedOutEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -21,12 +24,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import family_fun_pack.FamilyFunPack;
 
 /* Handles network listeners */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class NetworkHandler {
 
   private boolean isConnected;
@@ -40,26 +44,26 @@ public class NetworkHandler {
   public NetworkHandler() {
     this.isConnected = false;
     this.networkManager = null;
-    this.outbound_listeners = new List[33];
-    this.outbound_lock = new ReadWriteLock[33];
+    this.outbound_listeners = new List[48];
+    this.outbound_lock = new ReadWriteLock[48];
 
-    for(int i = 0; i < 33; i ++) {
+    for(int i = 0; i < 48; i ++) {
       this.outbound_lock[i] = new ReentrantReadWriteLock();
     }
 
-    this.inbound_listeners = new List[80];
-    this.inbound_lock = new ReadWriteLock[80];
+    this.inbound_listeners = new List[92];
+    this.inbound_lock = new ReadWriteLock[92];
 
-    for(int i = 0; i < 80; i ++) {
+    for(int i = 0; i < 92; i ++) {
       this.inbound_lock[i] = new ReentrantReadWriteLock();
     }
   }
 
-  public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf buf) {
+  public IPacket<?> packetReceived(PacketDirection direction, int id, IPacket<?> packet, ByteBuf buf) {
     List<PacketListener> listeners;
     ReadWriteLock lock;
 
-    if(direction == EnumPacketDirection.CLIENTBOUND) {
+    if(direction == PacketDirection.CLIENTBOUND) {
       listeners = this.inbound_listeners[id];
       lock = this.inbound_lock[id];
     } else {
@@ -88,11 +92,11 @@ public class NetworkHandler {
     return packet;
   }
 
-  public void registerListener(EnumPacketDirection direction, PacketListener listener, int ... ids) {
+  public void registerListener(PacketDirection direction, PacketListener listener, int ... ids) {
     List<PacketListener>[] listeners;
     ReadWriteLock[] locks;
 
-    if(direction == EnumPacketDirection.CLIENTBOUND) {
+    if(direction == PacketDirection.CLIENTBOUND) {
       listeners = this.inbound_listeners;
       locks = this.inbound_lock;
     } else {
@@ -114,11 +118,11 @@ public class NetworkHandler {
     }
   }
 
-  public void unregisterListener(EnumPacketDirection direction, PacketListener listener) {
+  public void unregisterListener(PacketDirection direction, PacketListener listener) {
     List<PacketListener>[] listeners;
     ReadWriteLock[] locks;
 
-    if(direction == EnumPacketDirection.CLIENTBOUND) {
+    if(direction == PacketDirection.CLIENTBOUND) {
       listeners = this.inbound_listeners;
       locks = this.inbound_lock;
     } else {
@@ -139,11 +143,11 @@ public class NetworkHandler {
     }
   }
 
-  public void unregisterListener(EnumPacketDirection direction, PacketListener listener, int ... ids) {
+  public void unregisterListener(PacketDirection direction, PacketListener listener, int ... ids) {
     List<PacketListener>[] listeners;
     ReadWriteLock[] locks;
 
-    if(direction == EnumPacketDirection.CLIENTBOUND) {
+    if(direction == PacketDirection.CLIENTBOUND) {
       listeners = this.inbound_listeners;
       locks = this.inbound_lock;
     } else {
@@ -164,43 +168,36 @@ public class NetworkHandler {
     }
   }
 
-  public void sendPacket(Packet<?> packet) {
+  public void sendPacket(IPacket<?> packet) {
     if(this.networkManager != null) {
-      this.networkManager.sendPacket(packet);
+      this.networkManager.send(packet);
     }
-  }
-
-  public INetHandler getNetHandler() {
-    if(this.networkManager != null) {
-      return this.networkManager.getNetHandler();
-    }
-    return null;
   }
 
   public void disconnect() {
     if(this.networkManager != null) {
-      this.networkManager.closeChannel(new TextComponentString("You have been successfully disconnected from server"));
+      this.networkManager.disconnect(new StringTextComponent("You have been successfully disconnected from server"));
     }
   }
 
   @SubscribeEvent
-  public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-    if(!this.isConnected) {
+  public void onConnect(LoggedInEvent event) {
+    if(! this.isConnected) {
 
-      ChannelPipeline pipeline = event.getManager().channel().pipeline();
+      ChannelPipeline pipeline = event.getNetworkManager().channel().pipeline();
 
       try {
         // Install receive interception
         ChannelHandler old = pipeline.get("decoder");
         if(old != null && old instanceof NettyPacketDecoder) {
-          InboundInterceptor spoof = new InboundInterceptor(this, EnumPacketDirection.CLIENTBOUND);
+          InboundInterceptor spoof = new InboundInterceptor(this, PacketDirection.CLIENTBOUND);
           pipeline.replace("decoder", "decoder", spoof);
         }
 
         // Install send interception
         old = pipeline.get("encoder");
         if(old != null && old instanceof NettyPacketEncoder) {
-          OutboundInterceptor spoof = new OutboundInterceptor(this, EnumPacketDirection.SERVERBOUND);
+          OutboundInterceptor spoof = new OutboundInterceptor(this, PacketDirection.SERVERBOUND);
           pipeline.replace("encoder", "encoder", spoof);
         }
 
@@ -212,17 +209,17 @@ public class NetworkHandler {
         }
 
         // Record NetworkManager
-        this.networkManager = event.getManager();
+        this.networkManager = event.getNetworkManager();
         this.isConnected = true;
-      } catch (java.util.NoSuchElementException e) {}
+      } catch (NoSuchElementException e) {}
     }
   }
 
-  @SubscribeEvent
-	public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+  @SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void onDisconnect(LoggedOutEvent event) {
     this.isConnected = false;
     FamilyFunPack.getModules().onDisconnect();
-    FamilyFunPack.getMainGui().reset();
+    // FamilyFunPack.getMainGui().reset();
     this.networkManager = null;
   }
 
@@ -230,4 +227,8 @@ public class NetworkHandler {
     return this.isConnected;
   }
 
+  public ClientPlayNetHandler getNetHandler() {
+    if(this.networkManager == null) return null;
+    return (ClientPlayNetHandler) this.networkManager.getPacketListener();
+  }
 }

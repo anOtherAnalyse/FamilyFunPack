@@ -1,28 +1,29 @@
 package family_fun_pack.modules;
 
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import com.electronwill.nightconfig.core.Config;
+
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import family_fun_pack.gui.MainGuiComponent;
-import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OnOffButton;
-import family_fun_pack.gui.components.actions.OnOffAction;
+import family_fun_pack.key.KeyAction;
 
 /* An abstract Module */
 
-@SideOnly(Side.CLIENT)
-public abstract class Module implements OnOffAction, MainGuiComponent {
+@OnlyIn(Dist.CLIENT)
+public abstract class Module implements MainGuiComponent, Button.IPressable, KeyAction {
 
-  private boolean enabled;
+  protected Config config;
 
+  protected String id;
   protected String name;
-  protected String description;
 
-  public Module(String name, String description) {
+  public Module(String id, String name) {
+    this.id = id;
     this.name = name;
-    this.description = description;
-    this.enabled = false;
   }
 
   /* On Module enabled */
@@ -31,22 +32,48 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
   /* On Module disabled */
   protected abstract void disable();
 
+  public void onPress(Button btn) {
+    if(btn instanceof OnOffButton) {
+      this.toggle(((OnOffButton) btn).getState());
+    }
+  }
+
+  public void onKeyDown(int keysym) {
+    this.toggle();
+  }
+
   public void toggle() {
-    this.toggle(! this.enabled);
+    this.toggle(! this.isEnabled());
   }
 
   public void toggle(boolean state) {
     if(state) {
-      if(!this.enabled) {
+      if(! this.isEnabled()) {
         this.enable();
-        this.enabled = true;
+        this.setEnabled(true);
       }
-    } else {
-      if(this.enabled) {
-        this.disable();
-        this.enabled = false;
-      }
+    } else if(this.isEnabled()) {
+      this.disable();
+      this.setEnabled(false);
     }
+  }
+
+  public boolean isEnabled() {
+    return this.config.getByteOrElse("enabled", this.defaultState() ? (byte) 1 : (byte) 0) == 1;
+  }
+
+  private void setEnabled(boolean enabled) {
+    this.config.set("enabled", enabled ? (byte) 1 : (byte) 0);
+  }
+
+  // Get config, record a new one if none exists
+  protected <T> T getOrElse(String path, T defaultV) {
+    T value = this.config.<T>get(path);
+    if(value == null) {
+      this.config.<T>set(path, defaultV);
+      return defaultV;
+    }
+    return value;
   }
 
   /* Is the Module enabled by default (first use) */
@@ -54,48 +81,36 @@ public abstract class Module implements OnOffAction, MainGuiComponent {
     return false;
   }
 
-  /* Display this module in Gui */
-  public boolean displayInGui() {
-    return true;
-  }
-
-  /* Save basic Module state (enable / disabled) */
-  public void save_state(Configuration configuration) {
-    configuration.get(this.name, "state", false).set(this.isEnabled());
-  }
-
-  /* Save all Module configurations */
-  public void save(Configuration configuration) {
-    this.save_state(configuration);
-  }
-
-  /* Load all Module configuration */
-  public void load(Configuration configuration) {
-    boolean state = configuration.get(this.name, "state", this.defaultState()).getBoolean();
-    this.toggle(state);
+  public void load(Config config) {
+    this.config = config;
+    if(this.isEnabled()) {
+      this.enable();
+    }
   }
 
   /* Called when disconnecting from server */
   public void onDisconnect() {}
 
-  public boolean isEnabled() {
-    return this.enabled;
+  /* Display this module in Main Gui */
+  public boolean displayInGui() {
+    return true;
   }
 
   public String getLabel() {
     return this.name;
   }
 
-  /* ActionButton to be displayed on gui next to Module label */
-  public ActionButton getAction() {
-    OnOffButton ret = new OnOffButton(0, 0, this);
-    ret.setState(this.isEnabled());
-    return ret;
+  public String getId() {
+    return this.id;
   }
 
-  // Get dependent GuiComponent, i.e components used to open the configuration GUI associated to this Module
   public MainGuiComponent getChild() {
     return null;
   }
 
+  public Widget getAction() {
+    OnOffButton act = new OnOffButton(0, 0, this);
+    act.setState(this.isEnabled());
+    return act;
+  }
 }

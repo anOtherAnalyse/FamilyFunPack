@@ -1,17 +1,17 @@
 package family_fun_pack.network;
 
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.Packet;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.network.PacketDirection;
+import net.minecraft.network.IPacket;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import io.netty.buffer.ByteBuf;
 
 /* A class listening for network packets, register a listener on NetworkHandler */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public interface PacketListener {
 
-  public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in);
+  public IPacket<?> packetReceived(PacketDirection direction, int id, IPacket<?> packet, ByteBuf in);
 
 }

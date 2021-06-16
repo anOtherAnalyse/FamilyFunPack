@@ -1,64 +1,41 @@
 package family_fun_pack.gui.interfaces;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
-
-import java.io.IOException;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import family_fun_pack.FamilyFunPack;
-import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.modules.Module;
 
 /* Right panel, special module configuration GUI displayed next to Main GUI */
 
-@SideOnly(Side.CLIENT)
-public abstract class RightPanel extends GuiScreen {
+@OnlyIn(Dist.CLIENT)
+public abstract class RightPanel extends Screen {
 
-  protected Module dependence; // Module dependence
+  protected int x, y, x_end, y_end;
 
-  protected GuiScreen parent; // GUI parent that generated this one
+  public RightPanel(int x, int y, int width, int height, ITextComponent title) {
+    super(title);
 
-  public RightPanel() {
-    ScaledResolution scale = new ScaledResolution(Minecraft.getMinecraft());
-    this.setWorldAndResolution(Minecraft.getMinecraft(), scale.getScaledWidth(), scale.getScaledHeight());
-    this.parent = null;
-    this.dependence = null;
-  }
+    this.x = x;
+    this.y = y;
+    this.x_end = x + width;
+    this.y_end = y + height;
 
-  public void setParent(GuiScreen parent) {
-    this.parent = parent;
+    Minecraft mc = Minecraft.getInstance();
+    this.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
   }
 
   public void transition(RightPanel next) {
-    FamilyFunPack.getMainGui().setRightPanel(next);
+    FamilyFunPack.getMainGui().setRightPanel(next, -1);
   }
 
-  public void dependsOn(Module dependence) {
-    this.dependence = dependence;
+  public boolean isMouseOver(double mouseX, double mouseY) {
+    return mouseX >= this.x && mouseX < this.x_end && mouseY >= this.y && mouseY < this.y_end;
   }
 
-  protected void actionPerformed(GuiButton btn) throws IOException {
-    if(btn instanceof ActionButton) {
-      ((ActionButton) btn).onClick((GuiScreen)this);
-    }
-  }
-
-  public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-    super.mouseClicked(mouseX, mouseY, mouseButton);
-  }
-
-  public void mouseReleased(int mouseX, int mouseY, int state) {
-    super.mouseReleased(mouseX, mouseY, state);
-  }
-
-  public void mouseWheel(int wheel) {
-  }
-
-  public void keyTyped(char keyChar, int keyCode) throws IOException {
-  }
-
+  // When gui is re-opened, actualize state
+  public void onReopen() {}
 }

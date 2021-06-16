@@ -1,74 +1,72 @@
 package family_fun_pack.modules;
 
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.file.FileConfig;
+
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.io.File;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /* All Modules record */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class Modules {
 
-  private List<Module> modules;
+  private File configFile;
+  private FileConfig config;
 
-  private Configuration configuration;
+  private Map<String, Module> modules;
 
-  public Modules(File configuration_file) {
+  public Modules(File configuration) {
+    this.modules = new HashMap<String, Module>();
+    this.register(new PacketInterceptionModule());
+    this.register(new CommandsModule());
 
-    this.configuration = new Configuration(configuration_file);
-
-    this.modules = new ArrayList<Module>();
-    this.modules.add(new BookFormatModule());
-    this.modules.add(new CommandsModule());
-    this.modules.add(new IgnoreModule());
-    this.modules.add(new PacketInterceptionModule());
-    this.modules.add(new PigPOVModule());
-    this.modules.add(new PortalInvulnerabilityModule());
-    this.modules.add(new SearchModule());
-    this.modules.add(new NoCloseModule());
-    this.modules.add(new StalkModule());
-    this.modules.add(new TraceModule());
-    this.modules.add(new TrueDurabilityModule());
-    this.modules.add(new UndeadModule());
-    this.load();
+    this.configFile = configuration;
+    this.loadConfig();
   }
 
-  public List<Module> getModules() {
-    return this.modules;
+  private void register(Module module) {
+    this.modules.put(module.getId(), module);
+  }
+
+  public Collection<Module> getModules() {
+    return this.modules.values();
+  }
+
+  public Module getById(String id) {
+    return this.modules.get(id);
   }
 
   public void onDisconnect() {
-    for(Module i : this.modules) {
-      i.onDisconnect();
+    for(Module module : this.getModules()) {
+      module.onDisconnect();
     }
   }
 
-  public Configuration getConfiguration() {
-    return this.configuration;
-  }
+  private void loadConfig() {
+    this.config = FileConfig.of(this.configFile);
+    this.config.load();
 
-  public Module getByName(String name) {
-    for(Module m : this.modules) {
-      if(m.getLabel().equals(name)) return m;
-    }
-    return null;
-  }
-
-  private void load() {
-    for(Module i : this.modules) {
-      i.load(this.configuration);
+    for(Module module : this.getModules()) {
+      Config c = this.config.<Config>get(module.getId());
+      if(c == null) {
+        c = Config.inMemory();
+        this.config.<Config>set(module.getId(), c);
+      }
+      module.load(c);
     }
   }
 
-  public void save() {
-    for(Module i : this.modules) {
-      i.save(this.configuration);
-    }
-    this.configuration.save();
+  public void saveConfig() {
+    this.config.save();
   }
 
+  protected void finalize() throws Throwable {
+    this.config.close();
+  }
 }

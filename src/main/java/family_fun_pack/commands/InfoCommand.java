@@ -1,25 +1,23 @@
 package family_fun_pack.commands;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.Packet;
+import net.minecraft.network.PacketDirection;
+import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.server.SPacketCustomPayload;
-import net.minecraft.world.storage.WorldInfo;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.network.play.server.SCustomPayloadPlayPacket;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import io.netty.buffer.ByteBuf;
 import java.nio.charset.StandardCharsets;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.network.PacketListener;
+import family_fun_pack.utils.ReflectUtils;
 
 /* Get information about player, world, plugins, ... */
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class InfoCommand extends Command implements PacketListener {
 
   private String[] plugins;
@@ -27,68 +25,49 @@ public class InfoCommand extends Command implements PacketListener {
 
   public InfoCommand() {
     super("info");
-    this.plugins = null;
-    FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 24);
+    FamilyFunPack.getNetworkHandler().registerListener(PacketDirection.CLIENTBOUND, this, 23);
   }
 
   public String usage() {
-    return this.getName() + " [plugins]";
+    return this.getName() + " server | player | world | plugins";
   }
 
   public String execute(String[] args) {
-    if(args.length > 1) { // Plugins listening for custom messages
+    Minecraft mc = Minecraft.getInstance();
 
-      if(args[1].startsWith("plugin")) {
-
-        if(! this.rcv_plugins) return "No info received about listening plugins";
-
-        if(this.plugins == null || this.plugins.length == 0) return "No listening plugins";
-
-        return "Listening plugins: [" + String.join(", ", this.plugins) + "]";
-
-      } else return this.getUsage();
-
-    } else { // Get basic info
-      Minecraft mc = Minecraft.getMinecraft();
-      EntityPlayerSP player = mc.player;
-      WorldInfo info = mc.world.getWorldInfo();
-
-      String game_type = mc.playerController.getCurrentGameType().toString();
-      boolean hardcore = info.isHardcoreModeEnabled();
-      boolean reduce_debug = player.hasReducedDebug();
-      String world_type = info.getTerrainType().getName();
-      String difficulty = info.getDifficulty().toString();
-      String entity_id = Integer.toString(player.getEntityId());
-      String max_players = Integer.toString(((NetHandlerPlayClient) FamilyFunPack.getNetworkHandler().getNetHandler()).currentServerMaxPlayers);
-
-      String dimension = null;
-      switch(player.dimension) {
-        case 0: dimension = "overworld"; break;
-        case -1: dimension = "nether"; break;
-        case 1: dimension = "end"; break;
-        default: dimension = "unknown";
+    if(args.length > 1) {
+      switch(args[1]) {
+        case "plugins":
+          if(! rcv_plugins) return "No information about listening plugins";
+          if(plugins.length == 0) return "No listening plugins";
+          return "Listening plugins: [" + String.join(", ", this.plugins) + "]";
+        case "server":
+          if(mc.player != null && mc.player.getServerBrand() != null) return "Server brand: " + mc.player.getServerBrand();
+          return "Not on a server";
+        case "player":
+          if(mc.player != null) {
+            if(mc.player.isPassenger()) return String.format("Player [%d] riding [%d]", mc.player.getId(), mc.player.getVehicle().getId());
+            return String.format("Player [%d]", mc.player.getId());
+          }
+          break;
+        case "world":
+          {
+            int chunkRadius = ReflectUtils.<Integer>getFieldValue(FamilyFunPack.getNetworkHandler().getNetHandler(), new String[] {"serverChunkRadius", "field_217287_m"});
+            return String.format("Difficulty: %s%s, chunk radius: %d", mc.level.getLevelData().getDifficulty().toString(), mc.level.getLevelData().isHardcore() ? "[hardcore]" : "", chunkRadius);
+          }
+        default:
+          return this.getUsage();
       }
-
-      String stat = player.getGameProfile().getName() + "id[" + entity_id + "] (" + game_type + ") in " + dimension + "[" + world_type + "], " + difficulty;
-      if(hardcore) stat += " [hardcore]";
-      if(reduce_debug) stat += " [reduce debug info]";
-      stat += " max players: " + max_players;
-
-      if(mc.player.isRiding()) {
-        stat += ", riding: " + Integer.toString(mc.player.getRidingEntity().getEntityId());
-      }
-
-      return stat;
+      return null;
     }
+    return this.getUsage();
   }
 
-  public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-    SPacketCustomPayload custom = (SPacketCustomPayload) packet;
-    if(custom.getChannelName().equals("REGISTER")) {
+  public IPacket<?> packetReceived(PacketDirection direction, int id, IPacket<?> packet, ByteBuf in) {
+    SCustomPayloadPlayPacket custom = (SCustomPayloadPlayPacket) packet;
+    if(custom.getIdentifier().getPath().equals("register")) {
 
-      // FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 24);
-
-      PacketBuffer buff = custom.getBufferData();
+      PacketBuffer buff = custom.getData();
       byte[] data = new byte[buff.readableBytes()];
       buff.readBytes(data);
 
@@ -101,6 +80,5 @@ public class InfoCommand extends Command implements PacketListener {
   public void onDisconnect() {
     this.plugins = null;
     this.rcv_plugins = false;
-    // FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 24);
   }
 }

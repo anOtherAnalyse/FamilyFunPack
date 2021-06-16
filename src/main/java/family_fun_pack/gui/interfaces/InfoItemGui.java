@@ -1,246 +1,182 @@
 package family_fun_pack.gui.interfaces;
 
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.Slot;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.inventory.container.PlayerContainer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Iterator;
 
+import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.MainGuiComponent;
-import family_fun_pack.gui.components.ActionButton;
+import family_fun_pack.gui.components.ItemButton;
 import family_fun_pack.gui.components.GenericButton;
 import family_fun_pack.gui.components.OpenGuiButton;
-import family_fun_pack.gui.components.ScrollBar;
-import family_fun_pack.nbt.SpecialTagCompound;
+import family_fun_pack.gui.components.TextPanel;
+import family_fun_pack.utils.ReflectUtils;
 
 /* Get information about items in our inventory (tags, preview shulker ...) */
 
-@SideOnly(Side.CLIENT)
-public class InfoItemGui extends RightPanel {
+@OnlyIn(Dist.CLIENT)
+public class InfoItemGui extends RightPanel implements Button.IPressable {
 
-  // private static int guiWidth = 320;
-  private static int guiHeight = 136;
+  private static final int guiMaxWidth = 480;
+  private static final int guiHeight = 143;
 
-  private int maxLines;
-
-  private int x, y, x_end, y_end;
-
-  public int current_slot;
-
-  private String title;
-
-  private List<String> tag;
-
-  private ScrollBar scroll;
-  private GenericButton previewOpen;
-
-  public Container inventory;
+  private TextPanel info;
+  private GenericButton openPreview;
 
   public InfoItemGui() {
-    super();
-    this.inventory = this.mc.player.inventoryContainer;
-    this.current_slot = -1;
-    this.tag = new ArrayList<String>();
+    super(MainGui.guiWidth + 16, (MainGui.guiHeight - InfoItemGui.guiHeight) / 2 + 12, 0, InfoItemGui.guiHeight, new StringTextComponent("Inventory information"));
 
-    this.x = MainGui.guiWidth + 16;
-    this.y = (MainGui.guiHeight - InfoItemGui.guiHeight) / 2 + 12;
-    this.x_end = this.width - 12;
-    this.y_end = this.y + InfoItemGui.guiHeight;
-    this.scroll = new ScrollBar(0, this.x_end - 8, this.y + 20, 0, this.y_end - 2);
-    this.previewOpen = null;
-    this.maxLines = ((this.y_end - 2 - (this.y + 21)) / this.fontRenderer.FONT_HEIGHT);
+    if(this.x_end - this.x > InfoItemGui.guiMaxWidth) this.x_end = this.x + InfoItemGui.guiMaxWidth;
+    else this.x_end = this.width - 12;
+
+    this.initItems(this.minecraft.player.inventoryMenu);
+
+    this.info = this.<TextPanel>addWidget(new TextPanel(this.x + 91, this.y + 18, this.x_end - this.x - 91, this.y_end - this.y - 18));
   }
 
-  public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-    Gui.drawRect(this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR); // GUI background
-
-    // borders
-    Gui.drawRect(this.x, this.y, this.x_end, this.y + 1, MainGui.BORDER_COLOR);
-    Gui.drawRect(this.x, this.y, this.x + 1, this.y_end, MainGui.BORDER_COLOR);
-    Gui.drawRect(this.x_end - 1, this.y, this.x_end, this.y_end, MainGui.BORDER_COLOR);
-    Gui.drawRect(this.x, this.y_end - 1, this.x_end, this.y_end, MainGui.BORDER_COLOR);
-
-    // items border
-    int info_x = this.x + 4;
-    int info_y = this.y + 4;
-    int info_x_end = this.x + 84;
-    int info_y_end = this.y + 132;
-    Gui.drawRect(info_x, info_y, info_x_end, info_y_end, 0xff000000);
-    for(int i = 0; i < 6; i ++) {
-      Gui.drawRect(info_x - 1 + i*16, info_y, info_x + i*16, info_y_end, 0xffffffff);
-    }
-    for(int i = 0; i < 9; i ++) {
-      Gui.drawRect(info_x, info_y - 1 + i*16, info_x_end, info_y + i*16, 0xffffffff);
-    }
-
-    // draw tag border
-    info_x = this.x + 86;
-    info_y = this.y + 18;
-    info_x_end = this.x_end - 1;
-    info_y_end = this.y_end - 1;
-    Gui.drawRect(info_x, info_y, info_x_end, info_y + 1, 0xffffffff);
-    Gui.drawRect(info_x, info_y, info_x + 1, info_y_end, 0xffffffff);
-
-    // Draw preview open button
-    if(this.previewOpen != null) this.previewOpen.drawButton(this.mc, mouseX, mouseY, partialTicks);
-
-    // Draw tag
-    if(this.current_slot != -1) {
-
-      // Draw title
-      int width = this.fontRenderer.getStringWidth(this.title);
-      info_x += ((this.x_end - 2 - info_x) / 2 - (width) / 2);
-      this.fontRenderer.drawStringWithShadow(this.title, info_x, this.y + 4, 0xffffffff);
-
-      GlStateManager.pushMatrix();
-      float scale = 0.7f;
-      GlStateManager.scale(scale, scale, scale);
-      info_x = (int)(((float)this.x + 89f) / scale);
-
-      for(int i = this.scroll.current_scroll; i < (this.scroll.current_scroll + this.maxLines) && i < this.tag.size(); i ++) {
-        info_y = (int)(((float)this.y + 21f + (float)((i - this.scroll.current_scroll) * this.fontRenderer.FONT_HEIGHT)) / scale);
-        this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, 0xffffffff);
-      }
-
-      GlStateManager.popMatrix();
-    }
-
-    // Update scroll
-    if(this.scroll.clicked) {
-      this.scroll.dragged(mouseX, mouseY);
-    }
-
-    // Draw scroll bar
-    this.scroll.drawButton(this.mc, mouseX, mouseY, partialTicks);
-
-    // Draw items
-    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-    RenderHelper.enableGUIStandardItemLighting();
+  private void initItems(PlayerContainer inventory) {
     for(int i = 0; i < 8; i ++) {
       for(int j = 0; j < 5; j ++) {
-        Slot slot = this.inventory.getSlot((i * 5) + j + 5);
-        ItemStack stack = slot.getStack();
-        int x = this.x + 4 + j * 16;
-        int y = this.y + 4 + i * 16;
-        if(! stack.isEmpty()) {
-          GlStateManager.enableDepth();
-          this.itemRender.renderItemAndEffectIntoGUI(this.mc.player, stack, x, y);
-          this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, stack, x, y, null);
-        }
+        ItemStack stack = inventory.getSlot((i * 5) + j + 5).getItem();
+
+        int x = this.x + 4 + j * 17;
+        int y = this.y + 4 + i * 17;
+        this.<ItemButton>addButton(new ItemButton(x, y, stack, this));
       }
     }
-
-    super.drawScreen(mouseX, mouseY, partialTicks);
   }
 
-  public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-    if(mouseButton == 0) {
+  public void onReopen() {
+    // Delete previous item buttons
+    Iterator iterator = this.buttons.iterator();
+    while(iterator.hasNext()) {
+      Widget btn = (Widget) iterator.next();
+      this.children.remove(btn);
+      iterator.remove();
+    }
 
-      if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
-      else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
-        this.previewOpen.onClick((GuiScreen) this);
-        this.previewOpen.playPressSound(this.mc.getSoundHandler());
-        return;
-      }
+    // Reset buttons
+    this.initItems(this.minecraft.player.inventoryMenu);
 
-      int x = (mouseX - 4 - this.x) / 16;
-      int y = (mouseY - 4 - this.y) / 16;
-      if(x >= 0 && x < 5 && y >= 0 && y < 8) { // Item slot clicked
-        this.current_slot = (y * 5) + x + 5;
-        ItemStack stack = this.inventory.getSlot(this.current_slot).getStack();
-        if(!stack.isEmpty()) {
-          this.title = stack.getDisplayName();
+    // Reset open preview button
+    this.resetPreviewButton();
 
-          NBTTagCompound tag = stack.getTagCompound();
-          String tag_string;
-          if(tag != null) {
-            tag_string = tag.toString().replaceAll("§[0-9A-FK-Oa-fk-orR]", "");
-          } else tag_string = "Stack has no tag";
+    // Reset text panel
+    this.info.resetTag();
+  }
 
-          this.tag.clear();
-          this.tag.add(String.format("Damage field: %s%d%s, Tag:", TextFormatting.BLUE, SpecialTagCompound.getStackDamage(stack), TextFormatting.RESET));
+  public void render(MatrixStack mStack, int mouseX, int mouseY, float partialTicks) {
+    // Background
+    AbstractGui.fill(mStack, this.x, this.y, this.x_end, this.y_end, MainGui.BACKGROUND_COLOR);
+    AbstractGui.fill(mStack, this.x, this.y, this.x_end, this.y + 1, MainGui.BORDER_COLOR);
+    AbstractGui.fill(mStack, this.x, this.y, this.x + 1, this.y_end, MainGui.BORDER_COLOR);
+    AbstractGui.fill(mStack, this.x_end - 1, this.y, this.x_end, this.y_end, MainGui.BORDER_COLOR);
+    AbstractGui.fill(mStack, this.x, this.y_end - 1, this.x_end, this.y_end, MainGui.BORDER_COLOR);
 
-          // Divide tag into lines
-          int line_width = this.x_end - this.x - 98;
-          StringBuilder next_line = new StringBuilder();
-          for(int i = 0; i < tag_string.length(); i += 2) {
-            int end = (i + 2 > tag_string.length()) ? tag_string.length() : (i + 2);
-            next_line.append(tag_string.substring(i, end));
-            if((int)((float)this.fontRenderer.getStringWidth(next_line.toString()) * 0.7f) > line_width) {
-              i -= 2;
-              this.tag.add(next_line.substring(0, next_line.length() - 2));
-              next_line = new StringBuilder();
+    // items grid
+    int info_x = this.x + 4;
+    int info_y = this.y + 4;
+    int info_x_end = this.x + 88;
+    int info_y_end = this.y + 139;
+
+    AbstractGui.fill(mStack, info_x, info_y, info_x_end, info_y_end, 0xff000000);
+    for(int i = 0; i < 6; i ++) AbstractGui.fill(mStack, info_x - 1 + i * 17, info_y, info_x + i * 17, info_y_end, 0xffffffff);
+    for(int i = 0; i < 9; i ++) AbstractGui.fill(mStack, info_x, info_y - 1 + i * 17, info_x_end, info_y + i * 17, 0xffffffff);
+
+    // Item info
+    this.info.render(mStack, mouseX, mouseY, partialTicks);
+
+    // Buttons
+    super.render(mStack, mouseX, mouseY, partialTicks);
+  }
+
+  public void onPress(Button btn) {
+    if(btn instanceof ItemButton) {
+      ItemStack stack = ((ItemButton) btn).getStack();
+
+      // Reset open preview button
+      this.resetPreviewButton();
+
+      if(! stack.isEmpty()) {
+
+        // Set up info panel
+        this.info.setTitle(stack.getDisplayName().getString());
+
+        Item item = ReflectUtils.<Item>getFieldValue(stack, new String[] {"item"});
+        String header = null;
+        if(item != null) header = TextFormatting.DARK_PURPLE + item.toString() + TextFormatting.RESET;
+
+        CompoundNBT tag = stack.getTag();
+        if(tag != null) {
+          String str = tag.toString().replaceAll("§[0-9A-FK-Oa-fk-orR]", "");
+          this.info.setTag(str.substring(1, str.length() - 1), header);
+        } else {
+          this.info.setTag("No compound tag", header);
+        }
+
+        // Shulker preview
+        if(tag != null && tag.contains("BlockEntityTag") && tag.getTagType("BlockEntityTag") == 10) {
+          CompoundNBT blockTag = tag.getCompound("BlockEntityTag");
+
+          if(blockTag.contains("Items") && blockTag.getTagType("Items") == 9) {
+            int index = this.buttons.indexOf(btn);
+            if(index >= 0) {
+              this.openPreview = this.<GenericButton>addButton(new GenericButton(this.x_end - 28, this.y + 2, "Preview", this, 0.6f));
+              this.openPreview.setId(index);
             }
           }
-          if(next_line.length() > 0) this.tag.add(next_line.toString());
-
-          if(this.tag.size() > this.maxLines) this.scroll.resetMaxScroll(this.tag.size() - this.maxLines);
-          else this.scroll.resetMaxScroll(0);
-
-          // If shulker tag, had option to preview shulker content
-          if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {
-            NBTTagCompound blockTag = tag.getCompoundTag("BlockEntityTag");
-            if(blockTag.hasKey("Items") && blockTag.getTagId("Items") == 9) {
-              this.previewOpen = new GenericButton(0, this.x_end - 46, this.y + 3, "Preview") {
-                public void onClick(GuiScreen parent) {
-                  PreviewGui preview = new PreviewGui(
-                    InfoItemGui.this.inventory.getSlot(InfoItemGui.this.current_slot).getStack().getTagCompound().getCompoundTag("BlockEntityTag").getTagList("Items", 10)
-                  );
-                  preview.setParent(parent);
-                  InfoItemGui.this.transition(preview);
-                }
-              };
-            } else this.previewOpen = null;
-          } else this.previewOpen = null;
-
-        } else {
-          this.current_slot = -1;
-          this.tag.clear();
-          this.title = null;
-          this.previewOpen = null;
         }
-        this.mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+      } else this.info.resetTag();
+    } else if(btn instanceof GenericButton) {
+      Widget widget = this.buttons.get(((GenericButton) btn).getId());
+      if(widget != null && widget instanceof ItemButton) {
+        ItemButton item = (ItemButton) widget;
+        this.transition(new PreviewGui(item.getStack().getTagElement("BlockEntityTag").getList("Items", 10), this));
       }
     }
   }
 
-  public void mouseReleased(int mouseX, int mouseY, int state) {
-    if(state == 0) {
-      this.scroll.mouseReleased(mouseX, mouseY);
+  private void resetPreviewButton() {
+    if(this.openPreview != null) {
+      this.children.remove(this.openPreview);
+      this.buttons.remove(this.openPreview);
+      this.openPreview = null;
     }
-  }
-
-  public void mouseWheel(int wheel) {
-    this.scroll.scroll(wheel);
   }
 
   // To be displayed in Main GUI, to access the GUI
-  private static class GuiComponent implements MainGuiComponent {
+  private static class GuiComponent implements MainGuiComponent, Button.IPressable {
 
     public String getLabel() {
       return "Info items";
     }
 
-    public ActionButton getAction() {
-      return new OpenGuiButton(0, 0, "view", InfoItemGui.class, null);
+    public Widget getAction() {
+      return new OpenGuiButton(0, 0, "view", this);
     }
 
     public MainGuiComponent getChild() {
       return null;
+    }
+
+    public void onPress(Button btn) {
+      if(((OpenGuiButton) btn).isClicked()) {
+        FamilyFunPack.getMainGui().setRightPanel(new InfoItemGui(), ((OpenGuiButton) btn).getId());
+      } else {
+        FamilyFunPack.getMainGui().removeRightPanel();
+      }
     }
   }
 
@@ -248,5 +184,4 @@ public class InfoItemGui extends RightPanel {
   public static MainGuiComponent getMainGuiComponent() {
     return new GuiComponent();
   }
-
 }

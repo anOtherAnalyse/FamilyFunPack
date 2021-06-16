@@ -1,32 +1,36 @@
 package family_fun_pack.gui.components;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import family_fun_pack.FamilyFunPack;
-import family_fun_pack.gui.components.actions.OnOffAction;
 
-@SideOnly(Side.CLIENT)
-public class OnOffButton extends ActionButton {
+@OnlyIn(Dist.CLIENT)
+public class OnOffButton extends Button {
 
   private static final ResourceLocation ON_OFF = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
 
   private boolean state;
-  private OnOffAction action;
+  private int metadata;
 
-  public OnOffButton(int id, int x, int y, OnOffAction action) {
-    super(id, x, y, 16, 7, null);
+  public OnOffButton(int x, int y, Button.IPressable action) {
+    super(x, y, 16, 7, StringTextComponent.EMPTY, action);
     this.state = false;
-    this.action = action;
   }
 
-  public OnOffButton(int x, int y, OnOffAction action) {
-    this(0, x, y, action);
+  public void setMetadata(int data) {
+    this.metadata = data;
+  }
+
+  public int getMetadata() {
+    return this.metadata;
   }
 
   public void setState(boolean state) {
@@ -37,22 +41,18 @@ public class OnOffButton extends ActionButton {
     return this.state;
   }
 
-  public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-		GlStateManager.enableAlpha();
-    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+  public void renderButton(MatrixStack mStack, int mouseX, int mouseY, float partialTicks) {
+    Minecraft mc = Minecraft.getInstance();
+    mc.getTextureManager().bind(OnOffButton.ON_OFF);
+    RenderSystem.enableDepthTest();
 
-    client.getTextureManager().bindTexture(OnOffButton.ON_OFF);
-    int i = 0;
-    if(! this.state) i = this.height;
+    AbstractGui.blit(mStack, this.x, this.y, 0, this.state ? 0 : this.height, this.width, this.height, this.width, this.height * 2);
 
-    Gui.drawModalRectWithCustomSizedTexture(this.x, this.y, 0, i, this.width, this.height, this.width, this.height * 2);
-
-    if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
+    if(! this.active) AbstractGui.fill(mStack, this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
-  public void onClick(GuiScreen parent) {
-    if(! this.enabled) return;
+  public void onPress() {
     this.state = !this.state;
-    if(this.action != null) this.action.toggle(this.state);
+    super.onPress();
   }
 }

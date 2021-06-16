@@ -1,33 +1,33 @@
 package family_fun_pack.gui.components;
 
-import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.audio.SoundHandler;
-import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.util.text.StringTextComponent;
 
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-@SideOnly(Side.CLIENT)
-public class ScrollBar extends GuiButton {
+@OnlyIn(Dist.CLIENT)
+public class ScrollBar extends Widget {
 
   static final int COLOR = 0xffbbbbbb;
 
   public int current_scroll;
-  public boolean clicked;
 
   private int max_scroll;
   private int min_y;
   private int max_y;
 
-  private int offset_y;
+  private double offset_y;
 
-  public ScrollBar(int id, int x, int y, int max_scroll, int max_y) {
-    super(id, x, y, 6, 16, null);
+  public ScrollBar(int x, int y, int max_scroll, int max_y) {
+    super(x, y, 6, 16, StringTextComponent.EMPTY);
     this.max_scroll = max_scroll;
     this.min_y = this.y;
     this.max_y = max_y - this.height;
     this.current_scroll = 0;
-    this.clicked = false;
   }
 
   // Set max scroll, reset scroll bar at start
@@ -35,12 +35,11 @@ public class ScrollBar extends GuiButton {
     this.y = this.min_y;
     this.current_scroll = 0;
     this.max_scroll = max_scroll;
-    this.clicked = false;
   }
 
   // Set max scroll, set current scroll at max scroll
-  public void resetMaxScrollAndScroll(int max_scroll) {
-    if(this.clicked) {
+  public void resetMaxScrollAndScroll(int max_scroll, boolean clicked) {
+    if(clicked) {
       this.maxScrollUpdate(max_scroll);
     } else {
       this.y = this.max_y;
@@ -55,9 +54,7 @@ public class ScrollBar extends GuiButton {
     int old_y = this.y;
     if(max_scroll == 0) this.y = 0;
     else this.y = this.min_y + (int)(((float)this.current_scroll / (float)this.max_scroll) * (float)(this.max_y - this.min_y));
-    if(this.clicked) {
-      this.offset_y -= (this.y - old_y);
-    }
+    this.offset_y -= (this.y - old_y);
   }
 
   public void scroll(int count) {
@@ -65,34 +62,28 @@ public class ScrollBar extends GuiButton {
     if(this.current_scroll < 0) this.current_scroll = 0;
     else if(this.current_scroll > this.max_scroll) this.current_scroll = this.max_scroll;
     this.y = this.min_y + (int)(((float)this.current_scroll / (float)this.max_scroll) * (float)(this.max_y - this.min_y));
-    this.clicked = false;
   }
 
-  public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-    this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
+  public void renderButton(MatrixStack mStack, int mouseX, int mouseY, float partialTicks) {
+    AbstractGui.fill(mStack, this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
   }
 
-  public void dragged(int mouseX, int mouseY) {
-    this.y = mouseY - this.offset_y;
+  public void drag(double mouseX, double mouseY) {
+    this.y = (int) (mouseY - this.offset_y);
     if(this.y < this.min_y) this.y = this.min_y;
     else if(this.y > this.max_y) this.y = this.max_y;
 
     this.current_scroll = (int)(((float)(this.y - this.min_y) / (float)(this.max_y - this.min_y)) * (float)this.max_scroll);
   }
 
-  public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
-    if(super.mousePressed(mc, mouseX, mouseY)) {
-      this.clicked = true;
-      this.offset_y = mouseY - this.y;
-      return true;
-    }
-    return false;
+  public void onClick(double mouseX, double mouseY) {
+    this.offset_y = mouseY - (double) this.y;
   }
 
-  public void mouseReleased(int mouseX, int mouseY) {
-    this.clicked = false;
+  protected void onDrag(double toX, double toY, double motionX, double motionY) {
+    this.drag(toX, toY);
   }
 
-  public void playPressSound(SoundHandler handler) {}
-
+  // No sound for you
+  public void playDownSound(SoundHandler soundHandler) {}
 }
