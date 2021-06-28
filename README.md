@@ -114,7 +114,7 @@ Will create a ghost donkey if your mount does not exist client side (server desy
 ##### Rollback to last teleport position
 ```.rollback``` -> First use is initialization, second performs the rollback
 
-##### Switf steal (steal from container before a tick update)
+##### Swift steal (steal from container before a tick update)
 ```.steal <slot> | <start_slot> <stop_slot>```
 
 ##### Use entity from unloaded chunk

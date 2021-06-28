@@ -17,7 +17,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.MainGuiComponent;
@@ -32,7 +32,7 @@ import family_fun_pack.nbt.SpecialTagCompound;
 @SideOnly(Side.CLIENT)
 public class InfoItemGui extends RightPanel {
 
-  // private static int guiWidth = 320;
+  private static int guiMaxWidth = 480;
   private static int guiHeight = 136;
 
   private int maxLines;
@@ -54,15 +54,15 @@ public class InfoItemGui extends RightPanel {
     super();
     this.inventory = this.mc.player.inventoryContainer;
     this.current_slot = -1;
-    this.tag = new ArrayList<String>();
 
     this.x = MainGui.guiWidth + 16;
     this.y = (MainGui.guiHeight - InfoItemGui.guiHeight) / 2 + 12;
     this.x_end = this.width - 12;
+    if(this.x_end - this.x > InfoItemGui.guiMaxWidth) this.x_end = this.x + InfoItemGui.guiMaxWidth;
     this.y_end = this.y + InfoItemGui.guiHeight;
     this.scroll = new ScrollBar(0, this.x_end - 8, this.y + 20, 0, this.y_end - 2);
     this.previewOpen = null;
-    this.maxLines = ((this.y_end - 2 - (this.y + 21)) / this.fontRenderer.FONT_HEIGHT);
+    this.maxLines = (int) ((float) (InfoItemGui.guiHeight - 23) / ((float) this.fontRenderer.FONT_HEIGHT * 0.7f));
   }
 
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -107,13 +107,19 @@ public class InfoItemGui extends RightPanel {
       this.fontRenderer.drawStringWithShadow(this.title, info_x, this.y + 4, 0xffffffff);
 
       GlStateManager.pushMatrix();
-      float scale = 0.7f;
-      GlStateManager.scale(scale, scale, scale);
-      info_x = (int)(((float)this.x + 89f) / scale);
+      GlStateManager.scale(0.7f, 0.7f, 0.7f);
+      info_x = (int)(((float)this.x + 89f) / 0.7f);
 
-      for(int i = this.scroll.current_scroll; i < (this.scroll.current_scroll + this.maxLines) && i < this.tag.size(); i ++) {
-        info_y = (int)(((float)this.y + 21f + (float)((i - this.scroll.current_scroll) * this.fontRenderer.FONT_HEIGHT)) / scale);
-        this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, 0xffffffff);
+      int i = 0;
+      for(String line : this.tag) {
+        if(i >= this.scroll.current_scroll) {
+          int index = i - this.scroll.current_scroll;
+          if(index >= this.maxLines) break;
+
+          info_y = (int) ((((float)this.y + 21f) / 0.7f) + index * this.fontRenderer.FONT_HEIGHT);
+          this.drawString(this.fontRenderer, this.tag.get(i), info_x, info_y, 0xffffffff);
+        }
+        i ++;
       }
 
       GlStateManager.popMatrix();
@@ -169,27 +175,10 @@ public class InfoItemGui extends RightPanel {
           String tag_string;
           if(tag != null) {
             tag_string = tag.toString().replaceAll("§[0-9A-FK-Oa-fk-orR]", "");
+            tag_string = tag_string.substring(1, tag_string.length() - 1);
           } else tag_string = "Stack has no tag";
 
-          this.tag.clear();
-          this.tag.add(String.format("Damage field: %s%d%s, Tag:", TextFormatting.BLUE, SpecialTagCompound.getStackDamage(stack), TextFormatting.RESET));
-
-          // Divide tag into lines
-          int line_width = this.x_end - this.x - 98;
-          StringBuilder next_line = new StringBuilder();
-          for(int i = 0; i < tag_string.length(); i += 2) {
-            int end = (i + 2 > tag_string.length()) ? tag_string.length() : (i + 2);
-            next_line.append(tag_string.substring(i, end));
-            if((int)((float)this.fontRenderer.getStringWidth(next_line.toString()) * 0.7f) > line_width) {
-              i -= 2;
-              this.tag.add(next_line.substring(0, next_line.length() - 2));
-              next_line = new StringBuilder();
-            }
-          }
-          if(next_line.length() > 0) this.tag.add(next_line.toString());
-
-          if(this.tag.size() > this.maxLines) this.scroll.resetMaxScroll(this.tag.size() - this.maxLines);
-          else this.scroll.resetMaxScroll(0);
+          this.formatTag(String.format("Damage field: %s%d%s, Tag:", TextFormatting.BLUE, SpecialTagCompound.getStackDamage(stack), TextFormatting.RESET), tag_string);
 
           // If shulker tag, had option to preview shulker content
           if(tag != null && tag.hasKey("BlockEntityTag") && tag.getTagId("BlockEntityTag") == 10) {
@@ -209,13 +198,78 @@ public class InfoItemGui extends RightPanel {
 
         } else {
           this.current_slot = -1;
-          this.tag.clear();
+          this.tag = null;
           this.title = null;
           this.previewOpen = null;
         }
         this.mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
       }
     }
+  }
+
+  private void formatTag(String header, String tag) {
+    this.tag = new LinkedList<String>();
+    if(header != null) {
+      this.tag.add(header);
+      this.tag.add("");
+    }
+
+    // Divide tag into lines
+    int line_width = (int) ((float) (this.x_end - this.x - 98) / 0.7f);
+
+    StringBuilder next_line = new StringBuilder();
+
+    int width = 0, shift = 0;
+    boolean in_string = false;
+    char[] arr = tag.toCharArray();
+    for(int i = 0; i < arr.length; i ++) {
+      int cw = this.fontRenderer.getStringWidth(Character.toString(arr[i]));
+
+      if(width + cw >= line_width) {
+        width = this.newLine(next_line, shift);
+      }
+
+      if(arr[i] == '}' && shift > 0 && !in_string) {
+        shift --;
+        width = this.newLine(next_line, shift);
+      }
+
+      next_line.append(arr[i]);
+      width += cw;
+
+      if(in_string) {
+        if(arr[i] == '"' && (i <= 1 || arr[i-1] != '\\' || arr[i-2] != '\\')) in_string = false;
+      } else {
+        switch(arr[i]) {
+          case '{':
+            if(shift < 12) shift ++;
+            width = this.newLine(next_line, shift);
+            break;
+          case '}':
+            if(i + 1 < arr.length && arr[i + 1] != ',' && arr[i + 1] != '}' && arr[i + 1] != ']' && arr[i + 1] != '\'') width = this.newLine(next_line, shift);
+            break;
+          case ',':
+            width = this.newLine(next_line, shift);
+            break;
+          case '"':
+            in_string = true;
+            break;
+        }
+      }
+    }
+    if(next_line.length() > 0) this.tag.add(next_line.toString());
+
+
+    if(this.tag.size() > this.maxLines) this.scroll.resetMaxScroll(this.tag.size() - this.maxLines);
+    else this.scroll.resetMaxScroll(0);
+  }
+
+  private int newLine(StringBuilder next, int shift) {
+    this.tag.add(next.toString());
+    next.delete(0, next.length());
+    if(shift <= 0) return 0;
+    for(int i = 0; i < shift; i ++) next.append("  ");
+    return this.fontRenderer.getStringWidth(next.toString());
   }
 
   public void mouseReleased(int mouseX, int mouseY, int state) {
