@@ -31,7 +31,7 @@ public class MainGui extends GuiScreen {
   public static final int BORDER_COLOR = 0xffbbbbbb;
 
   public static final int guiWidth = 148;
-  public static final int guiHeight = 200;
+  public static final int guiHeight = 216;
 
   private int x, y, x_end, y_end;
 
