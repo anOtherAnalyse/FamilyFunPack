@@ -41,3 +41,7 @@ Manage it with the ```.stalk``` command.
 Don't display gameover GUI when dead, so you can move around. On vanilla servers you can still interact with the environment while being dead.
 
 Use ```.respawn``` to respawn.
+
+##### Bowbomb
+
+One-shot & ultra-fast arrows. Can only be shot horizontally though.
