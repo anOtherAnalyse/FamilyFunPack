@@ -3,6 +3,7 @@ package family_fun_pack.modules;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -45,6 +46,16 @@ public class CommandsModule extends Module {
 
   public boolean displayInGui() {
     return false;
+  }
+
+  public void save(Configuration configuration) {
+    configuration.get(this.name, "escape", ".").set(CommandsModule.ESCAPE_CHARACTER);
+    super.save(configuration);
+  }
+
+  public void load(Configuration configuration) {
+    CommandsModule.ESCAPE_CHARACTER = configuration.get(this.name, "escape", ".").getString().substring(0, 1);
+    super.load(configuration);
   }
 
   @SubscribeEvent
