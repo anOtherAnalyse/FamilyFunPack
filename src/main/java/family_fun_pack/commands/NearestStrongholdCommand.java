@@ -32,7 +32,7 @@ public class NearestStrongholdCommand extends Command {
     Minecraft mc = Minecraft.getMinecraft();
 
     //check if server is 2b2t.org using  Minecraft.getCurrentServerData()
-    if (mc.getCurrentServerData().serverIP.equals("2b2t.org")) {
+    if (mc.getCurrentServerData().serverIP.equals("connect.2b2t.org")) {
       //get stronghold location nearest to player on 2b2t.org
 
       if (mc.player.dimension == 1) return "dont you feel stupid... dont you feel a little ashamed...";
