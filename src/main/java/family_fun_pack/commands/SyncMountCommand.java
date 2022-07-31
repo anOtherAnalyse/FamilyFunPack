@@ -8,6 +8,7 @@ import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketVehicleMove;
 import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -67,13 +68,22 @@ public class SyncMountCommand extends Command implements PacketListener {
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 41, 47);
 
+    Minecraft mc = Minecraft.getMinecraft();
+    Vec3d loc;
+
     if(id == 41) {
       SPacketMoveVehicle move = (SPacketMoveVehicle) packet;
-      FamilyFunPack.printMessage(String.format("Vehicle sync -> (%.2f, %.2f, %.2f)", move.getX(), move.getY(), move.getZ()));
+      loc = new Vec3d(move.getX(), move.getY(), move.getZ());
     } else {
       SPacketPlayerPosLook move = (SPacketPlayerPosLook) packet;
-      FamilyFunPack.printMessage(String.format("Player sync -> (%.2f, %.2f, %.2f)", move.getX(), move.getY(), move.getZ()));
+      loc = new Vec3d(move.getX(), move.getY(), move.getZ());
     }
+
+    if(! this.showDebugInfo()) {
+      loc = loc.subtract(mc.player.posX, mc.player.posY, mc.player.posZ);
+    }
+
+    FamilyFunPack.printMessage(String.format("%s sync -> (%.2f, %.2f, %.2f)", (id == 41 ? "Vehicle" : "Player"), loc.x, loc.y, loc.z));
 
     return packet;
   }

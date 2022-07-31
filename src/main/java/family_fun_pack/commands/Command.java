@@ -3,6 +3,8 @@ package family_fun_pack.commands;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
+import family_fun_pack.FamilyFunPack;
+
 /* A Command */
 
 @SideOnly(Side.CLIENT)
@@ -25,6 +27,11 @@ public abstract class Command {
 
   public String getUsage() {
     return "Usage: " + this.usage();
+  }
+
+  // should some commands leak your coords
+  protected boolean showDebugInfo() {
+    return FamilyFunPack.getModules().getConfiguration().get("commands", "showDebugInfo", true).getBoolean();
   }
 
   // Execute a command

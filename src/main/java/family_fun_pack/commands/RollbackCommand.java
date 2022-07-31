@@ -114,7 +114,8 @@ public class RollbackCommand extends Command implements PacketListener {
 
       if(mode != Mode.TMP) this.onDisconnect();
 
-      return String.format("Rollback to (%.2f, %.2f, %.2f)", this.position.x, this.position.y, this.position.z);
+      Vec3d loc = this.outputedPos();
+      return String.format("Rollback to (%.2f, %.2f, %.2f)", loc.x, loc.y, loc.z);
     }
 
     return "Rollback initialized";
@@ -134,7 +135,9 @@ public class RollbackCommand extends Command implements PacketListener {
 
       if(x != this.position.x || y != this.position.y || z != this.position.z) {
         this.position = new Vec3d(x, y, z);
-        FamilyFunPack.printMessage(String.format("Rollback set to (%.2f, %.2f, %.2f)", this.position.x, this.position.y, this.position.z));
+
+        Vec3d loc = this.outputedPos();
+        FamilyFunPack.printMessage(String.format("Rollback set to (%.2f, %.2f, %.2f)", loc.x, loc.y, loc.z));
       }
 
       this.teleport_id = position.getTeleportId();
@@ -147,6 +150,13 @@ public class RollbackCommand extends Command implements PacketListener {
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 47);
     FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.SERVERBOUND, this, 0);
     this.teleport_id = -1;
+  }
+
+  private Vec3d outputedPos() {
+    if(this.showDebugInfo()) return this.position;
+
+    Minecraft mc = Minecraft.getMinecraft();
+    return this.position.subtract(mc.player.posX, mc.player.posY, mc.player.posZ);
   }
 
   private static enum Mode {SIMPLE, DOUBLE, TMP, YEET};
