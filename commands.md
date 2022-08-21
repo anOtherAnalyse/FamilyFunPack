@@ -129,7 +129,7 @@ Requires dirt & cobblestone blocks in your inventory.
 What is the block at given positions.
 
 ##### Remotely keep a chunk area loaded
-```.load <center_x> <center_y> [radius] | off```
+```.load <center_x> <center_z> [radius] | off```
 
 ```(center_x, center_z)``` are **chunk coords**   (normal coords divided by 16)  
 ```radius``` in number of chunks around center, default 2
