@@ -53,7 +53,7 @@ public class LoadChunkCommand extends Command implements PacketListener {
   }
 
   public String usage() {
-    return this.getName() + " <center_x> <center_y> [radius] | off";
+    return this.getName() + " <center_x> <center_z> [radius] | off";
   }
 
   public String execute(String[] args) {
