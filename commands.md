@@ -141,8 +141,7 @@ Requires dirt & cobblestone blocks in your inventory.
 ```nb_tries``` - maximum number of entity ids to try. Default is 15, to limit packet spamming.
 
 Example
-[https://www.youtube.com/watch?v=FNQC_BvECvA
-](url)
+https://www.youtube.com/watch?v=FNQC_BvECvA
 
 ##### Block at
 ```.at <x> <y> <z>```  
