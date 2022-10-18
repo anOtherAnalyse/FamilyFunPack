@@ -222,11 +222,10 @@ public class SearchSelectionGui extends RightPanel {
     GlStateManager.popMatrix();
 
     // Draw chart
-    int scroll_end = this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed > this.blocks.size() ? this.blocks.size() : this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed;
     int y = 20 + this.y;
     Gui.drawRect(this.x + 4, y - 1, chart_end, y, SearchSelectionGui.INNER_BORDER);
     int i;
-    for(i = this.scroll.current_scroll; i < scroll_end; i ++) {
+    for(i = this.scroll.current_scroll; i < Math.min(this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed, this.blocks.size()); i ++) {
 
       Block block = this.blocks.get(i);
 
