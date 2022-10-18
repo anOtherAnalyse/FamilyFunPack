@@ -47,7 +47,7 @@ public class PumpkinAuraModule extends Module {
         break_ = configuration.get(this.getLabel(), "break", false).getBoolean();
         breakDelay = configuration.get(this.getLabel(), "breakDelay", 5).getInt();
         place = configuration.get(this.getLabel(), "place", false).getBoolean();
-        placeDelay = configuration.get(this.getLabel(), "breakDelay", 5).getInt();
+        placeDelay = configuration.get(this.getLabel(), "placeDelay", 5).getInt();
         super.load(configuration);
     }
 
