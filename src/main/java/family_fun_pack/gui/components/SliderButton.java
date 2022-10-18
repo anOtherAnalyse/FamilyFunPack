@@ -14,7 +14,7 @@ public class SliderButton extends ActionButton {
 
   private static final int BORDER = 0xffcccccc;
   private boolean drag;
-  private int number;
+  private int number, max, min;
 
   private final NumberAction action;
 
@@ -35,6 +35,14 @@ public class SliderButton extends ActionButton {
 
   public int getNumber() {
     return number;
+  }
+
+  public void setMax(int max) {
+    this.max = max;
+  }
+
+  public void setMin(int min) {
+    this.min = min;
   }
 
   public void reset() {
@@ -68,11 +76,15 @@ public class SliderButton extends ActionButton {
   }
 
   public void dragged(int mouseX, int mouseY) {
-    int cursor = (mouseX < this.x ? this.x : (mouseX >= this.x + this.width ? this.x + this.width - 1 : mouseX));
-    int index = (cursor - this.x) * (64 / this.width);
-    if (index > 32) index += (64 / this.width) - 1;
-//    this.number = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-    if (this.action != null) this.action.setNumber(index);
+    /**
+      int cursor = (mouseX < this.x ? this.x : (mouseX >= this.x + this.width ? this.x + this.width - 1 : mouseX));
+      int index = (cursor - this.x) * (64 / this.width);
+      if (index > 32) index += (64 / this.width) - 1;
+      this.number = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
+     */
+    int value = min + ((max - min) * ((mouseX - x) / width));
+    System.out.printf("dragged, mouseX=%s, mouseY=%s, value=%s", mouseX, mouseY, value);
+    if (this.action != null) this.action.setNumber(value);
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {

@@ -147,7 +147,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
     }
 
     public ActionButton getAction() {
-      return new OpenGuiButton(0, 0, "select", PacketsSelectionGui.class, this.dependence);
+      return new OpenGuiButton(0, 0, "packets", PacketsSelectionGui.class, this.dependence);
     }
 
     public MainGuiComponent getChild() {

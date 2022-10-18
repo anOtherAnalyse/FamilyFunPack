@@ -286,11 +286,11 @@ public class InfoItemGui extends RightPanel {
   private static class GuiComponent implements MainGuiComponent {
 
     public String getLabel() {
-      return "Info items";
+      return "Item NBT";
     }
 
     public ActionButton getAction() {
-      return new OpenGuiButton(0, 0, "view", InfoItemGui.class, null);
+      return new OpenGuiButton(0, 0, "inventory", InfoItemGui.class, null);
     }
 
     public MainGuiComponent getChild() {

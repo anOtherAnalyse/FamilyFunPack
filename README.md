@@ -2,7 +2,7 @@
 
 ### Summary
 
-Minecraft 1.12.2 utility mod for anarchy servers, 2b2t - 9b9t. This is not a complete anarchy utility mod, but instead offers a few features that are missing or are improved from what offer others utility mods.
+[FamilyFunPack](https://github.com/anOtherAnalyse/FamilyFunPack) fork for pumpkin pvp, auscpvp.org - 2b2t.org.au
 
 ### Usage
 Use the ```backslash``` key to open the GUI (by default). Change it from Minecraft keybinds options.

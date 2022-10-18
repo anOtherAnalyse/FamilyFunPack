@@ -26,8 +26,8 @@ import family_fun_pack.modules.Module;
 @SideOnly(Side.CLIENT)
 public class PacketsSelectionGui extends RightPanel {
 
-  private static final int guiWidth = 148;
-  private static final int guiHeight = 200;
+  private static final int guiWidth = 160;
+  private static final int guiHeight = 220;
 
   private static final int maxLabelsDisplayed = 16;
 
@@ -87,7 +87,7 @@ public class PacketsSelectionGui extends RightPanel {
     GlStateManager.scale(scale, scale, scale);
     for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < PacketsSelectionGui.maxLabelsDisplayed & i < this.labels.size(); i ++) {
       int decal_y = (int)((float)(this.y + 20 + (i - this.scroll.current_scroll) * 11) / scale);
-      int decal_x = (int)((float)(this.x + 4) / scale);
+      int decal_x = (int)((float)(this.x + 10) / scale);
       this.drawString(this.fontRenderer, this.labels.get(i), decal_x, decal_y, 0xffbbbbbb);
       int border_decal_y = decal_y + (int)(8f / scale);
       Gui.drawRect(decal_x, border_decal_y, (int)(((float)this.x_end - 10f) / scale), border_decal_y + 1, 0xff111133); // Border at end of line

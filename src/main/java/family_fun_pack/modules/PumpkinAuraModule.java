@@ -69,12 +69,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        place();
-    }
-
-    private void place() {
         if (mc.world == null && mc.player == null) return;
-        BlockPos pos = blockPosSupplier.get();
         if (autoSwitch) {
             int slot = -1;
             for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i)
@@ -90,6 +85,12 @@ public class PumpkinAuraModule extends Module implements PacketListener {
                 mc.playerController.updateController();
             }
         }
+        place();
+    }
+
+    private void place() {
+        if (mc.world == null && mc.player == null) return;
+        BlockPos pos = blockPosSupplier.get();
         if (mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) && pos != null) {
             mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
                     pos, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f
@@ -277,7 +278,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         }
 
         public String getLabel() {
-            return "config issue?";
+            return "config issue ?";
         }
 
         public ActionButton getAction() {

@@ -52,7 +52,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
         GlStateManager.scale(scale, scale, scale);
         for (int i = 0; i < this.buttons.size(); i ++) {
             int decal_y = (int)((float)(this.y + 20 + i * 11) / scale);
-            int decal_x = (int)((float)(this.x + 4) / scale);
+            int decal_x = (int)((float)(this.x + 10) / scale);
             this.drawString(this.fontRenderer, this.labels.get(i), decal_x, decal_y, 0xffbbbbbb);
             int border_decal_y = decal_y + (int)(8f / scale);
             Gui.drawRect(decal_x, border_decal_y, (int)(((float)this.x_end - 10f) / scale), border_decal_y + 1, 0xff111133); // Border at end of line
@@ -83,6 +83,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                 if (button instanceof SliderButton) {
                     SliderButton slider = (SliderButton) button;
                     if (slider.mousePressed(this.mc, mouseX, mouseY)) {
+//                        slider.dragged(mouseX, mouseY);
                         slider.onClick(this);
                     }
                 }

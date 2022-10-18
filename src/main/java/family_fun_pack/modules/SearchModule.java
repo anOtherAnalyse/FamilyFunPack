@@ -924,11 +924,11 @@ public class SearchModule extends Module implements PacketListener {
      }
 
      public String getLabel() {
-       return "Search selection";
+       return "which blocks ?";
      }
 
      public ActionButton getAction() {
-       return new OpenGuiButton(0, 0, "open", SearchSelectionGui.class, this.dependence);
+       return new OpenGuiButton(0, 0, "blocks", SearchSelectionGui.class, this.dependence);
      }
 
      public MainGuiComponent getChild() {
