@@ -7,6 +7,7 @@ import family_fun_pack.gui.components.SliderButton;
 import family_fun_pack.modules.Module;
 import family_fun_pack.modules.PumpkinAuraModule;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.renderer.GlStateManager;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class PumpkinAuraSettingsGui extends RightPanel {
 
     private static final int guiWidth = 148;
-    private static final int guiHeight = 200;
+    private static final int guiHeight = 110;
 
     private final int x, y, x_end, y_end;
     private final List<String> labels;
@@ -32,6 +33,10 @@ public class PumpkinAuraSettingsGui extends RightPanel {
 
         this.labels = new ArrayList<>();
         this.buttons = new ArrayList<>();
+
+        GuiLabel title = (new GuiLabel(this.fontRenderer, 0, this.x + 2, this.y + 4, MainGui.guiWidth - 4, 12, MainGui.LABEL_COLOR)).setCentered();
+        title.addLine("Pumpkin Aura");
+        this.labelList.add(title);
 
     }
 
@@ -77,7 +82,6 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                         onOff.onClick(this);
                         onOff.playPressSound(this.mc.getSoundHandler());
                     }
-                    continue;
                 }
 
                 if (button instanceof SliderButton) {
@@ -99,7 +103,6 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                 if (button instanceof OnOffButton) {
                     OnOffButton onOff = (OnOffButton) button;
                     onOff.mouseReleased(mouseX, mouseY);
-                    continue;
                 }
 
                 if (button instanceof SliderButton) {

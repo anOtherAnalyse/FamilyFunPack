@@ -60,14 +60,14 @@ public class CustomLayerElytra implements LayerRenderer<EntityLivingBase> {
     GlStateManager.pushMatrix();
     GlStateManager.translate(0.0F, 0.0F, 0.125F);
 
-    this.modelElytra.setRotationAngles(f1, f2, f4, f5, f6, f7, (Entity)entity);
-    this.modelElytra.render((Entity)entity, f1, f2, f4, f5, f6, f7);
+    this.modelElytra.setRotationAngles(f1, f2, f4, f5, f6, f7, entity);
+    this.modelElytra.render(entity, f1, f2, f4, f5, f6, f7);
 
     NBTTagCompound tag = stack.getTagCompound();
     if(stack.getItemDamage() > stack.getMaxDamage() || (tag != null && tag instanceof SpecialTagCompound)) {
-      CustomLayerBipedArmor.renderEnchantedGlint(this.renderPlayer, entity, (ModelBase)this.modelElytra, f1, f2, f3, f4, f5, f6, f7);
+      CustomLayerBipedArmor.renderEnchantedGlint(this.renderPlayer, entity, this.modelElytra, f1, f2, f3, f4, f5, f6, f7);
     } else if (stack.isItemEnchanted()) {
-      LayerArmorBase.renderEnchantedGlint(this.renderPlayer, entity, (ModelBase)this.modelElytra, f1, f2, f3, f4, f5, f6, f7);
+      LayerArmorBase.renderEnchantedGlint(this.renderPlayer, entity, this.modelElytra, f1, f2, f3, f4, f5, f6, f7);
     }
 
     GlStateManager.disableBlend();

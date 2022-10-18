@@ -1,25 +1,22 @@
 package family_fun_pack.gui.interfaces;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.client.renderer.GlStateManager;
-
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.fml.relauncher.Side;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.io.IOException;
-
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.GenericButton;
 import family_fun_pack.gui.components.OnOffButton;
 import family_fun_pack.gui.components.ScrollBar;
 import family_fun_pack.gui.components.actions.OnOffInterception;
-import family_fun_pack.modules.PacketInterceptionModule;
 import family_fun_pack.modules.Module;
+import family_fun_pack.modules.PacketInterceptionModule;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.network.EnumPacketDirection;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /* GUI for selecting packets to be canceled */
 
@@ -27,14 +24,17 @@ import family_fun_pack.modules.Module;
 public class PacketsSelectionGui extends RightPanel {
 
   private static final int guiWidth = 160;
-  private static final int guiHeight = 220;
+  private static final int guiHeight = 240;
 
-  private static final int maxLabelsDisplayed = 16;
+  private static final int maxLabelsDisplayed = 20;
 
-  private int x, y, x_end, y_end;
+  private final int x;
+  private final int y;
+  private final int x_end;
+  private final int y_end;
 
-  private List<String> labels;
-  private List<OnOffButton> enableList;
+  private final List<String> labels;
+  private final List<OnOffButton> enableList;
 
   private ScrollBar scroll;
 
@@ -52,10 +52,10 @@ public class PacketsSelectionGui extends RightPanel {
     this.labels = new ArrayList<String>();
     this.enableList = new ArrayList<OnOffButton>();
 
-    GenericButton selection = new GenericButton(1, this.x + 2, this.y + 4, "Emitted") {
+    GenericButton selection = new GenericButton(1, this.x + 2, this.y + 4, "Outgoing") {
       public void onClick(GuiScreen parent) {
-        if(this.displayString.equals("Emitted")) this.displayString = "Received";
-        else this.displayString = "Emitted";
+        if (this.displayString.equals("Outgoing")) this.displayString = "Incoming";
+        else this.displayString = "Outgoing";
         this.width = this.fontRenderer.getStringWidth(this.displayString) + 4;
         this.x = PacketsSelectionGui.this.x + (PacketsSelectionGui.guiWidth / 2) - (this.width / 2);
         PacketsSelectionGui.this.switchDirection();

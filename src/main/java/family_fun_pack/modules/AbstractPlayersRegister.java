@@ -143,11 +143,11 @@ public abstract class AbstractPlayersRegister extends Module {
       AbstractPlayersRegister.REPOSITORY.findProfilesByNames(new String[] {this.player_name}, Agent.MINECRAFT, new LookupCallback(this));
     }
 
-    public static enum Action {ADD, DEL, INV};
+    public enum Action {ADD, DEL, INV}
 
     private static class LookupCallback implements ProfileLookupCallback {
 
-      private LookupThread thread;
+      private final LookupThread thread;
 
       public LookupCallback(LookupThread thread) {
         this.thread = thread;

@@ -54,7 +54,7 @@ public class TrackCommand extends Command implements PacketListener {
   private long last_sent;
 
   private int window;
-  private ReadWriteLock window_lock;
+  private final ReadWriteLock window_lock;
 
   public LinkedList<ChunkPos> loaded;
   public ReadWriteLock loaded_lock;
@@ -67,7 +67,7 @@ public class TrackCommand extends Command implements PacketListener {
   /* Operating mode */
   private Mode mode;
   public Mode effective_mode;
-  private ReadWriteLock mode_lock;
+  private final ReadWriteLock mode_lock;
 
   private ScanParameters save;
 
@@ -295,7 +295,7 @@ public class TrackCommand extends Command implements PacketListener {
           this.loaded_lock.writeLock().unlock();
 
           this.effective_mode = Mode.TRACK;
-          this.last_sent = 0l;
+          this.last_sent = 0L;
         }
 
         packet = null;
@@ -434,12 +434,12 @@ public class TrackCommand extends Command implements PacketListener {
   }
 
   // Operating mode
-  public static enum Mode {SCAN, TRACK, TRACK_SCAN};
+  public enum Mode {SCAN, TRACK, TRACK_SCAN}
 
   // Forge event listener used to open radar GUI
   private static class GuiOpener {
 
-    private RadarInterface gui;
+    private final RadarInterface gui;
 
     public GuiOpener(RadarInterface gui) {
       this.gui = gui;

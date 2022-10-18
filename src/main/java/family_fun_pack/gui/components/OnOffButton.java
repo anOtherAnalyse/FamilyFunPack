@@ -17,7 +17,7 @@ public class OnOffButton extends ActionButton {
   private static final ResourceLocation ON_OFF = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/on_off.png");
 
   private boolean state;
-  private OnOffAction action;
+  private final OnOffAction action;
 
   public OnOffButton(int id, int x, int y, OnOffAction action) {
     super(id, x, y, 16, 7, null);
@@ -48,7 +48,7 @@ public class OnOffButton extends ActionButton {
 
     Gui.drawModalRectWithCustomSizedTexture(this.x, this.y, 0, i, this.width, this.height, this.width, this.height * 2);
 
-    if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
+    if(! this.enabled) drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
   public void onClick(GuiScreen parent) {

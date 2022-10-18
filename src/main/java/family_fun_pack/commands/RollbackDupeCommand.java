@@ -41,7 +41,7 @@ public class RollbackDupeCommand extends Command {
 
       if(! on) { // init
 
-        List<AbstractHorse> horses = mc.player.world.<AbstractHorse>getEntitiesWithinAABB(AbstractHorse.class, mc.player.getEntityBoundingBox().grow(6.0D, 2.0D, 6.0D));
+        List<AbstractHorse> horses = mc.player.world.getEntitiesWithinAABB(AbstractHorse.class, mc.player.getEntityBoundingBox().grow(6.0D, 2.0D, 6.0D));
         if(horses.size() == 0) return "where's your ride ?";
 
         Entity ride = horses.get(0);
@@ -60,7 +60,7 @@ public class RollbackDupeCommand extends Command {
         this.on = true;
       } else { // exec
 
-        List<AbstractChestHorse> donkeys = mc.player.world.<AbstractChestHorse>getEntitiesWithinAABB(AbstractChestHorse.class, mc.player.getEntityBoundingBox().grow(6.0D, 2.0D, 6.0D));
+        List<AbstractChestHorse> donkeys = mc.player.world.getEntitiesWithinAABB(AbstractChestHorse.class, mc.player.getEntityBoundingBox().grow(6.0D, 2.0D, 6.0D));
 
         Entity ddonkey = null;
         for(AbstractChestHorse c : donkeys) {

@@ -22,20 +22,17 @@ public class NumberPumpkinAura implements NumberAction {
     switch (id) {
       case 2: {
 //        module.placeRange = number;
-        System.out.printf("placeRange=%s", number);
         break;
       }
       case 3: {
 //        module.minDamage = number;
-        System.out.printf("minDamage=%s", number);
         break;
       }
       case 4: {
 //        module.maxDamage = number;
-        System.out.printf("maxDamage=%s", number);
         break;
       }
     }
-    module.save();
+//    module.save();
   }
 }

@@ -1,6 +1,7 @@
 package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -18,7 +19,7 @@ public class ColorButton extends GuiButton {
   private int color;
   private boolean drag;
 
-  private NumberAction action;
+  private final NumberAction action;
 
   public ColorButton(int id, int x, int y, NumberAction action) {
     super(id, x, y, 32, 7, null);
@@ -51,17 +52,17 @@ public class ColorButton extends GuiButton {
     if(this.drag) this.dragged(mouseX, mouseY);
 
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-    this.drawRect(this.x, this.y, x_end, y_end, this.getColor());
-    this.drawRect(this.x, this.y, x_end, this.y + 1, ColorButton.BORDER);
-    this.drawRect(this.x, this.y, this.x + 1, y_end, ColorButton.BORDER);
-    this.drawRect(this.x, y_end - 1, x_end, y_end, ColorButton.BORDER);
-    this.drawRect(x_end - 1, this.y, x_end, y_end, ColorButton.BORDER);
+    drawRect(this.x, this.y, x_end, y_end, this.getColor());
+    drawRect(this.x, this.y, x_end, this.y + 1, ColorButton.BORDER);
+    drawRect(this.x, this.y, this.x + 1, y_end, ColorButton.BORDER);
+    drawRect(this.x, y_end - 1, x_end, y_end, ColorButton.BORDER);
+    drawRect(x_end - 1, this.y, x_end, y_end, ColorButton.BORDER);
 
     int index = (((this.color & 0xff) / 85) + ((((this.color >> 8) & 0xff) / 85) * 4) + ((((this.color >> 16) & 0xff) / 85) * 16)) / (64 / this.width);
-    this.drawRect(this.x + index, this.y - 2, this.x + index + 1, y_end + 2, ColorButton.BORDER);
-    this.drawRect(this.x + index - 1, this.y, this.x + index + 2, y_end, ColorButton.BORDER);
+    drawRect(this.x + index, this.y - 2, this.x + index + 1, y_end + 2, ColorButton.BORDER);
+    drawRect(this.x + index - 1, this.y, this.x + index + 2, y_end, ColorButton.BORDER);
 
-    if(! this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
+    if(! this.enabled) drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
   public void dragged(int mouseX, int mouseY) {

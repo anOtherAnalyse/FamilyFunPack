@@ -62,7 +62,7 @@ public class NearestStrongholdCommand extends Command {
 
       WorldProvider provider = new WorldProviderSurface();
 
-      WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211l, GameType.SURVIVAL, true, false, WorldType.DEFAULT), "tmp");
+      WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211L, GameType.SURVIVAL, true, false, WorldType.DEFAULT), "tmp");
 
       FakeWorld fake = new FakeWorld(null, info, provider);
       provider.setWorld(fake);

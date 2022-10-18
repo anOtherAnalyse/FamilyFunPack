@@ -10,8 +10,10 @@ import family_fun_pack.gui.components.actions.NumberPumpkinAura;
 import family_fun_pack.gui.components.actions.OnOffPumpkinAura;
 import family_fun_pack.gui.interfaces.PumpkinAuraSettingsGui;
 import family_fun_pack.network.PacketListener;
+import family_fun_pack.utils.Timer;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -25,6 +27,7 @@ import net.minecraft.network.play.client.CPacketHeldItemChange;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.server.SPacketEntityStatus;
 import net.minecraft.network.play.server.SPacketExplosion;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -34,10 +37,13 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Explosion;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
@@ -45,16 +51,25 @@ import java.util.stream.Collectors;
 
 public class PumpkinAuraModule extends Module implements PacketListener {
     private final Minecraft mc = Minecraft.getMinecraft();
+    private final HashMap<EntityPlayer, PopCounter> popMap = new HashMap<>();
+
+    private final Timer timer = new Timer();;
     public int placeRange;
+
+    public int placeDelay;
     public int minDamage;
     public int maxDamage;
     public boolean autoSwitch;
     public boolean sequential;
-
+    public boolean antiTotem;
+    public boolean multiPlace;
     private BlockPos lastPos;
+    private BlockPos renderPos;
 
     public PumpkinAuraModule() {
-        super("PumpkinAura", "Pumpkin PvP module for auscpvp.org/2b2t.org.au");
+        super("Pumpkin Aura", "Pumpkin PvP module for auscpvp.org/2b2t.org.au");
+        FamilyFunPack.addModuleKey(0, this);
+        timer.reset();
     }
 
     @Override
@@ -85,28 +100,60 @@ public class PumpkinAuraModule extends Module implements PacketListener {
                 mc.playerController.updateController();
             }
         }
-        place();
+        place(false);
     }
 
-    private void place() {
+    private void place(boolean sequential) {
         if (mc.world == null && mc.player == null) return;
         BlockPos pos = blockPosSupplier.get();
-        if (mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) && pos != null) {
-            mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
-                    pos, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f
-            ));
-            lastPos = pos;
+        handlePlacing(pos, sequential);
+    }
+
+    private void handlePlacing(BlockPos pos, boolean sequential) {
+        final EnumHand hand = mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.MAIN_HAND
+                : mc.player.getHeldItemOffhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.OFF_HAND : null;
+        if (hand != null && pos != null) {
+            if (timer.passed(placeDelay * 1000L)) {
+                mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
+                        pos, EnumFacing.UP, hand, 0f, 0f, 0f
+                ));
+
+                if (!sequential) {
+                    lastPos = pos;
+                }
+
+                timer.reset();
+            }
         }
+    }
+
+    public boolean isDoublePoppable(EntityPlayer player, float damage) {
+        if (antiTotem && this.popMap.get(player) != null) {
+            final PopCounter popCounter = this.popMap.get(player);
+            final float playerHealth = player.getHealth() + player.getAbsorptionAmount();
+            return popCounter.timer.passed(500L) && playerHealth - damage <= 0.0F;
+        }
+
+        return true;
     }
 
     @Override
     public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
-        SPacketExplosion explosion = (SPacketExplosion) packet;
+        if (mc.world == null) return packet;
 
-        if (explosion != null && sequential) {
+        if (packet instanceof SPacketExplosion && sequential) {
+            SPacketExplosion explosion = (SPacketExplosion) packet;
             BlockPos pos = new BlockPos(explosion.getX(), explosion.getY(), explosion.getZ());
             if (pos.equals(this.lastPos)) {
-                place();
+                place(true);
+            }
+        }
+
+        if (packet instanceof SPacketEntityStatus) {
+            SPacketEntityStatus totemPop = (SPacketEntityStatus) packet;
+            Entity entity = totemPop.getEntity(mc.world);
+            if (entity instanceof EntityPlayer) {
+                this.popMap.computeIfAbsent((EntityPlayer) entity, v -> new PopCounter()).pop();
             }
         }
 
@@ -123,12 +170,16 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             for (BlockPos pos : possiblePlacePositions(placeRange, true)) {
                 float damage = calculateToastShitfuckerooPumpkin(pos.getX(), pos.getY() + 1, pos.getZ(), player);
                 float selfDamage = calculateToastShitfuckerooPumpkin(pos.getX(), pos.getY() + 1, pos.getZ(), mc.player);
-                if (damage > minDamage && damage > lastDamage && selfDamage < maxDamage) {
+                if (damage > minDamage && damage > lastDamage && selfDamage < maxDamage && isDoublePoppable(player, damage)) {
                     placePos = pos;
                     lastDamage = damage;
+                    if (multiPlace) {
+                        handlePlacing(placePos, false);
+                    }
                 }
             }
         }
+        renderPos = placePos;
         return placePos;
     });
 
@@ -236,37 +287,68 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     }
     @Override
     public void save(Configuration configuration) {
+        configuration.get(this.getLabel(), "multiPlace", true).set(multiPlace);
+        configuration.get(this.getLabel(), "antiTotem", true).set(antiTotem);
+        configuration.get(this.getLabel(), "autoSwitch", false).set(autoSwitch);
         configuration.get(this.getLabel(), "sequential", true).set(sequential);
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
+        configuration.get(this.getLabel(), "placeDelay", 1).set(placeDelay);
         configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
-        configuration.get(this.getLabel(), "autoSwitch", false).set(autoSwitch);
         super.save(configuration);
     }
 
     @Override
     public void load(Configuration configuration) {
+        multiPlace = configuration.get(this.getLabel(), "multiPlace", true).getBoolean();
+        antiTotem = configuration.get(this.getLabel(), "antiTotem", true).getBoolean();
+        autoSwitch = configuration.get(this.getLabel(), "autoSwitch", false).getBoolean();
         sequential = configuration.get(this.getLabel(), "sequential", true).getBoolean();
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
+        placeDelay = configuration.get(this.getLabel(), "placeDelay", 1).getInt();
         minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
-        autoSwitch = configuration.get(this.getLabel(), "autoSwitch", false).getBoolean();
         super.load(configuration);
     }
 
     public LinkedHashMap<String, ActionButton> getSettings() {
         load(FamilyFunPack.getModules().getConfiguration());
         LinkedHashMap<String, ActionButton> buttonMap = new LinkedHashMap<>();
+        buttonMap.put("MultiPlace", new OnOffButton(-2, 0, 0, new OnOffPumpkinAura(this, -2)).setState(multiPlace));
+        buttonMap.put("AntiTotem", new OnOffButton(-1, 0, 0, new OnOffPumpkinAura(this, -1)).setState(antiTotem));
         buttonMap.put("AutoSwitch", new OnOffButton(0, 0, 0, new OnOffPumpkinAura(this, 0)).setState(autoSwitch));
         buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)).setState(sequential));
-        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setNumber(placeRange));
-        buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)).setNumber(minDamage));
-        buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)).setNumber(maxDamage));
+        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setValue(placeRange).setMin(1).setMax(6));
+        buttonMap.put("PlaceDelay", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)).setValue(placeDelay).setMin(0).setMax(10));
+        buttonMap.put("MinDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)).setValue(minDamage).setMin(0).setMax(36));
+        buttonMap.put("MaxDamage", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 5)).setValue(maxDamage).setMin(0).setMax(36));
         return buttonMap;
     }
 
     public void save() {
         save(FamilyFunPack.getModules().getConfiguration());
+    }
+
+    private static class PopCounter {
+        private final Timer timer = new Timer();
+        private int pops;
+
+        public int getPops() {
+            return pops;
+        }
+
+        public void pop() {
+            timer.reset();
+            pops++;
+        }
+
+        public void reset() {
+            pops = 0;
+        }
+
+        public long lastPop() {
+            return timer.getTime();
+        }
     }
 
     private static class SettingsGui implements MainGuiComponent {

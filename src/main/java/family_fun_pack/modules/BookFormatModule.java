@@ -25,7 +25,7 @@ public class BookFormatModule extends Module {
   private Field book_signed;
 
   public BookFormatModule() {
-    super("Book format", "Special book editing gui");
+    super("Book Format", "Special book editing gui");
 
     // Get access to book field of GuiScreenBook
     Class<GuiScreenBook> screenBook = GuiScreenBook.class;

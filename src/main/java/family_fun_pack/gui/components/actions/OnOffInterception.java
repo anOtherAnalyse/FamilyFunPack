@@ -9,9 +9,9 @@ import family_fun_pack.modules.PacketInterceptionModule;
 @SideOnly(Side.CLIENT)
 public class OnOffInterception implements OnOffAction {
 
-  private PacketInterceptionModule module;
-  private EnumPacketDirection direction;
-  private int id;
+  private final PacketInterceptionModule module;
+  private final EnumPacketDirection direction;
+  private final int id;
 
   public OnOffInterception(PacketInterceptionModule module, EnumPacketDirection direction, int id) {
     this.module = module;

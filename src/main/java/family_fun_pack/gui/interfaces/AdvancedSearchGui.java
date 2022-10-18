@@ -37,7 +37,10 @@ public class AdvancedSearchGui extends RightPanel {
   private static final int guiHeight = 200;
 
   // Interface dimensions
-  private int x, y, x_end, y_end;
+  private final int x;
+  private final int y;
+  private final int x_end;
+  private final int y_end;
 
   // Currently displayed states
   private IBlockState display_state;
@@ -49,15 +52,15 @@ public class AdvancedSearchGui extends RightPanel {
   private int current_preset;
 
   // Interface buttons
-  private OnOffButton tracer;
-  private ColorButton color;
+  private final OnOffButton tracer;
+  private final ColorButton color;
 
-  private ArrowButton left_arrow;
-  private ArrowButton right_arrow;
+  private final ArrowButton left_arrow;
+  private final ArrowButton right_arrow;
 
-  private GenericButton add;
-  private GenericButton update;
-  private GenericButton remove;
+  private final GenericButton add;
+  private final GenericButton update;
+  private final GenericButton remove;
 
   public AdvancedSearchGui() {
     super();
@@ -152,7 +155,7 @@ public class AdvancedSearchGui extends RightPanel {
         case 3: // NBTTagInt
           if(key.length() <= 1) continue;
           path.add(key);
-          this.buttonList.add(new SelectButton(2, this.x_end - 40, y + 1, path, (int)(tag.getShort(key))));
+          this.buttonList.add(new SelectButton(2, this.x_end - 40, y + 1, path, tag.getShort(key)));
           path.remove(path.size() - 1);
           break;
         case 8: // NBTTagString
@@ -224,7 +227,7 @@ public class AdvancedSearchGui extends RightPanel {
     // Title
     String label = null;
     if(this.current_preset == 0) label = "New preset";
-    else label = "Preset " + Integer.toString(this.current_preset);
+    else label = "Preset " + this.current_preset;
     this.drawString(this.fontRenderer, label, this.x + ((AdvancedSearchGui.guiWidth - this.fontRenderer.getStringWidth(label)) / 2), this.y + 6, 0xffeeeeee);
 
     this.left_arrow.enabled = (this.preset_count > 0);
@@ -239,7 +242,7 @@ public class AdvancedSearchGui extends RightPanel {
 
     // Number of preset
     if(this.preset_count > 0) {
-      label = Integer.toString(this.current_preset) + "/" + Integer.toString(this.preset_count);
+      label = this.current_preset + "/" + this.preset_count;
       this.drawString(this.fontRenderer, label, this.x + ((AdvancedSearchGui.guiWidth - this.fontRenderer.getStringWidth(label)) / 2), this.y_end - 12, 0xffffffff);
     }
 

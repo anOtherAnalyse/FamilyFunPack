@@ -52,10 +52,10 @@ public class DiffCommand extends Command implements PacketListener {
         }
       }
       if(add) {
-        FamilyFunPack.printMessage("No additional players over " + Integer.toString(completion.getMatches().length) + " players");
+        FamilyFunPack.printMessage("No additional players over " + completion.getMatches().length + " players");
       } else {
         int total_tab = handler.getPlayerInfoMap().size();
-        FamilyFunPack.printMessage("Board contains [" + Integer.toString(total_tab) + "/" + Integer.toString(completion.getMatches().length) + "] players");
+        FamilyFunPack.printMessage("Board contains [" + total_tab + "/" + completion.getMatches().length + "] players");
       }
     }
     return null;

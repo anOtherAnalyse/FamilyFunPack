@@ -62,7 +62,7 @@ public class FakeWorld extends World {
   }
 
   public long getTotalWorldTime() {
-    if(this.worldInfo == null) return 0l;
+    if(this.worldInfo == null) return 0L;
     return super.getTotalWorldTime();
   }
 

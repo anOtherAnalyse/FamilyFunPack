@@ -2,6 +2,7 @@ package family_fun_pack.gui.components;
 
 import family_fun_pack.gui.components.actions.NumberAction;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.Side;
@@ -14,7 +15,7 @@ public class SliderButton extends ActionButton {
 
   private static final int BORDER = 0xffcccccc;
   private boolean drag;
-  private int number, max, min;
+  private int number, max, min, value;
 
   private final NumberAction action;
 
@@ -28,21 +29,19 @@ public class SliderButton extends ActionButton {
     this(0, x, y, action);
   }
 
-  public SliderButton setNumber(int number) {
-    this.number = number;
+  public SliderButton setValue(int value) {
+    this.value = value;
     return this;
   }
 
-  public int getNumber() {
-    return number;
-  }
-
-  public void setMax(int max) {
+  public SliderButton setMax(int max) {
     this.max = max;
+    return this;
   }
 
-  public void setMin(int min) {
+  public SliderButton setMin(int min) {
     this.min = min;
+    return this;
   }
 
   public void reset() {
@@ -58,32 +57,29 @@ public class SliderButton extends ActionButton {
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     this.drawString(
             mc.fontRenderer,
-            String.valueOf(number),
-            this.x - (mc.fontRenderer.getStringWidth(String.valueOf(number)) + 8),
+            String.valueOf(value),
+            this.x - (mc.fontRenderer.getStringWidth(String.valueOf(value)) + 8),
             this.y,
             Color.WHITE.getRGB());
-    this.drawRect(this.x, this.y, x_end, y_end, Color.DARK_GRAY.getRGB());
-    this.drawRect(this.x, this.y, x_end, this.y + 1, SliderButton.BORDER);
-    this.drawRect(this.x, this.y, this.x + 1, y_end, SliderButton.BORDER);
-    this.drawRect(this.x, y_end - 1, x_end, y_end, SliderButton.BORDER);
-    this.drawRect(x_end - 1, this.y, x_end, y_end, SliderButton.BORDER);
+    drawRect(this.x, this.y, x_end, y_end, Color.DARK_GRAY.getRGB());
+    drawRect(this.x, this.y, x_end, this.y + 1, SliderButton.BORDER);
+    drawRect(this.x, this.y, this.x + 1, y_end, SliderButton.BORDER);
+    drawRect(this.x, y_end - 1, x_end, y_end, SliderButton.BORDER);
+    drawRect(x_end - 1, this.y, x_end, y_end, SliderButton.BORDER);
 
     int index = (((this.number & 0xff) / 85) + ((((this.number >> 8) & 0xff) / 85) * 4) + ((((this.number >> 16) & 0xff) / 85) * 16)) / (64 / this.width);
-    this.drawRect(this.x + index, this.y - 2, this.x + index + 1, y_end + 2, SliderButton.BORDER);
-    this.drawRect(this.x + index - 1, this.y, this.x + index + 2, y_end, SliderButton.BORDER);
+    drawRect(this.x + index, this.y - 2, this.x + index + 1, y_end + 2, SliderButton.BORDER);
+    drawRect(this.x + index - 1, this.y, this.x + index + 2, y_end, SliderButton.BORDER);
 
-    if(!this.enabled) this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
+    if(!this.enabled) drawRect(this.x, this.y, this.x + this.width, this.y + this.height, 0x99333333);
   }
 
   public void dragged(int mouseX, int mouseY) {
-    /**
-      int cursor = (mouseX < this.x ? this.x : (mouseX >= this.x + this.width ? this.x + this.width - 1 : mouseX));
-      int index = (cursor - this.x) * (64 / this.width);
-      if (index > 32) index += (64 / this.width) - 1;
-      this.number = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-     */
-    int value = min + ((max - min) * ((mouseX - x) / width));
-    System.out.printf("dragged, mouseX=%s, mouseY=%s, value=%s", mouseX, mouseY, value);
+    int cursor = (mouseX < this.x ? this.x : (mouseX >= this.x + this.width ? this.x + this.width - 1 : mouseX));
+    int index = (cursor - this.x) * (64 / this.width);
+    if (index > 32) index += (64 / this.width) - 1;
+    this.number = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
+    this.value = min + ((max - min) * ((cursor - x) / width));
     if (this.action != null) this.action.setNumber(value);
   }
 

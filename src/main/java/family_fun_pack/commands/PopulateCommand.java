@@ -33,9 +33,9 @@ public class PopulateCommand extends Command implements PacketListener {
 
   private long last_send;
 
-  private BlockPos[] window;
+  private final BlockPos[] window;
   private int completed;
-  private ReadWriteLock window_lock;
+  private final ReadWriteLock window_lock;
 
   private boolean enabled;
 

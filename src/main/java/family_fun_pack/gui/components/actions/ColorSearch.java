@@ -9,9 +9,9 @@ import family_fun_pack.modules.SearchModule;
 @SideOnly(Side.CLIENT)
 public class ColorSearch implements NumberAction {
 
-  private SearchModule module;
+  private final SearchModule module;
 
-  private Block block;
+  private final Block block;
 
   public ColorSearch(SearchModule module, Block block) {
     this.module = module;

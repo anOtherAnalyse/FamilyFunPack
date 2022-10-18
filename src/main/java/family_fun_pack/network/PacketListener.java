@@ -12,6 +12,6 @@ import io.netty.buffer.ByteBuf;
 @SideOnly(Side.CLIENT)
 public interface PacketListener {
 
-  public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in);
+  Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in);
 
 }

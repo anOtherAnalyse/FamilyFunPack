@@ -25,12 +25,12 @@ public class OverlayGui extends Gui {
   private static final float OVERLAY_SCALE = 0.7f;
   private static int counter = 0;
 
-  private FontRenderer fontRenderer;
+  private final FontRenderer fontRenderer;
 
-  private Map<Integer, String> labels;
-  private ReadWriteLock labels_lock;
+  private final Map<Integer, String> labels;
+  private final ReadWriteLock labels_lock;
 
-  private int height;
+  private final int height;
 
   public OverlayGui() {
     this.zLevel = 1;
@@ -53,11 +53,11 @@ public class OverlayGui extends Gui {
       GlStateManager.pushMatrix();
       GlStateManager.scale(OverlayGui.OVERLAY_SCALE, OverlayGui.OVERLAY_SCALE, OverlayGui.OVERLAY_SCALE);
 
-      this.drawRect(x1, y1, x_end, y_end, MainGui.BACKGROUND_COLOR);
-      this.drawRect(x1, y1, x_end, y1 + 1, OverlayGui.BORDER);
-      this.drawRect(x1, y1, x1 + 1, y_end, OverlayGui.BORDER);
-      this.drawRect(x1, y_end - 1, x_end, y_end, OverlayGui.BORDER);
-      this.drawRect(x_end - 1, y1, x_end, y_end, OverlayGui.BORDER);
+      drawRect(x1, y1, x_end, y_end, MainGui.BACKGROUND_COLOR);
+      drawRect(x1, y1, x_end, y1 + 1, OverlayGui.BORDER);
+      drawRect(x1, y1, x1 + 1, y_end, OverlayGui.BORDER);
+      drawRect(x1, y_end - 1, x_end, y_end, OverlayGui.BORDER);
+      drawRect(x_end - 1, y1, x_end, y_end, OverlayGui.BORDER);
       this.drawString(this.fontRenderer, l, x1 + 2, y1 + 2, 0xffffffff);
 
       GlStateManager.popMatrix();

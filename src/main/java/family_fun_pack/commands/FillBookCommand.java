@@ -67,7 +67,7 @@ public class FillBookCommand extends Command implements PacketListener {
       FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 22);
 
       FamilyFunPack.getNetworkHandler().sendPacket(new CPacketCustomPayload(sign ? "MC|BSign" : "MC|BEdit", data));
-      return Integer.toString(data.writerIndex()) + " bytes written to book";
+      return data.writerIndex() + " bytes written to book";
     }
     return "Please hold a writable book";
   }
@@ -85,7 +85,7 @@ public class FillBookCommand extends Command implements PacketListener {
         return packet;
       }
       size = buff.readerIndex() - size;
-      FamilyFunPack.printMessage("Server recorded " + Integer.toString(size) + " bytes");
+      FamilyFunPack.printMessage("Server recorded " + size + " bytes");
     }
     return packet;
   }

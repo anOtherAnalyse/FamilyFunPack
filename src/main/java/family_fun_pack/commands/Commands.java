@@ -11,7 +11,7 @@ import java.util.Map;
 
 @SideOnly(Side.CLIENT)
 public class Commands {
-  private Map<String, Command> commands;
+  private final Map<String, Command> commands;
 
   /* I'm too lazy to develop interfaces so let's add a lot of commands */
 

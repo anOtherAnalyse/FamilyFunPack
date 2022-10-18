@@ -112,5 +112,5 @@ public class UseCommand extends Command {
     return ret;
   }
 
-  public static enum Mode {BLOCK, ENTITY};
+  public enum Mode {BLOCK, ENTITY}
 }

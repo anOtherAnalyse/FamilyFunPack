@@ -27,7 +27,7 @@ public class VoidMountCommand extends Command {
         ((AbstractChestHorse) entity).setChested(true);
 
         if(entity instanceof EntityLlama) {
-          ((EntityLlama) entity).getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf(3));
+          entity.getDataManager().set(new DataParameter(16, DataSerializers.VARINT), Integer.valueOf(3));
         }
       }
     }

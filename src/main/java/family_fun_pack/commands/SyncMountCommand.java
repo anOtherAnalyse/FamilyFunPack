@@ -41,9 +41,9 @@ public class SyncMountCommand extends Command implements PacketListener {
 
     if(args.length > 3) {
       try {
-        x = (double) Integer.parseInt(args[1]);
-        y = (double) Integer.parseInt(args[2]);
-        z = (double) Integer.parseInt(args[3]);
+        x = Integer.parseInt(args[1]);
+        y = Integer.parseInt(args[2]);
+        z = Integer.parseInt(args[3]);
       } catch(NumberFormatException e) {
         return this.getUsage();
       }

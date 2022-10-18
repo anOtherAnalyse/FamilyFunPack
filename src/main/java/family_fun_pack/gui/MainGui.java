@@ -31,14 +31,14 @@ public class MainGui extends GuiScreen {
   public static final int BORDER_COLOR = 0xffbbbbbb;
 
   public static final int guiWidth = 150;
-  public static final int guiHeight = 240;
+  public static final int guiHeight = 238;
 
   private int x, y, x_end, y_end;
 
   private int exitKey;
 
   // List of lines in the GUI (label + button)
-  private List<MainGuiComponent> lines;
+  private final List<MainGuiComponent> lines;
 
   private RightPanel right_panel; // GUI right panel
   private int current_button; // Current clicked button index
@@ -47,7 +47,7 @@ public class MainGui extends GuiScreen {
     this.lines = new ArrayList<>();
     for(Module i : modules.getModules()) {
       if(i.displayInGui()) {
-        this.lines.add((MainGuiComponent) i);
+        this.lines.add(i);
         MainGuiComponent child = i.getChild();
         if(child != null) this.lines.add(child);
       }
@@ -90,7 +90,7 @@ public class MainGui extends GuiScreen {
       this.labelList.add(label);
 
       // Button
-      GuiButton button = (GuiButton)line.getAction();
+      GuiButton button = line.getAction();
       button.id = i;
       button.x = this.x_end - 6 - button.width;
       button.y = y + 2;
@@ -123,7 +123,7 @@ public class MainGui extends GuiScreen {
       }
 
       ActionButton action = (ActionButton) button;
-      action.onClick((GuiScreen) this);
+      action.onClick(this);
     }
   }
 

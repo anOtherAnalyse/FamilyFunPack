@@ -13,9 +13,9 @@ import java.util.ArrayList;
 @SideOnly(Side.CLIENT)
 public class Modules {
 
-  private List<Module> modules;
+  private final List<Module> modules;
 
-  private Configuration configuration;
+  private final Configuration configuration;
 
   public Modules(File configuration_file) {
 

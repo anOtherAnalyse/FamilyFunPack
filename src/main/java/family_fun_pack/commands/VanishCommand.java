@@ -55,7 +55,7 @@ public class VanishCommand extends Command implements PacketListener {
                 mc.world.spawnEntity(this.ride);
                 mc.player.startRiding(this.ride, true);
                 if(mc.player.isRiding())
-                  ret = "Entity " + Integer.toString(this.ride.hashCode()) + " remounted";
+                  ret = "Entity " + this.ride.hashCode() + " remounted";
                 else
                   ret = "Could not remount";
               }

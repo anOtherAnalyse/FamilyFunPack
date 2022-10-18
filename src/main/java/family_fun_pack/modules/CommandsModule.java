@@ -19,7 +19,7 @@ public class CommandsModule extends Module {
 
   private static String ESCAPE_CHARACTER = ".";
 
-  private Commands commands;
+  private final Commands commands;
 
   public CommandsModule() {
     super("FFP Commands", "Enable Family Fun Pack commands");

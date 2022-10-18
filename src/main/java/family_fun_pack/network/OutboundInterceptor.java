@@ -20,7 +20,7 @@ import java.io.IOException;
 public class OutboundInterceptor extends NettyPacketEncoder {
 
   private final EnumPacketDirection direction;
-  private NetworkHandler handler;
+  private final NetworkHandler handler;
   private boolean isPlay;
 
   public OutboundInterceptor(NetworkHandler handler, EnumPacketDirection direction) {
@@ -30,15 +30,15 @@ public class OutboundInterceptor extends NettyPacketEncoder {
     this.isPlay = false;
   }
 
-  protected void encode(ChannelHandlerContext context, Packet<?> packet, ByteBuf out) throws IOException, Exception {
+  protected void encode(ChannelHandlerContext context, Packet<?> packet, ByteBuf out) throws Exception {
 
     if(! this.isPlay) {
-      EnumConnectionState state = (EnumConnectionState)(context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get());
+      EnumConnectionState state = context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get();
       this.isPlay = (state == EnumConnectionState.PLAY);
     }
 
     if(this.isPlay) {
-      int id = ((EnumConnectionState)(context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get())).getPacketId(this.direction, packet);
+      int id = context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get().getPacketId(this.direction, packet);
 
       packet = this.handler.packetReceived(this.direction, id, packet, null);
 

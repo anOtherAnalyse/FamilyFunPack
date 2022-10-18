@@ -25,15 +25,15 @@ import family_fun_pack.network.PacketListener;
 @SideOnly(Side.CLIENT)
 public class PacketInterceptionModule extends Module implements PacketListener {
 
-  private Set<Integer> inbound_block;
-  private Set<Integer> outbound_block;
+  private final Set<Integer> inbound_block;
+  private final Set<Integer> outbound_block;
 
-  private Set<Packet> exceptions;
+  private final Set<Packet> exceptions;
 
   private int label_id;
 
   public PacketInterceptionModule() {
-    super("Packets interception", "Intercept network packets");
+    super("Intercept Packets", "Intercept network packets");
     this.inbound_block = new HashSet<Integer>();
     this.outbound_block = new HashSet<Integer>();
     this.exceptions = new HashSet<Packet>();
@@ -136,7 +136,7 @@ public class PacketInterceptionModule extends Module implements PacketListener {
   // To be displayed in Main GUI, to access the packets selection GUI
   private class GuiComponent implements MainGuiComponent {
 
-    private PacketInterceptionModule dependence;
+    private final PacketInterceptionModule dependence;
 
     public GuiComponent(PacketInterceptionModule dependence) {
       this.dependence = dependence;

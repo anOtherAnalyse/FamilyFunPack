@@ -32,10 +32,10 @@ public class NetworkHandler {
   private boolean isConnected;
   private NetworkManager networkManager;
 
-  private ReadWriteLock[] outbound_lock;
-  private ReadWriteLock[] inbound_lock;
-  private List<PacketListener>[] outbound_listeners;
-  private List<PacketListener>[] inbound_listeners;
+  private final ReadWriteLock[] outbound_lock;
+  private final ReadWriteLock[] inbound_lock;
+  private final List<PacketListener>[] outbound_listeners;
+  private final List<PacketListener>[] inbound_listeners;
 
   public NetworkHandler() {
     this.isConnected = false;

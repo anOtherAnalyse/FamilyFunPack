@@ -40,11 +40,11 @@ public class PeekCommand extends Command {
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
 
-    boolean book = (args.length > 1 && args[1].equals("book")) ? true : false;
+    boolean book = args.length > 1 && args[1].equals("book");
 
     double distance = 0;
     ItemStack stack = null;
-    for(Entity entity : mc.world.<Entity>getEntitiesWithinAABB(Entity.class, mc.player.getEntityBoundingBox().grow(12.0D, 4.0D, 12.0D))) {
+    for(Entity entity : mc.world.getEntitiesWithinAABB(Entity.class, mc.player.getEntityBoundingBox().grow(12.0D, 4.0D, 12.0D))) {
       if(entity == mc.player) continue;
 
       ItemStack current = null;
@@ -85,7 +85,7 @@ public class PeekCommand extends Command {
 
       if(! stack.getTagCompound().hasKey("pages", 9)) return "Book has no data";
 
-      FamilyFunPack.printMessage("Book size: " + Integer.toString(ItemSizeCommand.getItemSize(stack)) + " bytes");
+      FamilyFunPack.printMessage("Book size: " + ItemSizeCommand.getItemSize(stack) + " bytes");
 
       this.screen = new GuiScreenBook(mc.player, stack, false);
       MinecraftForge.EVENT_BUS.register(this);

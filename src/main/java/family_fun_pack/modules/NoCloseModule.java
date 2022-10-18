@@ -25,7 +25,7 @@ public class NoCloseModule extends Module implements PacketListener {
   private GuiContainer last_gui;
 
   public NoCloseModule() {
-    super("Silent close", "Don't tell the server when closing container, be able to re-open it");
+    super("Silent Close", "Don't tell the server when closing container, be able to re-open it");
     this.last_gui = null;
   }
 

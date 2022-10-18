@@ -12,7 +12,7 @@ import family_fun_pack.gui.interfaces.AdvancedSearchGui;
 @SideOnly(Side.CLIENT)
 public class ArrowButton extends ActionButton {
 
-  private boolean left;
+  private final boolean left;
 
   public ArrowButton(int x, int y, boolean left) {
     super(0, x, y, 8, 8, null);

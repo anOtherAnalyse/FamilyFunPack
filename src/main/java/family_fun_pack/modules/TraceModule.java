@@ -26,7 +26,7 @@ public class TraceModule extends Module implements PacketListener {
   private static final Logger LOGGER = LogManager.getLogger();
 
   public TraceModule() {
-    super("Trace teleports", "Print in chat coords of entity teleporting far away");
+    super("Track Teleports", "Print in chat coords of entity teleporting far away");
   }
 
   protected void enable() {
