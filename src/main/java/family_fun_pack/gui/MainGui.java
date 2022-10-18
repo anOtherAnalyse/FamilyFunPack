@@ -30,8 +30,8 @@ public class MainGui extends GuiScreen {
   public static final int LABEL_COLOR = 0xffeeeeee;
   public static final int BORDER_COLOR = 0xffbbbbbb;
 
-  public static final int guiWidth = 148;
-  public static final int guiHeight = 216;
+  public static final int guiWidth = 150;
+  public static final int guiHeight = 230;
 
   private int x, y, x_end, y_end;
 
@@ -44,7 +44,7 @@ public class MainGui extends GuiScreen {
   private int current_button; // Current clicked button index
 
   public MainGui(Modules modules) {
-    this.lines = new ArrayList<MainGuiComponent>();
+    this.lines = new ArrayList<>();
     for(Module i : modules.getModules()) {
       if(i.displayInGui()) {
         this.lines.add((MainGuiComponent) i);
@@ -101,8 +101,11 @@ public class MainGui extends GuiScreen {
       int height = button.height > this.fontRenderer.FONT_HEIGHT ? button.height + 4 : this.fontRenderer.FONT_HEIGHT + 4;
       y += height;
 
-      i ++;
+      i++;
     }
+
+    this.x_end = MainGui.guiWidth + this.x;
+    this.y_end = MainGui.guiHeight + this.y;
   }
 
   public void onGuiClosed() {

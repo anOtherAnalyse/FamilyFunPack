@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
 
-import family_fun_pack.gui.components.actions.ColorAction;
+import family_fun_pack.gui.components.actions.NumberAction;
 
 @SideOnly(Side.CLIENT)
 public class ColorButton extends GuiButton {
@@ -18,16 +18,16 @@ public class ColorButton extends GuiButton {
   private int color;
   private boolean drag;
 
-  private ColorAction action;
+  private NumberAction action;
 
-  public ColorButton(int id, int x, int y, ColorAction action) {
+  public ColorButton(int id, int x, int y, NumberAction action) {
     super(id, x, y, 32, 7, null);
     this.color = ColorButton.DEFAULT_COLOR;
     this.action = action;
     this.drag = false;
   }
 
-  public ColorButton(int x, int y, ColorAction action) {
+  public ColorButton(int x, int y, NumberAction action) {
     this(0, x, y, action);
   }
 
@@ -69,7 +69,7 @@ public class ColorButton extends GuiButton {
     int index = (cursor - this.x) * (64 / this.width);
     if(index > 32) index += (64 / this.width) - 1;
     this.color = ((index & 3) * 85) + ((((index >> 2) & 3) * 85) * 256) + (((index >> 4) * 85) * 65536) + 0xff000000;
-    if(this.action != null) this.action.setColor(this.color);
+    if(this.action != null) this.action.setNumber(this.color);
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {

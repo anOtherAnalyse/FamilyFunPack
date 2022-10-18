@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.Class;
-import org.lwjgl.input.Mouse;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ColorButton;
