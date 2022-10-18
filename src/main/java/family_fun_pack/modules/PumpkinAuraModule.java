@@ -18,6 +18,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.CPacketHeldItemChange;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -29,6 +31,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,10 +42,10 @@ import java.util.stream.Collectors;
 
 public class PumpkinAuraModule extends Module {
     Minecraft mc = Minecraft.getMinecraft();
-    private boolean place;
     private int placeRange;
     private int minDamage;
     private int maxDamage;
+    private boolean autoSwitch;
 
     public PumpkinAuraModule() {
         super("PumpkinAura", "Pumpkin PvP module for auscpvp.org/2b2t.org.au");
@@ -61,6 +65,21 @@ public class PumpkinAuraModule extends Module {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (mc.world == null && mc.player == null) return;
         BlockPos pos = blockPosSupplier.get();
+        if (autoSwitch) {
+            int slot = -1;
+            for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i)
+            {
+                if (!mc.player.inventory.mainInventory.get(i).isEmpty() && mc.player.inventory.mainInventory.get(i).getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
+                {
+                    slot = i;
+                }
+            }
+            if (slot != -1) {
+                mc.player.connection.sendPacket(new CPacketHeldItemChange(slot));
+                mc.player.inventory.currentItem = slot;
+                mc.playerController.updateController();
+            }
+        }
         if (mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) && pos != null) {
             mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
                     pos, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f
@@ -212,28 +231,28 @@ public class PumpkinAuraModule extends Module {
     }
     @Override
     public void save(Configuration configuration) {
-        configuration.get(this.getLabel(), "place", false).set(place);
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
         configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
+        configuration.get(this.getLabel(), "autoSwitch", false).set(autoSwitch);
         super.save(configuration);
     }
 
     @Override
     public void load(Configuration configuration) {
-        place = configuration.get(this.getLabel(), "place", false).getBoolean();
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
         minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
+        autoSwitch = configuration.get(this.getLabel(), "autoSwitch", false).getBoolean();
         super.load(configuration);
     }
 
     public LinkedHashMap<String, ActionButton> getSettings() {
         LinkedHashMap<String, ActionButton> buttonMap = new LinkedHashMap<>();
-        buttonMap.put("Place", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)));
-        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)));
-        buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)));
-        buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)));
+        buttonMap.put("PlaceRange", new SliderButton(1, 0, 0, new NumberPumpkinAura(this, 1)));
+        buttonMap.put("MinDamage", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)));
+        buttonMap.put("MaxDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)));
+        buttonMap.put("Switch", new OnOffButton(4, 0, 0, new OnOffPumpkinAura(this, 4)));
         return buttonMap;
     }
 
