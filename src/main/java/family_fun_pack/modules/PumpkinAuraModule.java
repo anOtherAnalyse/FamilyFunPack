@@ -8,6 +8,8 @@ import family_fun_pack.gui.components.SliderButton;
 import family_fun_pack.gui.components.actions.NumberPumpkinAura;
 import family_fun_pack.gui.components.actions.OnOffPumpkinAura;
 import family_fun_pack.gui.interfaces.PumpkinAuraSettingsGui;
+import family_fun_pack.network.PacketListener;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -18,7 +20,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
+import net.minecraft.network.EnumPacketDirection;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.server.SPacketEntityTeleport;
+import net.minecraft.network.play.server.SPacketExplosion;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -31,17 +37,21 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class PumpkinAuraModule extends Module {
+public class PumpkinAuraModule extends Module implements PacketListener {
     Minecraft mc = Minecraft.getMinecraft();
-    private boolean place;
+
+    private boolean sequential;
     private int placeRange;
     private int minDamage;
     private int maxDamage;
+    
+    private BlockPos lastPos;
 
     public PumpkinAuraModule() {
         super("PumpkinAura", "Pumpkin PvP module for auscpvp.org/2b2t.org.au");
@@ -60,17 +70,35 @@ public class PumpkinAuraModule extends Module {
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (mc.world == null && mc.player == null) return;
+        place();
+    }
+
+    private void place() {
         BlockPos pos = blockPosSupplier.get();
         if (mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) && pos != null) {
             mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
                     pos, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f
             ));
+            lastPos = pos;
         }
     }
 
+    @Override
+    public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
+        SPacketExplosion explosion = (SPacketExplosion) packet;
+
+        if (explosion != null && sequential) {
+            BlockPos pos = new BlockPos(explosion.getX(), explosion.getY(), explosion.getZ());
+            if (pos.equals(this.lastPos)) {
+                place();
+            }
+        }
+
+        return packet;
+    }
+
     public Supplier<BlockPos> blockPosSupplier = (() -> {
-        List<EntityPlayer> players = mc.world.playerEntities.stream().filter(
-                player -> !player.equals(mc.player) && player.getDistance(mc.player) <= 12f && !(player.isDead || player.getHealth() <= 0)).collect(Collectors.toList());
+        List<EntityPlayer> players = mc.world.playerEntities.stream().filter(player -> !player.equals(mc.player) && player.getDistance(mc.player) <= 12f && !(player.isDead || player.getHealth() <= 0)).collect(Collectors.toList());
         BlockPos placePos = null;
         float idk = 0.5f;
         for (EntityPlayer player : players) {
@@ -212,7 +240,7 @@ public class PumpkinAuraModule extends Module {
     }
     @Override
     public void save(Configuration configuration) {
-        configuration.get(this.getLabel(), "place", false).set(place);
+        configuration.get(this.getLabel(), "sequential", true).set(sequential);
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
         configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
@@ -221,7 +249,7 @@ public class PumpkinAuraModule extends Module {
 
     @Override
     public void load(Configuration configuration) {
-        place = configuration.get(this.getLabel(), "place", false).getBoolean();
+        sequential = configuration.get(this.getLabel(), "sequential", true).getBoolean();
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
         minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
@@ -230,7 +258,7 @@ public class PumpkinAuraModule extends Module {
 
     public LinkedHashMap<String, ActionButton> getSettings() {
         LinkedHashMap<String, ActionButton> buttonMap = new LinkedHashMap<>();
-        buttonMap.put("Place", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)));
+        buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)));
         buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)));
         buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)));
         buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)));
