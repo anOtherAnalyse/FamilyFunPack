@@ -18,7 +18,7 @@ import java.util.Map;
 public class PumpkinAuraSettingsGui extends RightPanel {
 
     private static final int guiWidth = 148;
-    private static final int guiHeight = 110;
+    private static final int guiHeight = 90;
 
     private final int x, y, x_end, y_end;
     private final List<String> labels;
