@@ -256,11 +256,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     public LinkedHashMap<String, ActionButton> getSettings() {
         load(FamilyFunPack.getModules().getConfiguration());
         LinkedHashMap<String, ActionButton> buttonMap = new LinkedHashMap<>();
+        buttonMap.put("AutoSwitch", new OnOffButton(0, 0, 0, new OnOffPumpkinAura(this, 0)).setState(autoSwitch));
         buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)).setState(sequential));
         buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setNumber(placeRange));
         buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)).setNumber(minDamage));
         buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)).setNumber(maxDamage));
-        buttonMap.put("AutoSwitch", new OnOffButton(5, 0, 0, new OnOffPumpkinAura(this, 5)).setState(autoSwitch));
         return buttonMap;
     }
 
@@ -277,7 +277,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         }
 
         public String getLabel() {
-            return "> settings";
+            return "config issue?";
         }
 
         public ActionButton getAction() {

@@ -31,7 +31,7 @@ public class MainGui extends GuiScreen {
   public static final int BORDER_COLOR = 0xffbbbbbb;
 
   public static final int guiWidth = 150;
-  public static final int guiHeight = 230;
+  public static final int guiHeight = 235;
 
   private int x, y, x_end, y_end;
 
@@ -103,9 +103,6 @@ public class MainGui extends GuiScreen {
 
       i++;
     }
-
-    this.x_end = MainGui.guiWidth + this.x;
-    this.y_end = MainGui.guiHeight + this.y;
   }
 
   public void onGuiClosed() {

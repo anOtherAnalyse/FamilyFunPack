@@ -1,6 +1,5 @@
 package family_fun_pack.gui.components.actions;
 
-import family_fun_pack.FamilyFunPack;
 import family_fun_pack.modules.PumpkinAuraModule;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -20,12 +19,12 @@ public class OnOffPumpkinAura implements OnOffAction {
     @Override
     public void toggle(boolean state) {
         switch (id) {
-            case 1: {
-                module.sequential = state;
+            case 0: {
+                module.autoSwitch = state;
                 break;
             }
-            case 5: {
-                module.autoSwitch = state;
+            case 1: {
+                module.sequential = state;
                 break;
             }
         }
