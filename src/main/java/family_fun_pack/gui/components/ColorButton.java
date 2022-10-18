@@ -73,7 +73,7 @@ public class ColorButton extends GuiButton {
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
-    if(super.mousePressed(mc, mouseX, mouseY)) {
+    if (super.mousePressed(mc, mouseX, mouseY)) {
       this.dragged(mouseX, mouseY);
       this.drag = true;
       return true;

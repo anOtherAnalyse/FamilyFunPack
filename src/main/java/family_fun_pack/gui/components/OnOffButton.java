@@ -29,8 +29,9 @@ public class OnOffButton extends ActionButton {
     this(0, x, y, action);
   }
 
-  public void setState(boolean state) {
+  public OnOffButton setState(boolean state) {
     this.state = state;
+    return this;
   }
 
   public boolean getState() {

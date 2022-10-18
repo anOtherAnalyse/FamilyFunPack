@@ -1,5 +1,6 @@
 package family_fun_pack.modules;
 
+import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGuiComponent;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OnOffButton;
@@ -43,12 +44,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class PumpkinAuraModule extends Module implements PacketListener {
-    Minecraft mc = Minecraft.getMinecraft();
-    private int placeRange;
-    private int minDamage;
-    private int maxDamage;
-    private boolean autoSwitch;
-    private boolean sequential;
+    private final Minecraft mc = Minecraft.getMinecraft();
+    public int placeRange;
+    public int minDamage;
+    public int maxDamage;
+    public boolean autoSwitch;
+    public boolean sequential;
 
     private BlockPos lastPos;
 
@@ -68,11 +69,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (mc.world == null && mc.player == null) return;
         place();
     }
 
     private void place() {
+        if (mc.world == null && mc.player == null) return;
         BlockPos pos = blockPosSupplier.get();
         if (autoSwitch) {
             int slot = -1;
@@ -112,34 +113,33 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     }
 
     public Supplier<BlockPos> blockPosSupplier = (() -> {
-        List<EntityPlayer> players = mc.world.playerEntities.stream().filter(player -> !player.equals(mc.player) && player.getDistance(mc.player) <= 12f && !(player.isDead || player.getHealth() <= 0)).collect(Collectors.toList());
+        List<EntityPlayer> players = mc.world.playerEntities.stream()
+                .filter(player -> !player.equals(mc.player) && player.getDistance(mc.player) <= 12f && !(player.isDead || player.getHealth() <= 0))
+                .collect(Collectors.toList());
         BlockPos placePos = null;
-        float idk = 0.5f;
+        float lastDamage = 0.5f;
         for (EntityPlayer player : players) {
-//            Command.sendMessage("wtf");
-            for (BlockPos pos : possiblePlacePositions(placeRange, true, false)) {
+            for (BlockPos pos : possiblePlacePositions(placeRange, true)) {
                 float damage = calculateToastShitfuckerooPumpkin(pos.getX(), pos.getY() + 1, pos.getZ(), player);
                 float selfDamage = calculateToastShitfuckerooPumpkin(pos.getX(), pos.getY() + 1, pos.getZ(), mc.player);
-                if (damage > minDamage && damage > idk && selfDamage < maxDamage) {
+                if (damage > minDamage && damage > lastDamage && selfDamage < maxDamage) {
                     placePos = pos;
-                    idk = damage;
+                    lastDamage = damage;
                 }
             }
         }
         return placePos;
     });
 
-    public List<BlockPos> possiblePlacePositions(final float placeRange, final boolean thirteen, final boolean specialEntityCheck) {
+    public List<BlockPos> possiblePlacePositions(final float placeRange, final boolean thirteen) {
         NonNullList<BlockPos> positions = NonNullList.create();
-        positions.addAll(getSphere(getPlayerPos(mc.player), placeRange, (int) placeRange, false, true, 0).stream().filter(pos -> canPlaceCrystal(pos, thirteen, specialEntityCheck)).collect(Collectors.toList()));
+        positions.addAll(getSphere(getPlayerPos(mc.player), placeRange, (int) placeRange, false, true, 0).stream().filter(pos -> canPlacePumpkin(pos, thirteen)).collect(Collectors.toList()));
         return positions;
     }
 
-    // can use same check
-    public boolean canPlaceCrystal(BlockPos blockPos, boolean specialEntityCheck, boolean oneDot15) {
+    public boolean canPlacePumpkin(BlockPos blockPos, boolean oneDot15) {
         final BlockPos boost = blockPos.add(0, 1, 0);
         final BlockPos boost2 = blockPos.add(0, 2, 0);
-        final BlockPos final_boost = blockPos.add(0, 3, 0);
         try {
             if (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN) {
                 return false;
@@ -147,28 +147,10 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             if ((mc.world.getBlockState(boost).getBlock() != Blocks.AIR || (mc.world.getBlockState(boost2).getBlock() != Blocks.AIR && !oneDot15))) {
                 return false;
             }
-            if (!specialEntityCheck) {
-                return mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost)).isEmpty() && mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2)).isEmpty();
-            }
-            for (final Object entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost))) {
-                if (!(entity instanceof EntityEnderCrystal)) {
-                    return false;
-                }
-            }
-            for (final Object entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2))) {
-                if (!(entity instanceof EntityEnderCrystal)) {
-                    return false;
-                }
-            }
-            for (final Object entity : mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(final_boost))) {
-                if (entity instanceof EntityEnderCrystal) {
-                    return false;
-                }
-            }
+            return mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost)).isEmpty() && mc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(boost2)).isEmpty();
         } catch (Exception ignored) {
             return false;
         }
-        return true;
     }
 
     public List<BlockPos> getSphere(BlockPos pos, float r, int h, boolean hollow, boolean sphere, int plus_y) {
@@ -206,7 +188,6 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
     public float calculateToastShitfuckerooPumpkin(double posX, double posY, double posZ, Entity entity) {
         float doubleExplosionSize = 12.0f;
-        double distancedsize = entity.getDistance(posX, posY, posZ) / (double) doubleExplosionSize;
         Vec3d vec3d = new Vec3d(posX, posY, posZ);
         double blockDensity = 0.0;
         try {
@@ -214,14 +195,14 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         } catch (Exception exception) {
             // empty catch block
         }
-        double v = (1.0 - distancedsize) * blockDensity;
+        double v = (1.0 - entity.getDistance(posX, posY, posZ) / (double) doubleExplosionSize) * blockDensity;
         float damage = (int) ((v * v + v) / 2.0 * 7.0 * (double) doubleExplosionSize + 1.0);
-        double finald = 1.0;
+        double final_ = 1.0;
         if (entity instanceof EntityLivingBase) {
-            finald = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(
+            final_ = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(
                     mc.world, null, posX, posY, posZ, 9f, false, true));
         }
-        return (float) finald;
+        return (float) final_;
     }
 
     public float getBlastReduction(EntityLivingBase entity, float damageI, Explosion explosion) {
@@ -273,13 +254,18 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     }
 
     public LinkedHashMap<String, ActionButton> getSettings() {
+        load(FamilyFunPack.getModules().getConfiguration());
         LinkedHashMap<String, ActionButton> buttonMap = new LinkedHashMap<>();
-        buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)));
-        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)));
-        buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)));
-        buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)));
-        buttonMap.put("AutoSwitch", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 5)));
+        buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)).setState(sequential));
+        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setNumber(placeRange));
+        buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)).setNumber(minDamage));
+        buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)).setNumber(maxDamage));
+        buttonMap.put("AutoSwitch", new OnOffButton(5, 0, 0, new OnOffPumpkinAura(this, 5)).setState(autoSwitch));
         return buttonMap;
+    }
+
+    public void save() {
+        save(FamilyFunPack.getModules().getConfiguration());
     }
 
     private static class SettingsGui implements MainGuiComponent {

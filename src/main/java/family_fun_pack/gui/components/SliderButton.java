@@ -2,7 +2,6 @@ package family_fun_pack.gui.components;
 
 import family_fun_pack.gui.components.actions.NumberAction;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.Side;
@@ -17,7 +16,7 @@ public class SliderButton extends ActionButton {
   private boolean drag;
   private int number;
 
-  private NumberAction action;
+  private final NumberAction action;
 
   public SliderButton(int id, int x, int y, NumberAction action) {
     super(id, x, y, 32, 7, null);
@@ -27,6 +26,15 @@ public class SliderButton extends ActionButton {
 
   public SliderButton(int x, int y, NumberAction action) {
     this(0, x, y, action);
+  }
+
+  public SliderButton setNumber(int number) {
+    this.number = number;
+    return this;
+  }
+
+  public int getNumber() {
+    return number;
   }
 
   public void reset() {
@@ -68,7 +76,7 @@ public class SliderButton extends ActionButton {
   }
 
   public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
-    if(super.mousePressed(mc, mouseX, mouseY)) {
+    if (super.mousePressed(mc, mouseX, mouseY)) {
       this.dragged(mouseX, mouseY);
       this.drag = true;
       return true;
@@ -80,7 +88,5 @@ public class SliderButton extends ActionButton {
     this.drag = false;
   }
 
-  public void onClick(GuiScreen parent) {
-
-  }
+  public void onClick(GuiScreen parent) { }
 }
