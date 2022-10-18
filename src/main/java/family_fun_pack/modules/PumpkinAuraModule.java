@@ -20,10 +20,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
+import net.minecraft.network.play.client.CPacketHeldItemChange;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
-import net.minecraft.network.play.server.SPacketEntityTeleport;
 import net.minecraft.network.play.server.SPacketExplosion;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -37,7 +37,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
@@ -45,12 +44,12 @@ import java.util.stream.Collectors;
 
 public class PumpkinAuraModule extends Module implements PacketListener {
     Minecraft mc = Minecraft.getMinecraft();
-
-    private boolean sequential;
     private int placeRange;
     private int minDamage;
     private int maxDamage;
-    
+    private boolean autoSwitch;
+    private boolean sequential;
+
     private BlockPos lastPos;
 
     public PumpkinAuraModule() {
@@ -75,6 +74,21 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
     private void place() {
         BlockPos pos = blockPosSupplier.get();
+        if (autoSwitch) {
+            int slot = -1;
+            for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i)
+            {
+                if (!mc.player.inventory.mainInventory.get(i).isEmpty() && mc.player.inventory.mainInventory.get(i).getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
+                {
+                    slot = i;
+                }
+            }
+            if (slot != -1) {
+                mc.player.connection.sendPacket(new CPacketHeldItemChange(slot));
+                mc.player.inventory.currentItem = slot;
+                mc.playerController.updateController();
+            }
+        }
         if (mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) && pos != null) {
             mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
                     pos, EnumFacing.UP, EnumHand.MAIN_HAND, 0f, 0f, 0f
@@ -244,6 +258,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
         configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
+        configuration.get(this.getLabel(), "autoSwitch", false).set(autoSwitch);
         super.save(configuration);
     }
 
@@ -253,6 +268,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
         minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
+        autoSwitch = configuration.get(this.getLabel(), "autoSwitch", false).getBoolean();
         super.load(configuration);
     }
 
@@ -262,6 +278,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)));
         buttonMap.put("MinDamage", new SliderButton(3, 0, 0, new NumberPumpkinAura(this, 3)));
         buttonMap.put("MaxDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)));
+        buttonMap.put("AutoSwitch", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 5)));
         return buttonMap;
     }
 
