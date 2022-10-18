@@ -1,6 +1,5 @@
 package family_fun_pack.gui.interfaces;
 
-import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ActionButton;
 import family_fun_pack.gui.components.OnOffButton;
@@ -33,6 +32,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
 
         this.labels = new ArrayList<>();
         this.buttons = new ArrayList<>();
+
     }
 
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -77,7 +77,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                         onOff.onClick(this);
                         onOff.playPressSound(this.mc.getSoundHandler());
                     }
-                    return;
+                    continue;
                 }
 
                 if (button instanceof SliderButton) {
@@ -87,6 +87,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                     }
                 }
             }
+
             super.mouseClicked(mouseX, mouseY, mouseButton);
         }
     }
@@ -97,7 +98,7 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                 if (button instanceof OnOffButton) {
                     OnOffButton onOff = (OnOffButton) button;
                     onOff.mouseReleased(mouseX, mouseY);
-                    return;
+                    continue;
                 }
 
                 if (button instanceof SliderButton) {
