@@ -88,24 +88,48 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (mc.world == null && mc.player == null) return;
-        if (autoSwitch) {
-            int slot = -1;
-            for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i)
+        if (autoSwitch && mc.player.getActiveItemStack().getItem() != Item.getItemFromBlock(Blocks.PUMPKIN)) {
+            int slot = -1; for (int i = 8; i > -1; i--)
             {
-                final ItemStack itemStack = mc.player.inventory.mainInventory.get(i);
-                FamilyFunPack.printMessage("[DEBUG] slot=%s itemStack=%s", i, itemStack);
-                if (!itemStack.isEmpty() && itemStack.getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
+                final ItemStack stack = mc.player.inventory.getStackInSlot(i);
+                if (!stack.isEmpty() && stack.getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
                 {
                     slot = i;
+                    if (mc.player.inventory.currentItem == i)
+                    {
+                        break;
+                    }
                 }
             }
-            if (slot != -1) {
+            if (mc.player.inventory.currentItem != slot && slot > -1 && slot < 9) {
                 mc.player.connection.sendPacket(new CPacketHeldItemChange(slot));
                 mc.player.inventory.currentItem = slot;
                 mc.playerController.updateController();
             }
         }
         place(false);
+    }
+
+    private void place(boolean sequential) {
+        if (mc.world == null && mc.player == null) return;
+        BlockPos pos = blockPosSupplier.get();
+        handlePlacing(pos, sequential);
+    }
+
+    private void handlePlacing(BlockPos pos, boolean sequential) {
+        final EnumHand hand = mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.MAIN_HAND
+                : mc.player.getHeldItemOffhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.OFF_HAND : null;
+        if (hand != null && pos != null) {
+            mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
+                    pos, EnumFacing.UP, hand, 0f, 0f, 0f
+            ));
+
+            if (!sequential) {
+                lastPos = pos;
+            }
+
+            renderPos = pos;
+        }
     }
 
     @SubscribeEvent
@@ -154,38 +178,6 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         this.renderPos = null;
     }
 
-    private void place(boolean sequential) {
-        if (mc.world == null && mc.player == null) return;
-        BlockPos pos = blockPosSupplier.get();
-        handlePlacing(pos, sequential);
-    }
-
-    private void handlePlacing(BlockPos pos, boolean sequential) {
-        final EnumHand hand = mc.player.getHeldItemMainhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.MAIN_HAND
-                : mc.player.getHeldItemOffhand().getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? EnumHand.OFF_HAND : null;
-        if (hand != null && pos != null) {
-            mc.player.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(
-                    pos, EnumFacing.UP, hand, 0f, 0f, 0f
-            ));
-
-            if (!sequential) {
-                lastPos = pos;
-            }
-
-            renderPos = pos;
-        }
-    }
-
-    public boolean isDoublePoppable(EntityPlayer player, float damage) {
-        if (antiTotem && this.popMap.get(player) != null) {
-            final PopCounter popCounter = this.popMap.get(player);
-            final float playerHealth = player.getHealth() + player.getAbsorptionAmount();
-            return popCounter.timer.passed(500L) && playerHealth - damage <= 0.0F;
-        }
-
-        return true;
-    }
-
     @Override
     public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
         if (mc.world == null) return packet;
@@ -227,6 +219,16 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         }
         return placePos;
     });
+
+    public boolean isDoublePoppable(EntityPlayer player, float damage) {
+        if (antiTotem && this.popMap.get(player) != null) {
+            final PopCounter popCounter = this.popMap.get(player);
+            final float playerHealth = player.getHealth() + player.getAbsorptionAmount();
+            return popCounter.timer.passed(500L) && playerHealth - damage <= 0.0F;
+        }
+
+        return true;
+    }
 
     public List<BlockPos> possiblePlacePositions(final float placeRange, final boolean thirteen) {
         NonNullList<BlockPos> positions = NonNullList.create();
