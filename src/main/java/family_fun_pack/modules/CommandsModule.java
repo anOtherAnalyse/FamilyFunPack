@@ -17,17 +17,17 @@ import family_fun_pack.commands.Commands;
 @SideOnly(Side.CLIENT)
 public class CommandsModule extends Module {
 
-  private static String ESCAPE_CHARACTER = ".";
+  public static String ESCAPE_CHARACTER = ".";
 
-  private final Commands commands;
+  private static Commands commands;
 
   public CommandsModule() {
     super("FFP Commands", "Enable Family Fun Pack commands");
-    this.commands = new Commands();
+    commands = new Commands();
   }
 
   public Command getCommand(String name) {
-    return this.commands.getCommand(name);
+    return commands.getCommand(name);
   }
 
   protected void enable() {
@@ -39,7 +39,7 @@ public class CommandsModule extends Module {
   }
 
   public void onDisconnect() {
-    for(Command c : this.commands.getCommands()) {
+    for(Command c : commands.getCommands()) {
       c.onDisconnect();
     }
   }
@@ -68,19 +68,25 @@ public class CommandsModule extends Module {
   }
 
   public boolean handleCommand(String command) {
-    String[] args = command.split("[ ]+");
-    if(args.length <= 0) return false;
+    String[] args = command.split(" +");
+    if (args.length == 0) return false;
 
-    Command cmd = this.commands.getCommand(args[0]);
-    if(cmd == null) return false;
+    Command cmd = commands.getCommand(args[0]);
+    if (cmd == null) return false;
 
-    String ret = cmd.execute(args);
-    if(ret != null) FamilyFunPack.printMessage(ret);
+    final String[] lines = cmd.execute(args).split("\\r?\\n");
+    for (String line : lines) {
+      if (line != null) FamilyFunPack.printMessage(line);
+    }
 
     return true;
   }
 
   public boolean defaultState() {
     return true;
+  }
+
+  public static Commands getCommands() {
+    return commands;
   }
 }

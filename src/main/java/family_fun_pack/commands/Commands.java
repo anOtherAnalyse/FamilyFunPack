@@ -23,6 +23,7 @@ public class Commands {
     this.registerCommand(new VanishCommand());
     this.registerCommand(new VClipCommand());
     this.registerCommand(new HClipCommand());
+    this.registerCommand(new HelpCommand());
     this.registerCommand(new RaytraceCommand());
     this.registerCommand(new UnloadedRideCommand());
     this.registerCommand(new StalkCommand());

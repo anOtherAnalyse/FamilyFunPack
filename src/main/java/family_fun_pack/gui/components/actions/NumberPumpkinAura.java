@@ -21,19 +21,37 @@ public class NumberPumpkinAura implements NumberAction {
   public void setNumber(int number) {
     switch (id) {
       case 2: {
-//        module.placeRange = number;
+        module.placeRange = number;
         break;
       }
       case 3: {
-//        module.minDamage = number;
+        module.minDamage = number;
         break;
       }
       case 4: {
-//        module.maxDamage = number;
+        module.maxDamage = number;
         break;
       }
       case 6: {
         module.renderColor = number;
+        break;
+      }
+    }
+    module.save();
+  }
+
+  public void setIndex(int index) {
+    switch (id) {
+      case 2: {
+        module.placeRange_index = index;
+        break;
+      }
+      case 3: {
+        module.minDamage_index = index;
+        break;
+      }
+      case 4: {
+        module.maxDamage_index = index;
         break;
       }
     }

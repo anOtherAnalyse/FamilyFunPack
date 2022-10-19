@@ -58,6 +58,10 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     public int placeRange;
     public int minDamage;
     public int maxDamage;
+
+    public int placeRange_index;
+    public int minDamage_index;
+    public int maxDamage_index;
     public boolean autoSwitch;
     public boolean sequential;
     public boolean antiTotem;
@@ -572,8 +576,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         configuration.get(this.getLabel(), "autoSwitch", false).set(autoSwitch);
         configuration.get(this.getLabel(), "sequential", true).set(sequential);
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
-        configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
+        configuration.get(this.getLabel(), "minDamage", 7).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
+        configuration.get(this.getLabel(), "placeRange_index", 22).set(placeRange_index);
+        configuration.get(this.getLabel(), "minDamage_index", 9).set(minDamage_index);
+        configuration.get(this.getLabel(), "maxDamage_index", 11).set(maxDamage_index);
         configuration.get(this.getLabel(), "render", true).set(render);
         configuration.get(this.getLabel(), "renderColor", ColorButton.DEFAULT_COLOR).set(renderColor);
         configuration.get(this.getLabel(), "bedwars", false).set(bedwars);
@@ -587,8 +594,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         autoSwitch = configuration.get(this.getLabel(), "autoSwitch", false).getBoolean();
         sequential = configuration.get(this.getLabel(), "sequential", true).getBoolean();
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
-        minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
+        minDamage = configuration.get(this.getLabel(), "minDamage", 7).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
+        placeRange_index = configuration.get(this.getLabel(), "placeRange_index", 22).getInt();
+        minDamage_index = configuration.get(this.getLabel(), "minDamage_index", 9).getInt();
+        maxDamage_index = configuration.get(this.getLabel(), "maxDamage_index", 11).getInt();
         render = configuration.get(this.getLabel(), "render", true).getBoolean();
         renderColor = configuration.get(this.getLabel(), "renderColor", ColorButton.DEFAULT_COLOR).getInt();
         bedwars = configuration.get(this.getLabel(), "bedwars", false).getBoolean();
@@ -602,9 +612,9 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         buttonMap.put("AntiTotem", new OnOffButton(-1, 0, 0, new OnOffPumpkinAura(this, -1)).setState(antiTotem));
         buttonMap.put("AutoSwitch", new OnOffButton(0, 0, 0, new OnOffPumpkinAura(this, 0)).setState(autoSwitch));
         buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)).setState(sequential));
-        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setValue(placeRange).setMin(1).setMax(6));
-        buttonMap.put("MinDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 3)).setValue(minDamage).setMin(0).setMax(36));
-        buttonMap.put("MaxDamage", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 4)).setValue(maxDamage).setMin(0).setMax(36));
+        buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setIndex(placeRange_index).setValue(placeRange).setMin(1).setMax(6));
+        buttonMap.put("MinDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 3)).setIndex(minDamage_index).setValue(minDamage).setMin(0).setMax(36));
+        buttonMap.put("MaxDamage", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 4)).setIndex(maxDamage_index).setValue(maxDamage).setMin(0).setMax(36));
         buttonMap.put("Render", new OnOffButton(6, 0, 0, new OnOffPumpkinAura(this, 5)).setState(render));
         buttonMap.put("RenderColor", new ColorButton(7, 0, 0, new NumberPumpkinAura(this, 6)).setColor(renderColor));
         buttonMap.put("Bedwars", new OnOffButton(8, 0, 0, new OnOffPumpkinAura(this, 7)).setState(bedwars));
