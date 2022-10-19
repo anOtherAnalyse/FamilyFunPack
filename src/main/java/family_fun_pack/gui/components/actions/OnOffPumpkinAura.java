@@ -35,6 +35,14 @@ public class OnOffPumpkinAura implements OnOffAction {
                 module.sequential = state;
                 break;
             }
+            case 5: {
+                module.render = state;
+                break;
+            }
+            case 7: {
+                module.bedwars = state;
+                break;
+            }
         }
         module.save();
     }

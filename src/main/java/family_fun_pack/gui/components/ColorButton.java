@@ -1,8 +1,8 @@
 package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.fml.relauncher.Side;
@@ -10,7 +10,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import family_fun_pack.gui.components.actions.NumberAction;
 
 @SideOnly(Side.CLIENT)
-public class ColorButton extends GuiButton {
+public class ColorButton extends ActionButton {
 
   private static final int BORDER = 0xffcccccc;
 
@@ -32,8 +32,9 @@ public class ColorButton extends GuiButton {
     this(0, x, y, action);
   }
 
-  public void setColor(int color) {
+  public ColorButton setColor(int color) {
     this.color = color;
+    return this;
   }
 
   public int getColor() {
@@ -85,4 +86,7 @@ public class ColorButton extends GuiButton {
   public void mouseReleased(int mouseX, int mouseY) {
     this.drag = false;
   }
+
+  @Override
+  public void onClick(GuiScreen parent) {}
 }

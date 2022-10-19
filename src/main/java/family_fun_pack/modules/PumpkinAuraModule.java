@@ -2,10 +2,7 @@ package family_fun_pack.modules;
 
 import family_fun_pack.FamilyFunPack;
 import family_fun_pack.gui.MainGuiComponent;
-import family_fun_pack.gui.components.ActionButton;
-import family_fun_pack.gui.components.OnOffButton;
-import family_fun_pack.gui.components.OpenGuiButton;
-import family_fun_pack.gui.components.SliderButton;
+import family_fun_pack.gui.components.*;
 import family_fun_pack.gui.components.actions.NumberPumpkinAura;
 import family_fun_pack.gui.components.actions.OnOffPumpkinAura;
 import family_fun_pack.gui.interfaces.PumpkinAuraSettingsGui;
@@ -16,6 +13,11 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.culling.ICamera;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -24,6 +26,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.EnumPacketDirection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.CPacketHeldItemChange;
@@ -33,16 +36,16 @@ import net.minecraft.network.play.server.SPacketExplosion;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.world.Explosion;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -50,6 +53,8 @@ import java.util.stream.Collectors;
 public class PumpkinAuraModule extends Module implements PacketListener {
     private final Minecraft mc = Minecraft.getMinecraft();
     private final HashMap<EntityPlayer, PopCounter> popMap = new HashMap<>();
+
+    private final ICamera camera = new Frustum();
     public int placeRange;
     public int minDamage;
     public int maxDamage;
@@ -57,6 +62,12 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     public boolean sequential;
     public boolean antiTotem;
     public boolean ignoreTerrain;
+
+    public boolean render;
+    public int renderColor;
+
+    public boolean bedwars;
+
     private BlockPos lastPos;
     private BlockPos renderPos;
 
@@ -82,7 +93,9 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             int slot = -1;
             for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i)
             {
-                if (!mc.player.inventory.mainInventory.get(i).isEmpty() && mc.player.inventory.mainInventory.get(i).getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
+                final ItemStack itemStack = mc.player.inventory.mainInventory.get(i);
+                FamilyFunPack.printMessage("[DEBUG] slot=%s itemStack=%s", i, itemStack);
+                if (!itemStack.isEmpty() && itemStack.getItem() == Item.getItemFromBlock(Blocks.PUMPKIN))
                 {
                     slot = i;
                 }
@@ -94,6 +107,52 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             }
         }
         place(false);
+    }
+
+    @SubscribeEvent
+    public void onRender(RenderWorldLastEvent event) {
+        Minecraft mc = Minecraft.getMinecraft();
+        RenderManager renderManager = mc.getRenderManager();
+
+        if (renderManager.options == null || renderPos == null || !render)
+            return;
+
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        GlStateManager.disableDepth();
+        GlStateManager.pushMatrix();
+        GlStateManager.depthMask(false);
+
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+        GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+        GL11.glLineWidth(1f);
+
+        AxisAlignedBB box = mc.world.getBlockState(renderPos)
+                .getSelectedBoundingBox(mc.world, renderPos)
+                .grow(0.0020000000949949026D)
+                .offset(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ);
+
+        this.camera.setPosition(0d, 0d, 0d);
+        if (camera.isBoundingBoxInFrustum(box)) {
+            float red = ((float)((renderColor >> 16) & 255)) / 255f;
+            float blue = ((float)((renderColor >> 8) & 255)) / 255f;
+            float green = ((float)(renderColor & 255)) / 255f;
+
+            RenderGlobal.drawBoundingBox(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, red, blue, green, 0.65f);
+            RenderGlobal.renderFilledBox(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, red, blue, green, 0.25f);
+        }
+
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableDepth();
+        GlStateManager.enableCull();
+
+        this.renderPos = null;
     }
 
     private void place(boolean sequential) {
@@ -113,6 +172,8 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             if (!sequential) {
                 lastPos = pos;
             }
+
+            renderPos = pos;
         }
     }
 
@@ -165,7 +226,6 @@ public class PumpkinAuraModule extends Module implements PacketListener {
                 }
             }
         }
-        renderPos = placePos;
         return placePos;
     });
 
@@ -179,7 +239,8 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         final BlockPos boost = blockPos.add(0, 1, 0);
         final BlockPos boost2 = blockPos.add(0, 2, 0);
         try {
-            if (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN) {
+            if ((mc.world.getBlockState(blockPos).getBlock() != Blocks.WOOL && bedwars)
+                    || (mc.world.getBlockState(blockPos).getBlock() != Blocks.BEDROCK && mc.world.getBlockState(blockPos).getBlock() != Blocks.OBSIDIAN)) {
                 return false;
             }
             if ((mc.world.getBlockState(boost).getBlock() != Blocks.AIR || (mc.world.getBlockState(boost2).getBlock() != Blocks.AIR && !oneDot15))) {
@@ -229,7 +290,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         Vec3d vec3d = new Vec3d(posX, posY, posZ);
         double blockDensity = 0.0;
         try {
-            blockDensity = this.getBlockDensity(vec3d, entity.getEntityBoundingBox(), ignoreTerrain);
+            blockDensity = this.getBlockDensity(vec3d, entity.getEntityBoundingBox(), ignoreTerrain, entity);
         } catch (Exception exception) {
             // empty catch block
         }
@@ -272,7 +333,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         return damage * (diff == 0 ? 0.0f : (diff == 2 ? 1.0f : (diff == 1 ? 0.5f : 1.5f)));
     }
 
-    public float getBlockDensity(Vec3d vec, AxisAlignedBB bb, boolean terrain)
+    public float getBlockDensity(Vec3d vec, AxisAlignedBB bb, boolean terrain, Entity entity)
     {
         double d0 = 1.0D / ((bb.maxX - bb.minX) * 2.0D + 1.0D);
         double d1 = 1.0D / ((bb.maxY - bb.minY) * 2.0D + 1.0D);
@@ -296,7 +357,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
                         double d7 = bb.minZ + (bb.maxZ - bb.minZ) * (double)f2;
 
 
-                        if (this.rayTraceBlocks(new Vec3d(d5 + d3, d6, d7 + d4), vec, terrain) == null)
+                        if (this.rayTraceBlocks(new Vec3d(d5 + d3, d6, d7 + d4), vec, terrain, entity) == null)
                         {
                             ++j2;
                         }
@@ -315,10 +376,10 @@ public class PumpkinAuraModule extends Module implements PacketListener {
     }
 
     @Nullable
-    public RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end, boolean terrain)
+    public RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end, boolean terrain, Entity entity)
     {
         return this.rayTraceBlocks(start, end, false, false, false,
-                (b, p) -> !(terrain && b.getExplosionResistance(mc.player) < 100 && p.distanceSq(end.x, end.y, end.z) <= 64.0));
+                (b, p) -> !(terrain && b.getExplosionResistance(entity) < 100 && p.distanceSq(end.x, end.y, end.z) <= 72.0));
     }
 
     @Nullable
@@ -512,6 +573,9 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         configuration.get(this.getLabel(), "placeRange", 5).set(placeRange);
         configuration.get(this.getLabel(), "minDamage", 6).set(minDamage);
         configuration.get(this.getLabel(), "maxDamage", 10).set(maxDamage);
+        configuration.get(this.getLabel(), "render", true).set(render);
+        configuration.get(this.getLabel(), "renderColor", ColorButton.DEFAULT_COLOR).set(renderColor);
+        configuration.get(this.getLabel(), "bedwars", false).set(bedwars);
         super.save(configuration);
     }
 
@@ -524,6 +588,9 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         placeRange = configuration.get(this.getLabel(), "placeRange", 5).getInt();
         minDamage = configuration.get(this.getLabel(), "minDamage", 6).getInt();
         maxDamage = configuration.get(this.getLabel(), "maxDamage", 10).getInt();
+        render = configuration.get(this.getLabel(), "render", true).getBoolean();
+        renderColor = configuration.get(this.getLabel(), "renderColor", ColorButton.DEFAULT_COLOR).getInt();
+        bedwars = configuration.get(this.getLabel(), "bedwars", false).getBoolean();
         super.load(configuration);
     }
 
@@ -535,8 +602,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         buttonMap.put("AutoSwitch", new OnOffButton(0, 0, 0, new OnOffPumpkinAura(this, 0)).setState(autoSwitch));
         buttonMap.put("Sequential", new OnOffButton(1, 0, 0, new OnOffPumpkinAura(this, 1)).setState(sequential));
         buttonMap.put("PlaceRange", new SliderButton(2, 0, 0, new NumberPumpkinAura(this, 2)).setValue(placeRange).setMin(1).setMax(6));
-        buttonMap.put("MinDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 4)).setValue(minDamage).setMin(0).setMax(36));
-        buttonMap.put("MaxDamage", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 5)).setValue(maxDamage).setMin(0).setMax(36));
+        buttonMap.put("MinDamage", new SliderButton(4, 0, 0, new NumberPumpkinAura(this, 3)).setValue(minDamage).setMin(0).setMax(36));
+        buttonMap.put("MaxDamage", new SliderButton(5, 0, 0, new NumberPumpkinAura(this, 4)).setValue(maxDamage).setMin(0).setMax(36));
+        buttonMap.put("Render", new OnOffButton(6, 0, 0, new OnOffPumpkinAura(this, 5)).setState(render));
+        buttonMap.put("RenderColor", new ColorButton(7, 0, 0, new NumberPumpkinAura(this, 6)).setColor(renderColor));
+        buttonMap.put("Bedwars", new OnOffButton(8, 0, 0, new OnOffPumpkinAura(this, 7)).setState(bedwars));
         return buttonMap;
     }
 

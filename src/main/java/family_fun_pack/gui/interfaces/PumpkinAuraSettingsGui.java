@@ -2,6 +2,7 @@ package family_fun_pack.gui.interfaces;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ActionButton;
+import family_fun_pack.gui.components.ColorButton;
 import family_fun_pack.gui.components.OnOffButton;
 import family_fun_pack.gui.components.SliderButton;
 import family_fun_pack.modules.Module;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class PumpkinAuraSettingsGui extends RightPanel {
 
     private static final int guiWidth = 148;
-    private static final int guiHeight = 100;
+    private static final int guiHeight = 135;
 
     private final int x, y, x_end, y_end;
     private final List<String> labels;
@@ -87,8 +88,14 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                 if (button instanceof SliderButton) {
                     SliderButton slider = (SliderButton) button;
                     if (slider.mousePressed(this.mc, mouseX, mouseY)) {
-//                        slider.dragged(mouseX, mouseY);
                         slider.onClick(this);
+                    }
+                }
+
+                if (button instanceof ColorButton) {
+                    ColorButton color = (ColorButton) button;
+                    if (color.mousePressed(this.mc, mouseX, mouseY)) {
+                        color.onClick(this);
                     }
                 }
             }
@@ -108,6 +115,11 @@ public class PumpkinAuraSettingsGui extends RightPanel {
                 if (button instanceof SliderButton) {
                     SliderButton slider = (SliderButton) button;
                     slider.mouseReleased(mouseX, mouseY);
+                }
+
+                if (button instanceof ColorButton) {
+                    ColorButton color = (ColorButton) button;
+                    color.mouseReleased(mouseX, mouseY);
                 }
             }
             super.mouseReleased(mouseX, mouseY, state);

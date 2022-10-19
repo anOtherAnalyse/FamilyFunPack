@@ -32,7 +32,11 @@ public class NumberPumpkinAura implements NumberAction {
 //        module.maxDamage = number;
         break;
       }
+      case 6: {
+        module.renderColor = number;
+        break;
+      }
     }
-//    module.save();
+    module.save();
   }
 }

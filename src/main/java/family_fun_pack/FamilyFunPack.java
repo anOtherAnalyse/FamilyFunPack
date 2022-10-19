@@ -63,8 +63,8 @@ public class FamilyFunPack
     }
 
     /* Print message in chat */
-    public static void printMessage(String msg) {
-      Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(TextFormatting.BLUE + "[FFP] " + TextFormatting.RESET + msg));
+    public static void printMessage(String msg, Object... args) {
+      Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(TextFormatting.BLUE + "[FFP] " + TextFormatting.RESET + String.format(msg, args)));
     }
 
     @EventHandler
