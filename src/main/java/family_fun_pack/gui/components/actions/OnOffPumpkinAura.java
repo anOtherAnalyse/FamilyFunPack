@@ -19,6 +19,10 @@ public class OnOffPumpkinAura implements OnOffAction {
     @Override
     public void toggle(boolean state) {
         switch (id) {
+            case -2: {
+                module.ignoreTerrain = state;
+                break;
+            }
             case -1: {
                 module.antiTotem = state;
                 break;
