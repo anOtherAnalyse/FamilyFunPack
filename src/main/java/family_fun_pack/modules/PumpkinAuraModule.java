@@ -225,7 +225,7 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
 
     public float calculateToastShitfuckerooPumpkin(double posX, double posY, double posZ, Entity entity) {
-        float doubleExplosionSize = 8.0f;
+        float doubleExplosionSize = 12.0f;
         Vec3d vec3d = new Vec3d(posX, posY, posZ);
         double blockDensity = 0.0;
         try {
@@ -234,11 +234,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
             // empty catch block
         }
         double v = (1.0 - entity.getDistance(posX, posY, posZ) / (double) doubleExplosionSize) * blockDensity;
-        float damage = (int) ((v * v + v) / 2.0 * 7.0 * (double) doubleExplosionSize + 1.0);
+        float damage = (int) ((v * v + v) / 2.0 * 7.0 * (double) doubleExplosionSize);
         double final_ = 1.0;
         if (entity instanceof EntityLivingBase) {
             final_ = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(
-                    mc.world, null, posX, posY, posZ, 8f, true, true));
+                    mc.world, null, posX, posY, posZ, doubleExplosionSize, true, true));
         }
         return (float) final_;
     }
