@@ -53,8 +53,8 @@ import java.util.stream.Collectors;
 public class PumpkinAuraModule extends Module implements PacketListener {
     private final Minecraft mc = Minecraft.getMinecraft();
     private final HashMap<EntityPlayer, PopCounter> popMap = new HashMap<>();
-
     private final ICamera camera = new Frustum();
+
     public int placeRange;
     public int minDamage;
     public int maxDamage;
@@ -65,7 +65,6 @@ public class PumpkinAuraModule extends Module implements PacketListener {
 
     public boolean render;
     public int renderColor;
-
     public boolean bedwars;
 
     private BlockPos lastPos;
