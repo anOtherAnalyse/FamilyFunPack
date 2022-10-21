@@ -303,8 +303,11 @@ public class PumpkinAuraModule extends Module implements PacketListener {
         float damage = (int) ((v * v + v) / 2.0 * 7.0 * (double) doubleExplosionSize);
         double final_ = 1.0;
         if (entity instanceof EntityLivingBase) {
-            final_ = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(
-                    mc.world, null, posX, posY, posZ, doubleExplosionSize, true, true));
+            EnumFacing facing = EnumFacing.getDirectionFromEntityLiving(new BlockPos(posX, posY, posZ),(EntityLivingBase) entity);
+            if (facing == EnumFacing.SOUTH || facing == EnumFacing.EAST) {
+                final_ = getBlastReduction((EntityLivingBase) entity, getDamageMultiplied(damage), new Explosion(
+                        mc.world, null, posX, posY, posZ, doubleExplosionSize, true, true));
+            }
         }
         return (float) final_;
     }
