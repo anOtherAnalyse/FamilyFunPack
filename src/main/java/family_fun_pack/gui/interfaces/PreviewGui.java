@@ -34,15 +34,18 @@ public class PreviewGui extends RightPanel {
 
   private static final int INNER_BORDER = PreviewGui.INNER_BORDER;
 
-  private static int guiWidth = 176;
-  private static int guiHeight = 80;
+  private static final int guiWidth = 176;
+  private static final int guiHeight = 80;
 
-  private int x, y, x_end, y_end;
+  private final int x;
+  private final int y;
+  private final int x_end;
+  private final int y_end;
 
-  private InventoryBasic inventory;
-  private List<Slot> slots;
+  private final InventoryBasic inventory;
+  private final List<Slot> slots;
 
-  private boolean hasParent;
+  private final boolean hasParent;
 
   public PreviewGui(NBTTagList list) {
     this(list, true);

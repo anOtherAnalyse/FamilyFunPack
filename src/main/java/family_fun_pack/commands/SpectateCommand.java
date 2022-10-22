@@ -31,7 +31,7 @@ public class SpectateCommand extends Command {
         return "Wrong UUID format";
       }
       FamilyFunPack.getNetworkHandler().sendPacket(new CPacketSpectate(uuid));
-      return "trying to spectate " + uuid.toString();
+      return "trying to spectate " + uuid;
     }
     return this.getUsage();
   }

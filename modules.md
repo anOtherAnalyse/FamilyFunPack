@@ -45,3 +45,7 @@ Use ```.respawn``` to respawn.
 ##### Bowbomb
 
 One-shot & ultra-fast arrows. Can only be shot horizontally though.
+
+##### PumpkinAura
+
+Super strong pumpkin aura for pumpkin pvp on auscpvp.org & 2b2t.org.au

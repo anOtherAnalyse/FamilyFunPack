@@ -43,7 +43,7 @@ public abstract class RightPanel extends GuiScreen {
 
   protected void actionPerformed(GuiButton btn) throws IOException {
     if(btn instanceof ActionButton) {
-      ((ActionButton) btn).onClick((GuiScreen)this);
+      ((ActionButton) btn).onClick(this);
     }
   }
 

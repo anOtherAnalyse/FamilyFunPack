@@ -28,7 +28,7 @@ public class StalkModule extends AbstractPlayersRegister implements PacketListen
   private static final TextFormatting ANNOUNCE_COLOR = TextFormatting.DARK_PURPLE;
 
   public StalkModule() {
-    super("Stalk players", "See when given players connect/disconnect/speak", "stalk");
+    super("Stalker", "See when given players connect/disconnect/speak", "stalk");
   }
 
   protected void enable() {

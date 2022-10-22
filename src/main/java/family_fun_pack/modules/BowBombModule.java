@@ -24,7 +24,7 @@ public class BowBombModule extends Module implements PacketListener {
   private static final int REPEAT_COUNT = 125;
 
   public BowBombModule() {
-    super("BowBomb", "Arrow goes brrrr");
+    super("Bow Bomb", "Arrow goes brrrr");
   }
 
   protected void enable() {

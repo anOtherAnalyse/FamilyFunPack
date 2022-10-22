@@ -13,5 +13,4 @@ public abstract class ActionButton extends GuiButton {
   }
 
   public abstract void onClick(GuiScreen parent);
-
 }

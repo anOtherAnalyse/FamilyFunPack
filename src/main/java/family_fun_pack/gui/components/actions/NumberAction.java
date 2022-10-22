@@ -6,8 +6,8 @@ import net.minecraftforge.fml.relauncher.Side;
 /* Action of a color button */
 
 @SideOnly(Side.CLIENT)
-public interface ColorAction {
+public interface NumberAction {
 
-  public abstract void setColor(int colot);
+  void setNumber(int number);
 
 }

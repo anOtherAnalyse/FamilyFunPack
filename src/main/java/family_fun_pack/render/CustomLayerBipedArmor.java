@@ -57,26 +57,26 @@ public class CustomLayerBipedArmor extends LayerBipedArmor {
         model.setModelAttributes(this.renderer_save.getMainModel());
         model.setLivingAnimations(entity, fp1, fp2, fp3);
         this.setModelSlotVisible(model, slot);
-        this.renderer_save.bindTexture(this.getArmorResource((Entity)entity, itemstack, slot, null));
+        this.renderer_save.bindTexture(this.getArmorResource(entity, itemstack, slot, null));
 
         if (itemarmor.hasOverlay(itemstack)) {
           int i = itemarmor.getColor(itemstack);
           float f = (i >> 16 & 0xFF) / 255.0F;
           float f1 = (i >> 8 & 0xFF) / 255.0F;
           float f2 = (i & 0xFF) / 255.0F;
-          GlStateManager.color(1f * f, 1f * f1, 1f * f2, 1f);
-          model.render((Entity)entity, fp1, fp2, fp4, fp5, fp6, fp7);
-          this.renderer_save.bindTexture(this.getArmorResource((Entity)entity, itemstack, slot, "overlay"));
+          GlStateManager.color(f, f1, f2, 1f);
+          model.render(entity, fp1, fp2, fp4, fp5, fp6, fp7);
+          this.renderer_save.bindTexture(this.getArmorResource(entity, itemstack, slot, "overlay"));
         }
 
         GlStateManager.color(1f, 1f, 1f, 1f);
-        model.render((Entity)entity, fp1, fp2, fp4, fp5, fp6, fp7);
+        model.render(entity, fp1, fp2, fp4, fp5, fp6, fp7);
 
         NBTTagCompound tag = itemstack.getTagCompound();
         if((itemstack.isItemStackDamageable() && itemstack.getItemDamage() > itemstack.getMaxDamage()) || (tag != null && (tag instanceof SpecialTagCompound || tag.getBoolean("Unbreakable")))) {
-          CustomLayerBipedArmor.renderEnchantedGlint(this.renderer_save, entity, (ModelBase)model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);
+          CustomLayerBipedArmor.renderEnchantedGlint(this.renderer_save, entity, model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);
         } else if (itemstack.hasEffect()) {
-          LayerArmorBase.renderEnchantedGlint(this.renderer_save, entity, (ModelBase)model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);
+          LayerArmorBase.renderEnchantedGlint(this.renderer_save, entity, model, fp1, fp2, fp3, fp4, fp5, fp6, fp7);
         }
       }
     }
@@ -101,7 +101,7 @@ public class CustomLayerBipedArmor extends LayerBipedArmor {
       GlStateManager.rotate(30.0F - i * 60.0F, 0.0F, 0.0F, 1.0F);
       GlStateManager.translate(0.0F, f * (0.001F + i * 0.003F) * 20.0F, 0.0F);
       GlStateManager.matrixMode(5888);
-      model.render((Entity)entity, fp1, fp2, fp4, fp5, fp6, fp7);
+      model.render(entity, fp1, fp2, fp4, fp5, fp6, fp7);
       GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
     }
 

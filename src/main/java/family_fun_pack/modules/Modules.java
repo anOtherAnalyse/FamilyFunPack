@@ -13,9 +13,9 @@ import java.util.ArrayList;
 @SideOnly(Side.CLIENT)
 public class Modules {
 
-  private List<Module> modules;
+  private final List<Module> modules;
 
-  private Configuration configuration;
+  private final Configuration configuration;
 
   public Modules(File configuration_file) {
 
@@ -28,6 +28,7 @@ public class Modules {
     this.modules.add(new PacketInterceptionModule());
     this.modules.add(new PigPOVModule());
     this.modules.add(new PortalInvulnerabilityModule());
+    this.modules.add(new PumpkinAuraModule());
     this.modules.add(new SearchModule());
     this.modules.add(new NoCloseModule());
     this.modules.add(new StalkModule());

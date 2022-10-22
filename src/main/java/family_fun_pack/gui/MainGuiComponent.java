@@ -15,13 +15,13 @@ import family_fun_pack.gui.components.ActionButton;
 public interface MainGuiComponent {
 
   // Get Label of the line
-  public abstract String getLabel();
+  String getLabel();
 
   // Get action button to be displayed after label
-  public abstract ActionButton getAction();
+  ActionButton getAction();
 
   /* Get child component, a component depending on this one
      Returns null if component has no child */
-  public abstract MainGuiComponent getChild();
+  MainGuiComponent getChild();
 
 }

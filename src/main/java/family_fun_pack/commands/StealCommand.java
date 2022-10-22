@@ -107,7 +107,7 @@ public class StealCommand extends Command implements PacketListener {
         this.enabled = false;
 
         if(this.next_id != open.getWindowId()) {
-          FamilyFunPack.printMessage("Window id guessed wrongly, expected " + Integer.toString(this.next_id) + " ,was " + Integer.toString(open.getWindowId()));
+          FamilyFunPack.printMessage("Window id guessed wrongly, expected " + this.next_id + " ,was " + open.getWindowId());
         }
 
         this.next_id = open.getWindowId() % 100 + 1;

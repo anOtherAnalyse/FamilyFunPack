@@ -66,7 +66,7 @@ public class PacketDumpCommand extends Command implements PacketListener {
 
     if(id != this.last_id) {
       if(this.last_packet != null) {
-        FamilyFunPack.printMessage("Received packet [" + this.last_packet + "] x " + Integer.toString(this.count));
+        FamilyFunPack.printMessage("Received packet [" + this.last_packet + "] x " + this.count);
       }
 
       if(packet instanceof SPacketEntityTeleport) {

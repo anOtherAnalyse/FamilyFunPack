@@ -36,8 +36,8 @@ public class LoadChunkCommand extends Command implements PacketListener {
   private static final int BURST_SIZE = 3;
   private static final int RE_SEND_TIME = 2000;
 
-  private Map<BlockPos, Long> window;
-  private ReadWriteLock window_lock;
+  private final Map<BlockPos, Long> window;
+  private final ReadWriteLock window_lock;
 
   private ChunkPos[] chunks;
   private int width;

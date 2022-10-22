@@ -1,5 +1,6 @@
 package family_fun_pack.key;
 
+import family_fun_pack.modules.PumpkinAuraModule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -22,11 +23,11 @@ import family_fun_pack.modules.Module;
 @SideOnly(Side.CLIENT)
 public class KeyListener {
 
-  private KeyBinding gui_key;
+  private final KeyBinding gui_key;
   private MainGui gui;
 
-  private List<KeyBinding> keys;
-  private List<Module> actions;
+  private final List<KeyBinding> keys;
+  private final List<Module> actions;
 
   public KeyListener() {
     this.gui_key = new KeyBinding("Open GUI", Keyboard.KEY_BACKSLASH, FamilyFunPack.NAME);

@@ -32,12 +32,15 @@ import family_fun_pack.nbt.SpecialTagCompound;
 @SideOnly(Side.CLIENT)
 public class InfoItemGui extends RightPanel {
 
-  private static int guiMaxWidth = 480;
-  private static int guiHeight = 136;
+  private static final int guiMaxWidth = 480;
+  private static final int guiHeight = 136;
 
-  private int maxLines;
+  private final int maxLines;
 
-  private int x, y, x_end, y_end;
+  private final int x;
+  private final int y;
+  private int x_end;
+  private final int y_end;
 
   public int current_slot;
 
@@ -45,7 +48,7 @@ public class InfoItemGui extends RightPanel {
 
   private List<String> tag;
 
-  private ScrollBar scroll;
+  private final ScrollBar scroll;
   private GenericButton previewOpen;
 
   public Container inventory;
@@ -158,7 +161,7 @@ public class InfoItemGui extends RightPanel {
 
       if(this.scroll.mousePressed(this.mc, mouseX, mouseY)) return;
       else if(this.previewOpen != null && this.previewOpen.mousePressed(this.mc, mouseX, mouseY)) {
-        this.previewOpen.onClick((GuiScreen) this);
+        this.previewOpen.onClick(this);
         this.previewOpen.playPressSound(this.mc.getSoundHandler());
         return;
       }
@@ -286,11 +289,11 @@ public class InfoItemGui extends RightPanel {
   private static class GuiComponent implements MainGuiComponent {
 
     public String getLabel() {
-      return "Info items";
+      return "Item NBT";
     }
 
     public ActionButton getAction() {
-      return new OpenGuiButton(0, 0, "view", InfoItemGui.class, null);
+      return new OpenGuiButton(0, 0, "inventory", InfoItemGui.class, null);
     }
 
     public MainGuiComponent getChild() {

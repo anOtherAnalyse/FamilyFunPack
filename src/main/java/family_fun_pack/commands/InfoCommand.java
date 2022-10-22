@@ -75,7 +75,7 @@ public class InfoCommand extends Command implements PacketListener {
       stat += " max players: " + max_players;
 
       if(mc.player.isRiding()) {
-        stat += ", riding: " + Integer.toString(mc.player.getRidingEntity().getEntityId());
+        stat += ", riding: " + mc.player.getRidingEntity().getEntityId();
       }
 
       return stat;

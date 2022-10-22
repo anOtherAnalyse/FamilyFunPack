@@ -20,11 +20,11 @@ public class SelectButton extends ActionButton {
 
   public static final ResourceLocation NAVIGATION = new ResourceLocation(FamilyFunPack.MODID, "textures/gui/navigation.png");
 
-  private IProperty<?> property;
+  private final IProperty<?> property;
   private String[] values;
-  private String[] path;
+  private final String[] path;
   private int index;
-  private int base;
+  private final int base;
   private int cycle;
 
   public SelectButton(int id, int x, int y, IProperty<?> property) {
@@ -113,9 +113,9 @@ public class SelectButton extends ActionButton {
       } else {
         int index = (this.index == -1 ? this.base : this.index);
         if(this.values == null) {
-          ((AdvancedSearchGui) parent).setTag(this.path, (Object)Integer.valueOf(index));
+          ((AdvancedSearchGui) parent).setTag(this.path, Integer.valueOf(index));
         } else {
-          ((AdvancedSearchGui) parent).setTag(this.path, (Object)(this.values[index]));
+          ((AdvancedSearchGui) parent).setTag(this.path, this.values[index]);
         }
       }
     }

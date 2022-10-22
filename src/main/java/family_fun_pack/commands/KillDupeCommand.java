@@ -98,9 +98,9 @@ public class KillDupeCommand extends Command implements PacketListener {
       SPacketConfirmTransaction confirm = (SPacketConfirmTransaction) packet;
       if(confirm.getWindowId() == this.window_id && confirm.getActionNumber() == -42) {
         if(confirm.wasAccepted()) {
-          FamilyFunPack.printMessage("Swap " + Integer.toString(slot) + TextFormatting.GREEN + " succeeded");
+          FamilyFunPack.printMessage("Swap " + slot + TextFormatting.GREEN + " succeeded");
         } else {
-          FamilyFunPack.printMessage("Swap " + Integer.toString(slot) + TextFormatting.RED + " failed");
+          FamilyFunPack.printMessage("Swap " + slot + TextFormatting.RED + " failed");
         }
       }
       FamilyFunPack.getNetworkHandler().unregisterListener(EnumPacketDirection.CLIENTBOUND, this, 17);

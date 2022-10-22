@@ -7,18 +7,18 @@ import net.minecraftforge.fml.relauncher.Side;
 import family_fun_pack.modules.SearchModule;
 
 @SideOnly(Side.CLIENT)
-public class ColorSearch implements ColorAction {
+public class ColorSearch implements NumberAction {
 
-  private SearchModule module;
+  private final SearchModule module;
 
-  private Block block;
+  private final Block block;
 
   public ColorSearch(SearchModule module, Block block) {
     this.module = module;
     this.block = block;
   }
 
-  public void setColor(int color) {
+  public void setNumber(int color) {
     this.module.setSearchColor(this.block, color);
   }
 

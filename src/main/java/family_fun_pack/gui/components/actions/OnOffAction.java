@@ -8,6 +8,6 @@ import net.minecraftforge.fml.relauncher.Side;
 @SideOnly(Side.CLIENT)
 public interface OnOffAction {
 
-  public void toggle(boolean state);
+  void toggle(boolean state);
 
 }

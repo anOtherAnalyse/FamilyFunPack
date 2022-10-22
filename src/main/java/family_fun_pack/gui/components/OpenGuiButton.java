@@ -1,6 +1,7 @@
 package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -26,11 +27,11 @@ public class OpenGuiButton extends ActionButton {
   public static final int ACTIVE_BACKGROUND = 0xffbbbbbb;
   public static final int ACTIVE_COLOR = 0xff000000;
 
-  private FontRenderer fontRenderer;
+  private final FontRenderer fontRenderer;
   private boolean clicked;
   private Class<? extends RightPanel> panel; // GUI to be opened
-  private Module dependsOn; // GUI dependence
-  private float scale; // Button scale
+  private final Module dependsOn; // GUI dependence
+  private final float scale; // Button scale
 
   public OpenGuiButton(int id, int x, int y, String text, Class<? extends RightPanel> panel, Module dependsOn, float scale) {
     super(id, x, y, 0, 0, text);
@@ -85,11 +86,11 @@ public class OpenGuiButton extends ActionButton {
         int x_end = this.x + width;
         int y_end = this.y + height;
 
-        this.drawRect(this.x, this.y, x_end, y_end, background);
-        this.drawRect(this.x, this.y, x_end, this.y + 1, border);
-        this.drawRect(this.x, this.y, this.x + 1, y_end, border);
-        this.drawRect(this.x, y_end - 1, x_end, y_end, border);
-        this.drawRect(x_end - 1, this.y, x_end, y_end, border);
+        drawRect(this.x, this.y, x_end, y_end, background);
+        drawRect(this.x, this.y, x_end, this.y + 1, border);
+        drawRect(this.x, this.y, this.x + 1, y_end, border);
+        drawRect(this.x, y_end - 1, x_end, y_end, border);
+        drawRect(x_end - 1, this.y, x_end, y_end, border);
         this.fontRenderer.drawString(this.displayString, this.x + 2, this.y + 2, border);
       } else {
         int x = (int)((float)this.x / this.scale);
@@ -99,11 +100,11 @@ public class OpenGuiButton extends ActionButton {
 
         GlStateManager.pushMatrix();
         GlStateManager.scale(this.scale, this.scale, this.scale);
-        this.drawRect(x, y, x_end, y_end, background);
-        this.drawRect(x, y, x_end, y + 1, border);
-        this.drawRect(x, y, x + 1, y_end, border);
-        this.drawRect(x, y_end - 1, x_end, y_end, border);
-        this.drawRect(x_end - 1, y, x_end, y_end, border);
+        drawRect(x, y, x_end, y_end, background);
+        drawRect(x, y, x_end, y + 1, border);
+        drawRect(x, y, x + 1, y_end, border);
+        drawRect(x, y_end - 1, x_end, y_end, border);
+        drawRect(x_end - 1, y, x_end, y_end, border);
         this.fontRenderer.drawString(this.displayString, (int)((float)(this.x + 2) / this.scale), (int)((float)(this.y + 2) / this.scale), border);
         GlStateManager.popMatrix();
       }

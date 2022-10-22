@@ -33,9 +33,9 @@ public class WorldCapture {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
-  private IChunkLoader chunkLoader;
-  private FakeWorld fakeWorld;
-  private String name;
+  private final IChunkLoader chunkLoader;
+  private final FakeWorld fakeWorld;
+  private final String name;
 
   private int count;
 
@@ -49,7 +49,7 @@ public class WorldCapture {
 
     AnvilSaveHandler saveHandler = new AnvilSaveHandler(saves_folder, saveName, false, DataFixesManager.createFixer());
 
-    WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211l, GameType.CREATIVE, true, false, WorldType.DEFAULT), saveName); // 9b seed
+    WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211L, GameType.CREATIVE, true, false, WorldType.DEFAULT), saveName); // 9b seed
     info.setAllowCommands(true);
     info.setDifficulty(EnumDifficulty.PEACEFUL);
     info.setServerInitialized(true);
@@ -82,9 +82,9 @@ public class WorldCapture {
       chunk.setLastSaveTime(this.fakeWorld.getTotalWorldTime());
       this.chunkLoader.saveChunk(this.fakeWorld, chunk);
     } catch (IOException e) {
-      LOGGER.error("FFP: Couldn't save captured chunk", (Throwable)e);
+      LOGGER.error("FFP: Couldn't save captured chunk", e);
     } catch (MinecraftException e) {
-      LOGGER.error("FFP: Couldn't save captured chunk; already in use by another instance of Minecraft?", (Throwable)e);
+      LOGGER.error("FFP: Couldn't save captured chunk; already in use by another instance of Minecraft?", e);
     }
 
     this.chunkLoader.flush();

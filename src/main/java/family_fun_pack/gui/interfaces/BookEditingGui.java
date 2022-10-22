@@ -134,7 +134,7 @@ public class BookEditingGui extends GuiScreenBook {
         String title = (String) this.book_title.get(this);
         super.keyTyped(character, code);
         if(code != 14 && code != 28 && code != 156 && title.length() < 32) {
-          this.book_title.set(this, title + Character.toString(character));
+          this.book_title.set(this, title + character);
         }
       } else super.keyTyped(character, code);
 

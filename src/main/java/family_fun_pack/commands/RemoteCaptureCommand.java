@@ -52,12 +52,12 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
 
   private WorldCapture capture;
 
-  private Map<BlockPos, Long> window;
-  private ReadWriteLock window_lock;
+  private final Map<BlockPos, Long> window;
+  private final ReadWriteLock window_lock;
 
-  private List<ChunkPos> chunks;
+  private final List<ChunkPos> chunks;
   private Chunk current;
-  private ReadWriteLock current_lock;
+  private final ReadWriteLock current_lock;
 
   private boolean getting_signs;
   private short retry_count;
@@ -306,7 +306,7 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
         this.window_lock.writeLock().lock();
         if(block instanceof BlockStandingSign || block instanceof BlockWallSign) {
           this.getting_signs = true;
-          this.window.put(position, 0l);
+          this.window.put(position, 0L);
         } else {
           this.window.remove(position);
         }
@@ -390,5 +390,5 @@ public class RemoteCaptureCommand extends Command implements PacketListener {
     else this.label_id = FamilyFunPack.getOverlay().addLabel(label);
   }
 
-  public static enum Mode {FULL, HALF, SURFACE};
+  public enum Mode {FULL, HALF, SURFACE}
 }

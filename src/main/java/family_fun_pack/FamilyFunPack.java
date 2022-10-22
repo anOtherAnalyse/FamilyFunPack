@@ -27,7 +27,7 @@ public class FamilyFunPack
 {
     public static final String MODID = "family_fun_pack";
     public static final String NAME = "Family Fun Pack";
-    public static final String VERSION = "1.1.4";
+    public static final String VERSION = "1.1.5";
 
     private static NetworkHandler networkHandler;
     private static Modules modules;
@@ -63,8 +63,8 @@ public class FamilyFunPack
     }
 
     /* Print message in chat */
-    public static void printMessage(String msg) {
-      Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(TextFormatting.BLUE + "[FFP] " + TextFormatting.RESET + msg));
+    public static void printMessage(String msg, Object... args) {
+      Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.SYSTEM, new TextComponentString(TextFormatting.BLUE + "[FFP] " + TextFormatting.RESET + String.format(msg, args)));
     }
 
     @EventHandler

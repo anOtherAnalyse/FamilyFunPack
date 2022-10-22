@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.Class;
-import org.lwjgl.input.Mouse;
 
 import family_fun_pack.gui.MainGui;
 import family_fun_pack.gui.components.ColorButton;
@@ -66,19 +65,22 @@ public class SearchSelectionGui extends RightPanel {
 
   private static final int maxLabelsDisplayed = 10;
 
-  private ScrollBar scroll;
-  private GuiTextField selection;
+  private final ScrollBar scroll;
+  private final GuiTextField selection;
   private String last_search;
 
-  private int x, y, x_end, y_end;
+  private final int x;
+  private final int y;
+  private final int x_end;
+  private final int y_end;
 
-  private List<Block> blocks;
+  private final List<Block> blocks;
   private List<OnOffButton> tracers;
   private List<OnOffButton> search;
   private List<ColorButton> colors;
-  private List<OpenGuiButton> advanced;
+  private final List<OpenGuiButton> advanced;
 
-  private FakeWorld world; // Used in tileentities rendering methods
+  private final FakeWorld world; // Used in tileentities rendering methods
 
   public SearchSelectionGui() {
     this.x = MainGui.guiWidth + 16;
@@ -223,11 +225,10 @@ public class SearchSelectionGui extends RightPanel {
     GlStateManager.popMatrix();
 
     // Draw chart
-    int scroll_end = this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed > this.blocks.size() ? this.blocks.size() : this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed;
     int y = 20 + this.y;
     Gui.drawRect(this.x + 4, y - 1, chart_end, y, SearchSelectionGui.INNER_BORDER);
     int i;
-    for(i = this.scroll.current_scroll; i < scroll_end; i ++) {
+    for(i = this.scroll.current_scroll; i < Math.min(this.scroll.current_scroll + SearchSelectionGui.maxLabelsDisplayed, this.blocks.size()); i ++) {
 
       Block block = this.blocks.get(i);
 
@@ -273,7 +274,7 @@ public class SearchSelectionGui extends RightPanel {
         GlStateManager.scale(0.60f, 0.60f, 0.60f);
 
         if(preset_count == 1) label = "Registered preset: 1";
-        else label = "Registered presets: " + Integer.toString(preset_count);
+        else label = "Registered presets: " + preset_count;
         this.drawString(this.fontRenderer, label, (int)((this.x + 4 + (int)((float)chart_width * 0.714f) + (((int)((float)chart_width * 0.286f) - (int)(this.fontRenderer.getStringWidth(label) * 0.60f)) / 2)) / 0.60f), (int)((y + 5) / 0.60f), 0xffffffff);
 
         GlStateManager.popMatrix();
@@ -414,14 +415,14 @@ public class SearchSelectionGui extends RightPanel {
       if (TileEntitySkullRenderer.instance != null) {
         GlStateManager.pushMatrix();
         GlStateManager.disableCull();
-        TileEntitySkullRenderer.instance.renderSkull(0f, 0f, 0f, (EnumFacing)(state.getValue(BlockDirectional.FACING)), (((TileEntitySkull) tile).getSkullRotation() * 360) / 16.0F, ((TileEntitySkull)tile).getSkullType(), this.mc.getSession().getProfile(), -1, 0f);
+        TileEntitySkullRenderer.instance.renderSkull(0f, 0f, 0f, state.getValue(BlockDirectional.FACING), (((TileEntitySkull) tile).getSkullRotation() * 360) / 16.0F, ((TileEntitySkull)tile).getSkullType(), this.mc.getSession().getProfile(), -1, 0f);
         GlStateManager.enableCull();
         GlStateManager.popMatrix();
       }
     } else {
       TileEntitySpecialRenderer<TileEntity> renderer = null;
       if(tile instanceof TileEntityEndGateway) renderer = TileEntityRendererDispatcher.instance.getRenderer(TileEntityEndPortal.class); // Avoid glitchy gateway beam rendering
-      else renderer = TileEntityRendererDispatcher.instance.getRenderer((Class)tile.getClass());
+      else renderer = TileEntityRendererDispatcher.instance.getRenderer(tile.getClass());
       if(renderer != null) renderer.render(tile, 0d, 0d, 0d, 0f, -1, 0f);
     }
 
@@ -442,14 +443,14 @@ public class SearchSelectionGui extends RightPanel {
       for(int i = this.scroll.current_scroll; (i - this.scroll.current_scroll) < SearchSelectionGui.maxLabelsDisplayed && i < this.blocks.size(); i ++) {
         OnOffButton search = this.search.get(i);
         if(search.mousePressed(this.mc, mouseX, mouseY)) {
-          search.onClick((GuiScreen) this);
+          search.onClick(this);
           search.playPressSound(this.mc.getSoundHandler());
           return;
         }
 
         OnOffButton tracer = this.tracers.get(i);
         if(tracer.mousePressed(this.mc, mouseX, mouseY)) {
-          tracer.onClick((GuiScreen) this);
+          tracer.onClick(this);
           tracer.playPressSound(this.mc.getSoundHandler());
           return;
         }

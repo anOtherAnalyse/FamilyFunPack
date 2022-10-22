@@ -9,8 +9,8 @@ import family_fun_pack.modules.SearchModule;
 @SideOnly(Side.CLIENT)
 public class OnOffTracer implements OnOffAction {
 
-  private SearchModule module;
-  private Block block;
+  private final SearchModule module;
+  private final Block block;
 
   public OnOffTracer(Block block, SearchModule module) {
     this.block = block;

@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 @SideOnly(Side.CLIENT)
 public class NoRenderPig extends RenderPig {
 
-  private Minecraft mc;
+  private final Minecraft mc;
 
   public NoRenderPig(RenderManager manager, Minecraft mc) {
     super(manager);

@@ -34,7 +34,7 @@ public class ReOpenCommand extends Command {
   // Forge event listener used to open GUI
   private static class GuiOpener {
 
-    private GuiScreen gui;
+    private final GuiScreen gui;
 
     public GuiOpener(GuiScreen gui) {
       this.gui = gui;

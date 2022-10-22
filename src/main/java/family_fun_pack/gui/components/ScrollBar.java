@@ -2,6 +2,7 @@ package family_fun_pack.gui.components;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SoundHandler;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -16,8 +17,8 @@ public class ScrollBar extends GuiButton {
   public boolean clicked;
 
   private int max_scroll;
-  private int min_y;
-  private int max_y;
+  private final int min_y;
+  private final int max_y;
 
   private int offset_y;
 
@@ -69,7 +70,7 @@ public class ScrollBar extends GuiButton {
   }
 
   public void drawButton(Minecraft client, int mouseX, int mouseY, float partialTicks) {
-    this.drawRect(this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
+    drawRect(this.x, this.y, this.x + this.width, this.y + this.height, ScrollBar.COLOR);
   }
 
   public void dragged(int mouseX, int mouseY) {

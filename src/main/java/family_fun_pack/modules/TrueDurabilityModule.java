@@ -57,7 +57,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
   private EntityRenderer entityRendererSave;
 
   public TrueDurabilityModule() {
-    super("Real item durability", "Display unbreakable items in red enchant, add real durability in tooltip");
+    super("True Durability", "Display unbreakable items in red enchant, add real durability in tooltip");
 
     this.renderItemSave = null;
     this.entityRendererSave = null;
@@ -126,7 +126,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
       RenderItem newRenderItem = null;
       if(this.renderItemSave == null) {
         newRenderItem = new CustomRenderItem(client.getTextureManager(), client.getRenderItem().getItemModelMesher().getModelManager(), client.getItemColors());
-        ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener((IResourceManagerReloadListener) newRenderItem);
+        ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener(newRenderItem);
       } else {
         newRenderItem = this.renderItemSave;
       }
@@ -142,7 +142,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
       EntityRenderer newEntityRenderer = null;
       if(this.entityRendererSave == null) {
         newEntityRenderer = new EntityRenderer(client, client.getResourceManager());
-        ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener((IResourceManagerReloadListener) newEntityRenderer);
+        ((IReloadableResourceManager)(client.getResourceManager())).registerReloadListener(newEntityRenderer);
       } else {
         newEntityRenderer = this.entityRendererSave;
       }
@@ -158,7 +158,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
     }
 
     // Replace old guiInGame
-    client.ingameGUI = (GuiIngame)new GuiIngameForge(client);
+    client.ingameGUI = new GuiIngameForge(client);
 
     MinecraftForge.EVENT_BUS.register(this); // register to listen for tooltip events
 
@@ -211,7 +211,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
     }
 
     // Reset guiInGame
-    client.ingameGUI = (GuiIngame)new GuiIngameForge(client);
+    client.ingameGUI = new GuiIngameForge(client);
 
     MinecraftForge.EVENT_BUS.unregister(this);
 
@@ -242,7 +242,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
     else color = TextFormatting.BLUE;
 
     toolTip.add("");
-    toolTip.add(color.toString() + "Durability: " + Long.toString(count) + " [Max: " + Long.toString(max) + "]" + TextFormatting.RESET.toString());
+    toolTip.add(color + "Durability: " + count + " [Max: " + Long.toString(max) + "]" + TextFormatting.RESET);
   }
 
   public Packet<?> packetReceived(EnumPacketDirection direction, int id, Packet<?> packet, ByteBuf in) {
@@ -258,7 +258,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
               short true_damage = buf.readShort();
               try {
                 if(true_damage < 0) {
-                  i.setTagCompound(new SpecialTagCompound(buf.readCompoundTag(), (int)true_damage));
+                  i.setTagCompound(new SpecialTagCompound(buf.readCompoundTag(), true_damage));
                 } else buf.readCompoundTag();
               } catch (IOException e) {
                 break;
@@ -277,7 +277,7 @@ public class TrueDurabilityModule extends Module implements PacketListener {
             short real_damage = buf.readShort();
             if(real_damage < 0) {
               ItemStack stack = packet_slot.getStack();
-              stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), (int)real_damage));
+              stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), real_damage));
             }
           }
         }
@@ -286,13 +286,13 @@ public class TrueDurabilityModule extends Module implements PacketListener {
         {
           SPacketEntityEquipment equipment = (SPacketEntityEquipment) packet;
           PacketBuffer buf = new PacketBuffer(in);
-          buf.readerIndex(buf.readerIndex() + 3 + (int)Math.floor(Math.log((double)equipment.getEntityID()) / Math.log(128d)));
+          buf.readerIndex(buf.readerIndex() + 3 + (int)Math.floor(Math.log(equipment.getEntityID()) / Math.log(128d)));
           if(buf.readShort() >= 0) {
             buf.readerIndex(buf.readerIndex() + 1);
             short real_damage = buf.readShort();
             if(real_damage < 0) {
               ItemStack stack = equipment.getItemStack();
-              stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), (int)real_damage));
+              stack.setTagCompound(new SpecialTagCompound(stack.getTagCompound(), real_damage));
             }
           }
         }

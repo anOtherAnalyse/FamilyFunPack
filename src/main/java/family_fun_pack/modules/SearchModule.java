@@ -101,8 +101,8 @@ public class SearchModule extends Module implements PacketListener {
     final Tessellator tessellator = Tessellator.getInstance();
     final BufferBuilder bufferbuilder = tessellator.getBuffer();
     bufferbuilder.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-    bufferbuilder.pos((double) x, (double) y, (double) z).color(red, green, blue, alpha).endVertex();
-    bufferbuilder.pos((double) x1, (double) y1, (double) z1).color(red, green, blue, alpha).endVertex();
+    bufferbuilder.pos(x, y, z).color(red, green, blue, alpha).endVertex();
+    bufferbuilder.pos(x1, y1, z1).color(red, green, blue, alpha).endVertex();
     tessellator.draw();
     GlStateManager.shadeModel(GL11.GL_FLAT);
     GL11.glDisable(GL11.GL_LINE_SMOOTH);
@@ -115,18 +115,18 @@ public class SearchModule extends Module implements PacketListener {
   }
 
   /* Map of Blocks to be searched */
-  private ReadWriteLock search_lock;
-  private Map<Block, SearchOptions> to_search;
+  private final ReadWriteLock search_lock;
+  private final Map<Block, SearchOptions> to_search;
 
   /* List of blocks that have been selected for highlighting */
-  private ReadWriteLock targets_lock;
-  private Map<BlockPos, Property> targets;
+  private final ReadWriteLock targets_lock;
+  private final Map<BlockPos, Property> targets;
 
   /* New chunks to be search for targets */
-  private ReadWriteLock new_chunks_lock;
-  private List<ChunkPos> new_chunks;
+  private final ReadWriteLock new_chunks_lock;
+  private final List<ChunkPos> new_chunks;
 
-  private ICamera camera;
+  private final ICamera camera;
 
   private Method transformMeth;
 
@@ -202,15 +202,15 @@ public class SearchModule extends Module implements PacketListener {
     this.search_lock.readLock().unlock();
 
     if(opt == null) {
-      configuration.get(this.name, "search_" + Integer.toString(id), false).set(false);
+      configuration.get(this.name, "search_" + id, false).set(false);
     } else {
-      configuration.get(this.name, "search_" + Integer.toString(id), false).set(true);
-      configuration.get(this.name, "tracer_" + Integer.toString(id), false).set(opt.default_property.tracer);
-      configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).set(opt.default_property.color);
+      configuration.get(this.name, "search_" + id, false).set(true);
+      configuration.get(this.name, "tracer_" + id, false).set(opt.default_property.tracer);
+      configuration.get(this.name, "color_" + id, ColorButton.DEFAULT_COLOR).set(opt.default_property.color);
 
       int length = opt.getAdvancedSearchSize();
       opt.targets_locks.readLock().lock();
-      configuration.get(this.name, "plength_" + Integer.toString(id), 0).set(length);
+      configuration.get(this.name, "plength_" + id, 0).set(length);
       if(length > 0) {
         int i = 0;
         for(AdvancedSearch preset : opt.advanced_targets) {
@@ -233,14 +233,14 @@ public class SearchModule extends Module implements PacketListener {
   // load configuration for one block
   private void loadBlock(Block block, Configuration configuration, boolean force) {
     int id = Block.getIdFromBlock(block);
-    boolean search = configuration.get(this.name, "search_" + Integer.toString(id), false).getBoolean();
+    boolean search = configuration.get(this.name, "search_" + id, false).getBoolean();
     if(search || force) {
-      boolean tracer = configuration.get(this.name, "tracer_" + Integer.toString(id), false).getBoolean();
-      int color = configuration.get(this.name, "color_" + Integer.toString(id), ColorButton.DEFAULT_COLOR).getInt();
+      boolean tracer = configuration.get(this.name, "tracer_" + id, false).getBoolean();
+      int color = configuration.get(this.name, "color_" + id, ColorButton.DEFAULT_COLOR).getInt();
 
       SearchOptions opt = new SearchOptions(new Property(tracer, color));
 
-      int length = configuration.get(this.name, "plength_" + Integer.toString(id), 0).getInt();
+      int length = configuration.get(this.name, "plength_" + id, 0).getInt();
       for(int i = 0; i < length; i ++) {
         opt.addTarget(this.loadPreset(configuration, block, i));
       }
@@ -254,7 +254,7 @@ public class SearchModule extends Module implements PacketListener {
   // load given preset configuration, for given block
   private AdvancedSearch loadPreset(Configuration configuration, Block block, int index) {
     AdvancedSearch out = new AdvancedSearch(block, false);
-    String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
+    String label = Block.getIdFromBlock(block) + "_" + index;
 
     // Get Block states
     int[] states = configuration.get(this.name, "states_" + label, new int[0]).getIntList();
@@ -280,7 +280,7 @@ public class SearchModule extends Module implements PacketListener {
 
   // save given preset configuration, for given block
   private void savePreset(Configuration configuration, AdvancedSearch preset, Block block, int index) {
-    String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(index);
+    String label = Block.getIdFromBlock(block) + "_" + index;
 
     // Save block states
     int[] states = new int[preset.states.size()];
@@ -462,7 +462,7 @@ public class SearchModule extends Module implements PacketListener {
     for(Target t : tracers) {
       Vec3d pos = new Vec3d(t.position).addVector(0.5, 0.5, 0.5).subtract(renderManager.viewerPosX, renderManager.viewerPosY, renderManager.viewerPosZ);
       Vec3d forward = new Vec3d(0, 0, 1).rotatePitch(-(float) Math.toRadians(mc.getRenderViewEntity().rotationPitch)).rotateYaw(-(float) Math.toRadians(mc.getRenderViewEntity().rotationYaw));
-      this.drawLine3D((float) forward.x, (float) forward.y + mc.getRenderViewEntity().getEyeHeight(), (float) forward.z, (float) pos.x, (float) pos.y, (float) pos.z, 0.85f, t.property.color);
+      drawLine3D((float) forward.x, (float) forward.y + mc.getRenderViewEntity().getEyeHeight(), (float) forward.z, (float) pos.x, (float) pos.y, (float) pos.z, 0.85f, t.property.color);
     }
 
     mc.gameSettings.viewBobbing = bobbing;
@@ -602,7 +602,7 @@ public class SearchModule extends Module implements PacketListener {
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
     if(opt != null) return opt.default_property.tracer;
-    return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Integer.toString(Block.getIdFromBlock(block)), false).getBoolean();
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "tracer_" + Block.getIdFromBlock(block), false).getBoolean();
   }
 
   public int getColor(Block block) {
@@ -610,7 +610,7 @@ public class SearchModule extends Module implements PacketListener {
     SearchOptions opt = this.to_search.get(block);
     this.search_lock.readLock().unlock();
     if(opt != null) return opt.default_property.color;
-    return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Integer.toString(Block.getIdFromBlock(block)), ColorButton.DEFAULT_COLOR).getInt();
+    return FamilyFunPack.getModules().getConfiguration().get(this.name, "color_" + Block.getIdFromBlock(block), ColorButton.DEFAULT_COLOR).getInt();
   }
 
   /*
@@ -660,7 +660,7 @@ public class SearchModule extends Module implements PacketListener {
        return size;
      }
 
-     return FamilyFunPack.getModules().getConfiguration().get(this.name, "plength_" + Integer.toString(Block.getIdFromBlock(block)), 0).getInt();
+     return FamilyFunPack.getModules().getConfiguration().get(this.name, "plength_" + Block.getIdFromBlock(block), 0).getInt();
    }
 
    public AdvancedSearch getAdvancedSearch(Block block, int index) {
@@ -703,12 +703,12 @@ public class SearchModule extends Module implements PacketListener {
        }
 
        // Update presets list length
-       config.get(this.name, "plength_" + Integer.toString(Block.getIdFromBlock(block)), 0).set(length - 1);
+       config.get(this.name, "plength_" + Block.getIdFromBlock(block), 0).set(length - 1);
      }
 
      // Erase last preset from config structure
      ConfigCategory cat = config.getCategory(this.name);
-     String label = Integer.toString(Block.getIdFromBlock(block)) + "_" + Integer.toString(length - 1);
+     String label = Block.getIdFromBlock(block) + "_" + (length - 1);
      cat.remove("states_" + label);
      cat.remove("hasTile_" + label);
      cat.remove("tile_" + label);
@@ -917,18 +917,18 @@ public class SearchModule extends Module implements PacketListener {
    // To be displayed in Main GUI, to access the search selection GUI
    private class GuiComponent implements MainGuiComponent {
 
-     private SearchModule dependence;
+     private final SearchModule dependence;
 
      public GuiComponent(SearchModule dependence) {
        this.dependence = dependence;
      }
 
      public String getLabel() {
-       return "Search selection";
+       return "which blocks ?";
      }
 
      public ActionButton getAction() {
-       return new OpenGuiButton(0, 0, "open", SearchSelectionGui.class, this.dependence);
+       return new OpenGuiButton(0, 0, "blocks", SearchSelectionGui.class, this.dependence);
      }
 
      public MainGuiComponent getChild() {

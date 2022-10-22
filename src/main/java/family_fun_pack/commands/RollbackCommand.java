@@ -159,5 +159,5 @@ public class RollbackCommand extends Command implements PacketListener {
     return this.position.subtract(mc.player.posX, mc.player.posY, mc.player.posZ);
   }
 
-  private static enum Mode {SIMPLE, DOUBLE, TMP, YEET};
+  private enum Mode {SIMPLE, DOUBLE, TMP, YEET}
 }

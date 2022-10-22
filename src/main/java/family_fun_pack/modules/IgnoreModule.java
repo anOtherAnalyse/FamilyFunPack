@@ -21,7 +21,7 @@ import family_fun_pack.network.PacketListener;
 public class IgnoreModule extends AbstractPlayersRegister implements PacketListener {
 
   public IgnoreModule() {
-    super("Ignore players", "Client-side /ignore", "ignore");
+    super("Ignore Players", "Client-side /ignore", "ignore");
   }
 
   protected void enable() {

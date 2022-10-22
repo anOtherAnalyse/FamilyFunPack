@@ -11,11 +11,11 @@ import family_fun_pack.modules.SearchModule;
 @SideOnly(Side.CLIENT)
 public class OnOffSearch implements OnOffAction {
 
-  private SearchModule module;
-  private Block block;
+  private final SearchModule module;
+  private final Block block;
 
-  private OnOffButton tracer;
-  private ColorButton color;
+  private final OnOffButton tracer;
+  private final ColorButton color;
 
   public OnOffSearch(Block block, SearchModule module, OnOffButton tracer, ColorButton color) {
     this.block = block;

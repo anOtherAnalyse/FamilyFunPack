@@ -23,7 +23,7 @@ import java.util.List;
 public class InboundInterceptor extends NettyPacketDecoder {
 
   private final EnumPacketDirection direction;
-  private NetworkHandler handler;
+  private final NetworkHandler handler;
   private boolean isPlay;
 
   public InboundInterceptor(NetworkHandler handler, EnumPacketDirection direction) {
@@ -33,20 +33,20 @@ public class InboundInterceptor extends NettyPacketDecoder {
     this.isPlay = false;
   }
 
-  protected void decode(ChannelHandlerContext context, ByteBuf in, List<Object> out) throws IOException, InstantiationException, IllegalAccessException, Exception {
+  protected void decode(ChannelHandlerContext context, ByteBuf in, List<Object> out) throws Exception {
     if (in.readableBytes() != 0) {
 
       int start_index = in.readerIndex(); // Mark start index
       super.decode(context, in, out); // Computer packet
 
       if(! this.isPlay) { // don't go fetch the attr every time
-        EnumConnectionState state = (EnumConnectionState)(context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get());
+        EnumConnectionState state = context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get();
         this.isPlay = (state == EnumConnectionState.PLAY);
       }
 
       if(this.isPlay && out.size() > 0) {
         Packet packet = (Packet)out.get(0);
-        int id = ((EnumConnectionState)context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get()).getPacketId(this.direction, packet);
+        int id = context.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get().getPacketId(this.direction, packet);
         int end_index = in.readerIndex();
 
         in.readerIndex(start_index);

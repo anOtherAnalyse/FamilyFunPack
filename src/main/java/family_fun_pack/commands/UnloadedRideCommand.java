@@ -64,8 +64,8 @@ public class UnloadedRideCommand extends Command implements PacketListener {
   }
 
   private int saved_id;
-  private int[] limits;
-  private int[] slots;
+  private final int[] limits;
+  private final int[] slots;
   private int max_tries;
   private boolean success;
   private boolean sneak_use;
@@ -212,7 +212,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
             return packet;
           }
 
-          FamilyFunPack.printMessage("Entity id from " + Integer.toString(this.limits[0] + 1) + " to " + Integer.toString(this.limits[1] - 1));
+          FamilyFunPack.printMessage("Entity id from " + (this.limits[0] + 1) + " to " + (this.limits[1] - 1));
 
           if(this.sneak_use) {
             FamilyFunPack.getNetworkHandler().registerListener(EnumPacketDirection.CLIENTBOUND, this, 19);
@@ -255,7 +255,7 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
             OpenWindowHandler handler = new OpenWindowHandler(this, this.window_count ++);
             try {
-              PacketThreadUtil.<INetHandlerPlayClient>checkThreadAndEnqueue(open, handler, mc);
+              PacketThreadUtil.checkThreadAndEnqueue(open, handler, mc);
             } catch (ThreadQuickExitException except) {
               return null;
             }
@@ -272,8 +272,8 @@ public class UnloadedRideCommand extends Command implements PacketListener {
 
   private static class OpenWindowHandler extends NetHandlerPlayClient {
 
-    private UnloadedRideCommand parent;
-    private int counter;
+    private final UnloadedRideCommand parent;
+    private final int counter;
 
     public OpenWindowHandler(UnloadedRideCommand parent, int counter) {
       super(Minecraft.getMinecraft(), null, null, null);

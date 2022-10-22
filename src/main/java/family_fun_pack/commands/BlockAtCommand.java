@@ -37,7 +37,7 @@ public class BlockAtCommand extends Command implements PacketListener {
 
   private int chg_count;
   private boolean enabled;
-  private Random random;
+  private final Random random;
   private int burst;
 
   public BlockAtCommand() {
