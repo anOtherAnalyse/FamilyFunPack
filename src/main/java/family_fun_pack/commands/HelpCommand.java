@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-/* Get information about player, world, plugins, ... */
+/* Dump all commands usage */
 
 @SideOnly(Side.CLIENT)
 public class HelpCommand extends Command {
