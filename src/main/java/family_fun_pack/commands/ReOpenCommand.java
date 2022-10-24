@@ -24,7 +24,7 @@ public class ReOpenCommand extends Command {
   }
 
   public String execute(String[] args) {
-    NoCloseModule module = (NoCloseModule) FamilyFunPack.getModules().getByName("Silent close");
+    NoCloseModule module = (NoCloseModule) FamilyFunPack.getModules().getByClass(NoCloseModule.class);
     GuiScreen screen = module.getOpenedContainer();
     if(screen == null) return "No container is currently opened";
     MinecraftForge.EVENT_BUS.register(new GuiOpener(screen));

@@ -22,7 +22,7 @@ public class IgnoreCommand extends Command {
 
   public String execute(String[] args) {
     if(args.length > 1) {
-      IgnoreModule module = (IgnoreModule) FamilyFunPack.getModules().getByName("Ignore players");
+      IgnoreModule module = (IgnoreModule) FamilyFunPack.getModules().getByClass(IgnoreModule.class);
       module.togglePlayer(args[1]);
       return null;
     }

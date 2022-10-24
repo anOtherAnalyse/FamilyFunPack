@@ -36,8 +36,8 @@ public class RollbackDupeCommand extends Command {
     if(args.length > 1 && args[1].equals("reset")) {
       this.on = false;
     } else {
-      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByName("Packets interception");
-      CommandsModule cmd = (CommandsModule) FamilyFunPack.getModules().getByName("FFP Commands");
+      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByClass(PacketInterceptionModule.class);
+      CommandsModule cmd = (CommandsModule) FamilyFunPack.getModules().getByClass(CommandsModule.class);
 
       if(! on) { // init
 

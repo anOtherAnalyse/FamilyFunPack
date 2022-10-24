@@ -99,7 +99,7 @@ public class RollbackCommand extends Command implements PacketListener {
       }
 
       /* Add exceptions to packet canceler */
-      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByName("Packets interception");
+      PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByClass(PacketInterceptionModule.class);
       for(int i = 0; i < to_send.length && to_send[i] != null; i ++) {
         intercept.addException(EnumPacketDirection.SERVERBOUND, to_send[i]);
       }

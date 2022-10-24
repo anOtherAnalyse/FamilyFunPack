@@ -22,7 +22,7 @@ public class StalkCommand extends Command {
 
   public String execute(String[] args) {
     if(args.length > 1) {
-      StalkModule module = (StalkModule) FamilyFunPack.getModules().getByName("Stalk players");
+      StalkModule module = (StalkModule) FamilyFunPack.getModules().getByClass(StalkModule.class);
       module.togglePlayer(args[1]);
       return null;
     }

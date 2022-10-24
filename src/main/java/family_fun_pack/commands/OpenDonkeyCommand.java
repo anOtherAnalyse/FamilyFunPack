@@ -69,7 +69,7 @@ public class OpenDonkeyCommand extends Command implements PacketListener {
         mc.player.startRiding(fake, true);
 
         // Sync vehicle position
-        ((CommandsModule)FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("sync").execute(new String[0]);
+        ((CommandsModule)FamilyFunPack.getModules().getByClass(CommandsModule.class)).getCommand("sync").execute(new String[0]);
 
         mc.player.openGuiHorseInventory(fake, new ContainerHorseChest(open.getWindowTitle().appendText(" [" + entity_id + "]"), open.getSlotCount()));
         mc.player.openContainer.windowId = open.getWindowId();

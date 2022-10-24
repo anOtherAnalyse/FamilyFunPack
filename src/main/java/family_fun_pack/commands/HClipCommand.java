@@ -44,7 +44,7 @@ public class HClipCommand extends Command {
         if(mc.player.isRiding()) packet = new CPacketVehicleMove(target);
         else packet = new CPacketPlayer.Position(target.posX, target.posY, target.posZ, true);
 
-        PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByName("Packets interception");
+        PacketInterceptionModule intercept = (PacketInterceptionModule) FamilyFunPack.getModules().getByClass(PacketInterceptionModule.class);
         intercept.addException(EnumPacketDirection.SERVERBOUND, packet);
 
         FamilyFunPack.getNetworkHandler().sendPacket(packet);

@@ -58,9 +58,9 @@ public class KillDupeCommand extends Command implements PacketListener {
       if(!Minecraft.getMinecraft().player.inventory.getStackInSlot(0).isEmpty()) return "Keep your first hotbar slot clear";
 
       if(this.op) {
-        this.window_id = ((StealCommand)((CommandsModule) FamilyFunPack.getModules().getByName("FFP Commands")).getCommand("steal")).getNextId();
+        this.window_id = ((StealCommand)((CommandsModule) FamilyFunPack.getModules().getByClass(CommandsModule.class)).getCommand("steal")).getNextId();
       } else {
-        this.window_id = ((NoCloseModule) FamilyFunPack.getModules().getByName("Silent close")).getWindowId();
+        this.window_id = ((NoCloseModule) FamilyFunPack.getModules().getByClass(NoCloseModule.class)).getWindowId();
       }
 
       if(this.window_id != -1) {
