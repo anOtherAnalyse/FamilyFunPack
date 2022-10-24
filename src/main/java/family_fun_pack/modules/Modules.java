@@ -53,9 +53,9 @@ public class Modules {
     return this.configuration;
   }
 
-  public Module getByName(String name) {
-    for(Module m : this.modules) {
-      if(m.getLabel().equals(name)) return m;
+  public Module getByClass(Class<?> clazz) {
+    for (Module m : this.modules) {
+      if (m.getClass() == clazz) return m;
     }
     return null;
   }

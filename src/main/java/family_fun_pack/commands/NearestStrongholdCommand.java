@@ -1,6 +1,8 @@
 package family_fun_pack.commands;
 
+import family_fun_pack.FamilyFunPack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldProvider;
@@ -30,13 +32,14 @@ public class NearestStrongholdCommand extends Command {
 
   public String execute(String[] args) {
     Minecraft mc = Minecraft.getMinecraft();
+    ServerData data = mc.getCurrentServerData();
+
+    if (data == null) return "server is null";
+    if (mc.player.dimension == 1) return "Why ?";
 
     //check if server is 2b2t.org using  Minecraft.getCurrentServerData()
-    if (mc.getCurrentServerData().serverIP.equals("connect.2b2t.org")) {
+    if (data.serverIP.equalsIgnoreCase("connect.2b2t.org")) {
       //get stronghold location nearest to player on 2b2t.org
-
-      if (mc.player.dimension == 1) return "dont you feel stupid... dont you feel a little ashamed...";
-
       int[][] endPortalCoords = {{1888, -32}, {-560, 1504}, {2064, -4400}, {-4992, -512}, {2960, 4208}, {-3200, 4480}, {-5568, 608}, {-2496, 5296}};
 
       int closestX = endPortalCoords[0][0];
@@ -48,18 +51,11 @@ public class NearestStrongholdCommand extends Command {
           closestX = endPortalCoords[i][0];
           closestZ = endPortalCoords[i][1];
           shortestDistance = d;
-
         }
       }
 
       return String.format("Nearest stronghold around (%d, %d) overworld", closestX, closestZ);
-
-
-    } else if (mc.getCurrentServerData().serverIP.equals("9b9t.org")) {
-
-
-      if (mc.player.dimension == 1) return "Why ?";
-
+    } else if (is9b9t(data.serverIP)) {
       WorldProvider provider = new WorldProviderSurface();
 
       WorldInfo info = new WorldInfo(new WorldSettings(-8076723744225505211L, GameType.SURVIVAL, true, false, WorldType.DEFAULT), "tmp");
@@ -72,12 +68,17 @@ public class NearestStrongholdCommand extends Command {
 
       BlockPos nearest = null;
       if (mc.player.dimension == 0) nearest = generation.getNearestStructurePos(fake, mc.player.getPosition(), false);
-      else
-        nearest = generation.getNearestStructurePos(fake, new BlockPos((int) mc.player.posX * 8, 70, (int) mc.player.posZ * 8), false);
+      else nearest = generation.getNearestStructurePos(fake, new BlockPos((int) mc.player.posX * 8, 70, (int) mc.player.posZ * 8), false);
 
       return String.format("Nearest stronghold around (%d, %d) overworld", nearest.getX(), nearest.getZ());
-
     }
-    return "you are not in 2b2t or 9b9t please join one to use this";
+
+    return String.format("this command does not support '%s' supported server(s): 2b2t, 9b9t", data.serverIP);
+  }
+
+  private boolean is9b9t(String serverIP) {
+    return serverIP.equalsIgnoreCase("9b9t.org")
+            || serverIP.equalsIgnoreCase("9b9t.com")
+            || serverIP.equalsIgnoreCase("2b2t.com");
   }
 }
