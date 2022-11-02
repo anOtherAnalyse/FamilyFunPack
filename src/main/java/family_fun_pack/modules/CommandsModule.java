@@ -74,9 +74,11 @@ public class CommandsModule extends Module {
     Command cmd = commands.getCommand(args[0]);
     if (cmd == null) return false;
 
-    final String[] lines = cmd.execute(args).split("\\r?\\n");
-    for (String line : lines) {
-      if (line != null) FamilyFunPack.printMessage(line);
+    final String lines = cmd.execute(args);
+    if(lines != null) {
+      for (String line : lines.split("\\r?\\n")) {
+        FamilyFunPack.printMessage(line);
+      }
     }
 
     return true;
